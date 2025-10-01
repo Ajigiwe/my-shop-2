@@ -257,3 +257,4 @@ For issues or questions, please check the contact page or create an issue in the
 ---
 
 **Note:** This is a demonstration e-commerce website. In production, additional security measures, error handling, and optimizations would be implemented.
+# my-shop-2 initgit add README.mdgit commit -m first commitgit branch -M maingit remote add origin https://github.com/Ajigiwe/my-shop-2.gitgit push -u origin mainecho # my-shop-2
