@@ -227,13 +227,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_add_to_cart'])) 
                 <?php else: ?>
                     <div class="row g-4" id="productsContainer">
                         <?php foreach ($products as $product): ?>
-                            <div class="col-lg-3 col-md-4 col-sm-6">
-                                <div class="card product-card h-100" style="max-height: 320px;">
+                            <div class="col-lg-5th col-md-4 col-sm-6 mb-4">
+                                <div class="card product-card h-100">
                                     <div class="product-image-container">
                                         <img src="assets/images/<?php echo htmlspecialchars($product['image'] ?? 'placeholder.jpg'); ?>"
                                              class="card-img-top product-image"
-                                             alt="<?php echo htmlspecialchars($product['name']); ?>"
-                                             style="height: 150px; object-fit: cover;">
+                                             alt="<?php echo htmlspecialchars($product['name']); ?>">
                                         <?php if ($product['stock_quantity'] <= 0): ?>
                                             <div class="out-of-stock-overlay">
                                                 <span class="out-of-stock-text">Out of Stock</span>

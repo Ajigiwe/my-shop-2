@@ -196,7 +196,7 @@ try {
                                                             </form>
                                                         </div>
 
-                                                        <button type="submit" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size: 0.8rem;">Update</button>
+                                                        
                                                     </form>
                                                 </div>
 
@@ -212,7 +212,7 @@ try {
                                                     <form method="POST" action="">
                                                         <input type="hidden" name="product_id" value="<?php echo $item['product_id']; ?>">
                                                         <input type="hidden" name="remove_item" value="1">
-                                                        <button type="submit" class="btn btn-outline-danger btn-sm" style="padding: 4px 8px; font-size: 0.8rem;"
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm" style="border-radius: 8px; padding: 6px 12px; font-weight: 600; font-size: 0.9rem;"
                                                                 onclick="return confirm('Remove this item from cart?')">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
@@ -227,55 +227,35 @@ try {
 
                         <!-- Cart Summary & Actions (moved outside cards) -->
                         <div class="row mt-4">
-                            <div class="col-md-6">
-                                <div class="d-flex gap-3 flex-wrap">
-                                    <a href="shop.php" class="btn btn-outline-primary" style="padding: 8px 16px; font-size: 0.9rem;">
-                                        <i class="fas fa-arrow-left me-2"></i>Continue Shopping
-                                    </a>
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                    <div class="d-flex gap-3 flex-wrap flex-grow-1 ps-2 ps-md-3 py-2">
+                                        <a href="shop.php" class="btn btn-outline-primary btn-sm" style="border-radius: 8px; padding: 4px 10px; font-weight: 600; font-size: 0.9rem;">
+                                            <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                                        </a>
 
-                                    <?php if (!empty($cart_items)): ?>
-                                        <form method="POST" action="" class="d-inline">
-                                            <input type="hidden" name="clear_all" value="1">
-                                            <button type="submit" class="btn btn-outline-danger" style="padding: 8px 16px; font-size: 0.9rem;"
-                                                    onclick="return confirm('Clear all items from cart?')">
-                                                <i class="fas fa-trash me-2"></i>Clear All
-                                            </button>
-                                        </form>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div style="background: linear-gradient(145deg, #ffffff, #f8f9fa); border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
-                                    <div class="mb-3">
-                                        <h3 class="mb-2" style="color: var(--gray-800); font-weight: 700;">
-                                            <i class="fas fa-receipt me-2" style="color: var(--primary-color);"></i>Order Summary
-                                        </h3>
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span style="color: var(--gray-600);">Subtotal (<?php echo count($cart_items); ?> items):</span>
-                                            <span class="fw-bold" style="color: var(--primary-color); font-size: 1.1rem;"><?php echo formatCurrency($total); ?></span>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span style="color: var(--gray-600);">Shipping:</span>
-                                            <span class="text-success fw-bold">
-                                                <i class="fas fa-truck me-1"></i>Free
-                                            </span>
-                                        </div>
-                                        <hr style="border-color: var(--gray-300);">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span style="font-weight: 700; color: var(--gray-800); font-size: 1.2rem;">Total:</span>
-                                            <span class="fw-bold fs-3" style="color: var(--success-color);"><?php echo formatCurrency($total); ?></span>
-                                        </div>
-                                        <small class="text-muted d-block text-center mt-2"><?php echo count($cart_items); ?> items in your cart</small>
+                                        <?php if (!empty($cart_items)): ?>
+                                            <form method="POST" action="" class="d-inline">
+                                                <input type="hidden" name="clear_all" value="1">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" style="border-radius: 8px; padding: 6px 12px; font-weight: 600; font-size: 0.9rem;"
+                                                        onclick="return confirm('Clear all items from cart?')">
+                                                    <i class="fas fa-trash me-2"></i>Clear All
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
                                     </div>
 
                                     <?php if (!empty($cart_items)): ?>
-                                        <a href="checkout.php" class="btn w-100" style="background: linear-gradient(135deg, var(--success-color), #28a745); color: white; border: none; border-radius: 8px; padding: 10px; font-weight: 700; font-size: 0.9rem; transition: all 0.3s ease;">
-                                            <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
-                                        </a>
-                                    <?php endif; ?>
+                                        <div class="ms-auto text-end pe-2 pe-md-3 py-2" style="padding-top: 1rem; padding-bottom: 1rem;">
+                                             <a href="checkout.php" class="btn btn-success btn-sm" style="border-radius: 8px; padding: 6px 12px; font-weight: 600;">
+                                                 <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
+                                             </a>
+                                         </div>
+                                     <?php endif; ?>
                                 </div>
                             </div>
+
+                            <!-- Order Summary removed as requested -->
                         </div>
                     <?php endif; ?>
                 </div>
@@ -295,6 +275,93 @@ function updateCartQuantity(productId, change) {
 
     input.value = currentQuantity;
 }
+
+// Enhance +/- buttons: detect clicks on minus/plus icon buttons, update the input, then submit the form
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+
+    // Identify minus/plus by icon classes to avoid markup changes
+    const icon = btn.querySelector('i');
+    if (!icon) return;
+
+    let change = 0;
+    if (icon.classList.contains('fa-minus')) change = -1;
+    if (icon.classList.contains('fa-plus')) change = 1;
+    if (change === 0) return;
+
+    // If this button is inside its own form with hidden quantity fields, submit it directly
+    const directForm = btn.closest('form');
+    if (directForm && directForm.querySelector('input[name="update_quantity"]')) {
+        e.preventDefault();
+        // Ensure server recognizes this as a cart update (matches PHP handler that checks update_cart)
+        if (!directForm.querySelector('input[name="update_cart"]')) {
+            const flag = document.createElement('input');
+            flag.type = 'hidden';
+            flag.name = 'update_cart';
+            flag.value = '1';
+            directForm.appendChild(flag);
+        }
+        try { directForm.submit(); } catch (_) {}
+        return;
+    }
+
+    // Fallback: find a visible quantity input and adjust it, then submit a related form
+    const container = btn.closest('.card, .row') || document;
+    const qtyInput = container.querySelector('input[id^="cart-quantity-"]');
+    if (qtyInput) {
+        e.preventDefault();
+        const idMatch = qtyInput.id.match(/cart-quantity-(\d+)/);
+        const productId = idMatch ? parseInt(idMatch[1], 10) : null;
+        if (productId) {
+            updateCartQuantity(productId, change);
+            const form = qtyInput.closest('form') || btn.closest('form');
+            if (form) {
+                try { form.submit(); } catch (_) {}
+            }
+        }
+    }
+});
+
+// Make +/- buttons smaller without changing PHP/HTML (override inline via JS)
+document.addEventListener('DOMContentLoaded', function () {
+    const tweakQtyButtons = () => {
+        document.querySelectorAll('button').forEach(btn => {
+            const icon = btn.querySelector('i');
+            if (!icon) return;
+            if (icon.classList.contains('fa-minus') || icon.classList.contains('fa-plus')) {
+                // Add reliable classes for styling and targeting
+                if (icon.classList.contains('fa-minus')) btn.classList.add('qty-minus');
+                if (icon.classList.contains('fa-plus')) btn.classList.add('qty-plus');
+                btn.classList.add('qty-compact');
+                // Fallback inline adjustments in case CSS is cached
+                if (!btn.style.width) btn.style.width = '24px';
+                if (!btn.style.height) btn.style.height = '24px';
+                btn.style.padding = '0';
+                btn.style.display = 'flex';
+                btn.style.alignItems = 'center';
+                btn.style.justifyContent = 'center';
+                icon.style.fontSize = '0.75rem';
+            }
+        });
+    };
+    tweakQtyButtons();
+    // In case cart content updates dynamically later
+    document.addEventListener('ajaxComplete', tweakQtyButtons, true);
+
+    // Lean order summary: hide shipping row and items count (non-breaking)
+    document.querySelectorAll('.cart-summary').forEach(summary => {
+        // Hide shipping row (looks like a d-flex row containing a label 'Shipping:')
+        const shippingRow = Array.from(summary.querySelectorAll('.d-flex'))
+            .find(row => row.textContent && row.textContent.trim().startsWith('Shipping:'));
+        if (shippingRow) shippingRow.style.display = 'none';
+
+        // Hide items count small text
+        const itemsCount = Array.from(summary.querySelectorAll('small'))
+            .find(s => /items in your cart/i.test(s.textContent || ''));
+        if (itemsCount) itemsCount.style.display = 'none';
+    });
+});
 </script>
 
 <?php include 'includes/footer.php'; ?>

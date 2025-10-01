@@ -192,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_add_to_cart'])) 
                 </div>
             <?php else: ?>
                 <?php foreach ($featured_products as $product): ?>
-                    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="col-lg-5th col-md-4 col-sm-6 mb-4">
                         <div class="card product-card h-100">
                             <img src="assets/images/<?php echo htmlspecialchars($product['image'] ?? 'placeholder.jpg'); ?>"
                                  class="card-img-top product-image" alt="<?php echo htmlspecialchars($product['name']); ?>">

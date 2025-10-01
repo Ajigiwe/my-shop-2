@@ -103,6 +103,18 @@ $page_title = 'Order Confirmation';
 
                                 <div class="col-md-6">
                                     <h5>Delivery Information</h5>
+                                    <?php
+                                        // Prefer dedicated phone column; fallback: extract from notes if present
+                                        $phoneDisplay = $order['phone'] ?? '';
+                                        if (empty($phoneDisplay) && !empty($order['notes'])) {
+                                            if (preg_match('/Phone:\s*(.+)/i', $order['notes'], $m)) {
+                                                $phoneDisplay = trim($m[1]);
+                                            }
+                                        }
+                                    ?>
+                                    <?php if (!empty($phoneDisplay)): ?>
+                                        <p><strong>Phone:</strong> <?php echo htmlspecialchars($phoneDisplay); ?></p>
+                                    <?php endif; ?>
                                     <p><strong>Shipping Address:</strong></p>
                                     <p class="text-muted"><?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?></p>
                                     <?php if (!empty(($order['notes'] ?? null) ?: ($order['order_notes'] ?? null))): ?>

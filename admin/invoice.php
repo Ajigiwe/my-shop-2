@@ -150,6 +150,18 @@ $store = [
             <div class="small">Status: <?php echo htmlspecialchars(ucfirst($order['status'])); ?></div>
         </div>
     </div>
+    <?php
+// Prefer dedicated phone column; fallback to extract from notes
+$phoneDisplay = $order['phone'] ?? '';
+if (empty($phoneDisplay) && !empty($order['notes'])) {
+    if (preg_match('/Phone:\s*(.+)/i', $order['notes'], $m)) {
+        $phoneDisplay = trim($m[1]);
+    }
+}
+?>
+<?php if (!empty($phoneDisplay)): ?>
+    <p><strong>Phone:</strong> <?php echo htmlspecialchars($phoneDisplay); ?></p>
+<?php endif; ?>
 
     <div class="table-responsive">
         <table class="table table-bordered">

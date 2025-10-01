@@ -96,9 +96,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     status,
                     shipping_address,
                     billing_address,
+                    phone,
                     notes
                 ) VALUES (
-                    ?, ?, ?, ?, 'Pay on Delivery', 'pending', ?, ?, ?
+                    ?, ?, ?, ?, 'Pay on Delivery', 'pending', ?, ?, ?, ?
                 )
             ");
             $stmt->execute([
@@ -108,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $tax,
                 $shipping_address,
                 $billing_address,
+                $phone,
                 $notes_to_save
             ]);
             $order_id = $pdo->lastInsertId();
@@ -154,12 +156,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Get user information for pre-filling form
 try {
-    $stmt = $pdo->prepare("SELECT name, email FROM users WHERE user_id = ?");
+    $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE user_id = ?");
     $stmt->execute([$user_id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 } catch(PDOException $e) {
-    $user = ['name' => '', 'email' => ''];
+    $user = ['name' => '', 'email' => '', 'phone' => ''];
 }
+
+// Ensure variables exist to avoid undefined notices on initial GET
+$phone = $phone ?? '';
+
 ?>
 
 <!DOCTYPE html>
@@ -200,6 +206,14 @@ try {
                             <h5 class="card-title">Order Information</h5>
 
                             <form method="POST" action="">
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">Phone Number *</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" required
+                                           value="<?php echo htmlspecialchars((($phone ?? '') !== '' ? ($phone ?? '') : ($user['phone'] ?? ''))); ?>"
+                                           placeholder="e.g. 0551234567">
+                                    <div class="form-text">We'll use this to contact you about your delivery.</div>
+                                </div>
+
                                 <div class="mb-3">
                                     <label for="shipping_address" class="form-label">Shipping Address *</label>
                                     <textarea class="form-control" id="shipping_address" name="shipping_address" rows="3" required><?php echo htmlspecialchars($shipping_address ?? ''); ?></textarea>

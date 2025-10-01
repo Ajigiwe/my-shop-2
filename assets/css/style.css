@@ -1459,3 +1459,182 @@ footer .social-links a:hover {
     }
 }
 
+/* ==========================
+   Cart Page Enhancements
+   (Non-breaking, CSS-only)
+   ========================== */
+
+/* Sticky summary on large screens */
+@media (min-width: 992px) {
+  .sticky-lg-top {
+    position: sticky;
+    top: 1rem;
+    z-index: 2;
+  }
+}
+
+/* Cart summary visual polish */
+.cart-summary {
+  border-radius: 16px;
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+.cart-summary h3 {
+  font-weight: 700;
+}
+
+/* Cart item layout helpers (opt-in classes if used) */
+.cart-item-row {
+  align-items: center;
+  gap: 12px;
+}
+.cart-item-thumb {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #eee;
+}
+.cart-item-title {
+  font-weight: 600;
+}
+.cart-item-meta {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+/* Quantity control buttons (works with existing buttons) */
+.qty-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+.qty-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Price alignment helpers */
+.text-price-muted {
+  color: #6c757d;
+}
+.text-price-strong {
+  color: var(--success-color, #28a745);
+  font-weight: 700;
+}
+
+/* Empty state polish */
+.cart-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+.cart-empty .icon {
+  font-size: 4rem;
+  color: #ced4da;
+}
+
+/* Responsive tweaks */
+@media (max-width: 576px) {
+  .cart-item-thumb { width: 72px; height: 72px; }
+  .cart-summary { padding: 18px !important; }
+}
+
+/* Compact quantity buttons (applied via JS classes) */
+.qty-compact {
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.qty-compact i { font-size: 0.75rem !important; }
+
+/* Product card Add to Cart button sizing (shop.php) */
+.shop-add-to-cart-btn {
+  padding: 6px 10px !important;
+  font-size: 0.9rem !important;
+  border-radius: 8px !important;
+  line-height: 1.2 !important;
+}
+.shop-add-to-cart-btn i {
+  font-size: 0.9rem !important;
+  margin-right: 0.35rem !important;
+}
+
+@media (max-width: 576px) {
+  .shop-add-to-cart-btn { padding: 5px 9px !important; font-size: 0.88rem !important; }
+  .shop-add-to-cart-btn i { font-size: 0.85rem !important; }
+}
+
+/* Product page Related products Add to Cart buttons */
+.related-add-to-cart-btn {
+  padding: 6px 10px !important;
+  font-size: 0.9rem !important;
+  border-radius: 8px !important;
+  line-height: 1.2 !important;
+}
+.related-add-to-cart-btn i {
+  font-size: 0.9rem !important;
+  margin-right: 0.35rem !important;
+}
+
+@media (max-width: 576px) {
+  .related-add-to-cart-btn { padding: 5px 9px !important; font-size: 0.88rem !important; }
+  .related-add-to-cart-btn i { font-size: 0.85rem !important; }
+}
+
+/* ===== Unified Product Card Compact Sizing (Home + Shop + Related) ===== */
+.product-card .card-body { padding: 0.5rem !important; }
+.product-card .product-title { font-size: 0.9rem !important; font-weight: 600; }
+.product-card .product-price { font-size: 0.95rem !important; font-weight: 700; }
+.product-card .product-image { height: 150px !important; object-fit: cover; }
+
+@media (max-width: 576px) {
+  .product-card .card-body { padding: 0.4rem !important; }
+  .product-card .product-image { height: 130px !important; }
+}
+
+/* Compact button sizing overrides (Home + Shop + Related) */
+.shop-add-to-cart-btn,
+.home-add-to-cart-btn,
+.related-add-to-cart-btn {
+  padding: 5px 9px !important;
+  font-size: 0.85rem !important;
+  border-radius: 8px !important;
+  line-height: 1.2 !important;
+}
+.shop-add-to-cart-btn i,
+.home-add-to-cart-btn i,
+.related-add-to-cart-btn i {
+  font-size: 0.85rem !important;
+}
+
+/* 5-up grid utility on large screens (desktop) */
+@media (min-width: 992px) {
+  .col-lg-5th {
+    -ms-flex: 0 0 20%;
+    flex: 0 0 20%;
+    max-width: 20%;
+  }
+}
+
+/* Shop page specific sizing overrides */
+#productsContainer .product-card .card-body { padding: 0.5rem !important; }
+#productsContainer .product-card .product-title {
+  font-size: 0.92rem !important;
+  margin-bottom: 0.25rem !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+#productsContainer .product-card .product-price { font-size: 0.95rem !important; margin-bottom: 0.25rem !important; }
+#productsContainer .product-card .product-image { height: 140px !important; object-fit: cover; }
+
+@media (max-width: 576px) {
+  #productsContainer .product-card .card-body { padding: 0.45rem !important; }
+  #productsContainer .product-card .product-image { height: 120px !important; }
+}
