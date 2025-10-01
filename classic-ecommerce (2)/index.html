@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreshMart - Your Online Grocery Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-container">
+      <a href="index.html" class="logo">FreshMart</a>
+      <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+      <nav class="nav" id="mainNav">
+        <a href="index.html">Home</a>
+        <a href="products.html">Shop</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="cart.html" class="cart-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span class="cart-count" id="cartCount">0</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero-slider">
+      <div class="slider-container">
+        <div class="slide active">
+          <img src="/placeholder.svg?height=600&width=1200" alt="Fresh Produce" class="slide-image">
+          <div class="slide-content">
+            <h1>Farm Fresh Produce</h1>
+            <p>Discover our selection of organic fruits and vegetables</p>
+            <a href="products.html?category=fruits" class="btn">Shop Produce</a>
+          </div>
+        </div>
+        
+        <div class="slide">
+          <img src="/placeholder.svg?height=600&width=1200" alt="Fresh Bakery" class="slide-image">
+          <div class="slide-content">
+            <h1>Freshly Baked Daily</h1>
+            <p>Artisan breads and pastries made in our bakery</p>
+            <a href="products.html?category=bakery" class="btn">Shop Bakery</a>
+          </div>
+        </div>
+        
+        <div class="slide">
+          <img src="/placeholder.svg?height=600&width=1200" alt="Dairy Products" class="slide-image">
+          <div class="slide-content">
+            <h1>Quality Dairy & Eggs</h1>
+            <p>Fresh from local farms to your table</p>
+            <a href="products.html?category=dairy" class="btn">Shop Dairy</a>
+          </div>
+        </div>
+      </div>
+      
+      <button class="slider-btn prev" id="prevBtn">‹</button>
+      <button class="slider-btn next" id="nextBtn">›</button>
+      
+      <div class="slider-dots" id="sliderDots"></div>
+    </section>
+
+    <section class="products-section">
+      <div class="section-header">
+        <h2>Featured Products</h2>
+        <p>Fresh picks for your healthy lifestyle</p>
+      </div>
+      <div class="products-grid" id="featuredProducts">
+      </div>
+    </section>
+
+    <section class="hero" style="padding-top: 0;">
+      <h2>Fresh, Healthy, Local</h2>
+      <p>We partner with local farms and suppliers to bring you the freshest produce, meats, and dairy. Quality and sustainability are at the heart of everything we do.</p>
+      <a href="about.html" class="btn btn-secondary">Learn More</a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-section">
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="products.html">All Products</a></li>
+          <li><a href="products.html?category=fruits">Fruits & Vegetables</a></li>
+          <li><a href="products.html?category=dairy">Dairy & Eggs</a></li>
+          <li><a href="products.html?category=bakery">Bakery</a></li>
+          <li><a href="products.html?category=meat">Meat & Seafood</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Blog</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="#">Delivery Info</a></li>
+          <li><a href="#">Returns</a></li>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">Food Safety</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Connect</h4>
+        <ul>
+          <li><a href="#">Instagram</a></li>
+          <li><a href="#">Facebook</a></li>
+          <li><a href="#">Twitter</a></li>
+          <li><a href="#">Newsletter</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 FreshMart. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="scripts/data.js"></script>
+  <script src="scripts/cart.js"></script>
+  <script src="scripts/main.js"></script>
+</body>
+</html>
