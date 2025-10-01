@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_add_to_cart'])) 
                                     foreach($categories as $category) {
                                         $icon = $categoryIcons[$category] ?? 'fas fa-box';
                                         echo '<a href="shop.php?category=' . urlencode($category) . '"
-                                                class="btn btn-outline-primary btn-sm">
+                                                class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem; padding: 2px 6px;"
                                                 <i class="' . $icon . ' me-1"></i>' . htmlspecialchars($category) . '
                                             </a>';
                                     }
@@ -350,6 +350,32 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, duration);
     }
+});
+</script>
+<script>
+// Hero Slider - Simple working version
+document.addEventListener('DOMContentLoaded', function() {
+    const slides = document.querySelectorAll('.hero-slide');
+    let currentSlide = 0;
+    
+    function showSlide(index) {
+        slides.forEach((slide, i) => {
+            slide.classList.remove('active');
+            if (i === index) {
+                slide.classList.add('active');
+            }
+        });
+    }
+    
+    function nextSlide() {
+        currentSlide = (currentSlide + 1) % slides.length;
+        showSlide(currentSlide);
+    }
+    
+    // Start auto-advance
+    setInterval(nextSlide, 5000);
+    
+    console.log('✅ Hero slider initialized with ' + slides.length + ' slides');
 });
 </script>
 </body>

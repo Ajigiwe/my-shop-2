@@ -557,4 +557,33 @@ function updateQuantity(productId, change) {
 
         quantityInput.value = currentQuantity;
     }
+
+     // Hero Slider Functionality (add this with your existing code)
+const slides = document.querySelectorAll('.hero-slide');
+let currentSlide = 0;
+
+function showSlide(index) {
+    slides.forEach((slide, i) => {
+        slide.classList.remove('active');
+        if (i === index) {
+            slide.classList.add('active');
+        }
+    });
+}
+
+function nextSlide() {
+    currentSlide = (currentSlide + 1) % slides.length;
+    showSlide(currentSlide);
+}
+
+// Auto-advance slides every 5 seconds
+setInterval(nextSlide, 5000);
+
+// Optional: Add click navigation
+const heroSlider = document.querySelector('.hero-slider');
+if (heroSlider) {
+    heroSlider.addEventListener('click', nextSlide);
+}
+    
+
 }

@@ -205,15 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_add_to_cart'])) 
                             <?php endif; ?>
                         </p>
                     </div>
-                    <div class="d-flex align-items-center">
-                        <label for="sortSelect" class="form-label me-2 mb-0">Sort by:</label>
-                        <select class="form-select form-select-sm" id="sortSelect" style="width: auto;">
-                            <option value="newest">Newest First</option>
-                            <option value="price_low">Price: Low to High</option>
-                            <option value="price_high">Price: High to Low</option>
-                            <option value="name">Name A-Z</option>
-                        </select>
-                    </div>
+                  
                 </div>
 
                 <!-- Products Grid -->

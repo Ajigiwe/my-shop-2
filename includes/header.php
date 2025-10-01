@@ -2,10 +2,34 @@
 /**
  * Header include
  * - Outputs <head> and opens <body>
- * - Computes $base to make asset and link paths work from root, /admin, /user, and /legal
+ * - computes $base to make asset and link paths work from root, /admin, /user, and /legal
  * - Exposes $site_name used across the UI (defaults to 'ASO Online Market')
  */
+
+// Start session for header/navbar functionality
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check if user is logged in (for navbar display)
+$user_logged_in = isset($_SESSION['user_id']);
+$user_name = $_SESSION['user_name'] ?? '';
+$user_role = $_SESSION['user_role'] ?? '';
+
+// Define graceful degradation for navbar and other optional components
+define('ALLOW_DB_GRACEFUL_DEGRADATION', true);
+
+// Compute base path for assets (works from root, /admin, /user, /legal, etc.)
+$base = '';
+$current_path = $_SERVER['PHP_SELF'] ?? '';
+if (preg_match('/\/(admin|user|legal)\//', $current_path)) {
+    $base = '../';
+}
+
+// Set site name
+$site_name = 'ASO Online Market';
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,30 +37,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="E-Commerce Shop - Your one-stop destination for quality products">
     <meta name="keywords" content="ecommerce, shop, products, online shopping">
-    <?php
-    // Define graceful degradation for navbar and other optional components
-    define('ALLOW_DB_GRACEFUL_DEGRADATION', true);
-
-    // Compute base path for assets (works from root, /admin, /user, /legal, etc.)
-    $base = '';
-    $current_path = $_SERVER['PHP_SELF'] ?? '';
-    if (preg_match('/\/(admin|user|legal)\//', $current_path)) {
-        $base = '../';
-    }
-
-    // Set site name
-    $site_name = 'ASO Online Market';
-    ?>
     <title><?php echo isset($page_title) ? htmlspecialchars($page_title) : 'Home'; ?> - <?php echo htmlspecialchars($site_name); ?></title>
 
     <!-- Bootstrap CSS -->
-    <link href="<?php echo $base; ?>https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Bootstrap JS (required for dropdowns and other components) -->
-    <script src="<?php echo $base; ?>https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="<?php echo $base; ?>https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?php echo $base; ?>assets/css/style.css">
@@ -78,17 +85,7 @@
             color: var(--primary-color);
             text-decoration: none;
         }
-
-        .dropdown-divider-custom {
-            height: 1px;
-            background-color: var(--gray-200);
-            margin: 8px 0;
-        }
     </style>
 </head>
 <body>
     <?php include __DIR__ . '/navbar.php'; ?>
-
-
-</body>
-</html>

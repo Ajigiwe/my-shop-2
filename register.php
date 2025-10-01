@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-overlay"></div>
     <div class="container py-5">
         <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
+            <div class="col-md-6 col-lg-5">
                 <div class="card shadow login-card">
                     <div class="card-body p-5">
                         <h2 class="text-center mb-4">Create Account</h2>

@@ -5,8 +5,8 @@
  */
 
 // Paystack Configuration - Using Environment Variables
-define('PAYSTACK_PUBLIC_KEY', $_ENV['PAYSTACK_PUBLIC_KEY'] ?? '');
-define('PAYSTACK_SECRET_KEY', $_ENV['PAYSTACK_SECRET_KEY'] ?? '');
+define('PAYSTACK_PUBLIC_KEY', $_ENV['PAYSTACK_PUBLIC_KEY'] ?? 'pk_test_38b1635c9aa6964ab1c5669bd0b9d40a3e512e06');
+define('PAYSTACK_SECRET_KEY', $_ENV['PAYSTACK_SECRET_KEY'] ?? 'sk_test_64b697acfffffff3c9e1f6c03eab9bc8cbe7f38d');
 define('PAYSTACK_PAYMENT_URL', 'https://api.paystack.co/transaction/initialize');
 define('PAYSTACK_VERIFY_URL', 'https://api.paystack.co/transaction/verify/');
 
@@ -17,7 +17,7 @@ define('PAYPAL_MODE', 'sandbox'); // 'sandbox' or 'live'
 
 // Payment settings - Correctly encoded callback URL
 define('CURRENCY', 'GHS'); // Ghana Cedi for Paystack
-define('PAYMENT_CALLBACK_URL', 'http://127.0.0.1/My%20Shop%202/verify_payment.php'); // Correctly encoded space
+define('PAYMENT_CALLBACK_URL', 'http://127.0.0.1/My%20Shop2/verify_payment.php'); // URL encoded space
 define('PAYMENT_RETURN_URL', 'https://yourdomain.com/verify_payment.php'); // Replace with your actual domain
 
 /**

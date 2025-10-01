@@ -170,12 +170,6 @@ try {
             <!-- Spacer for centering -->
         </div>
     </div>
-            <h2 class="mb-0">Manage Products</h2>
-        </div>
-        <div>
-            <!-- Spacer for centering -->
-        </div>
-    </div>
 
     <div class="row g-4">
         <div class="col-lg-5">

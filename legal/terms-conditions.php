@@ -157,6 +157,7 @@ $page_title = 'Terms & Conditions | ASO Online Market';
         </div>
     </div>
 </div>
+<?php include '../includes/footer.php'; ?>
 
 <style>
 /* Legal page specific styles */
@@ -274,3 +275,13 @@ $page_title = 'Terms & Conditions | ASO Online Market';
     .legal-content .card-body {
         padding: 0.5rem;
     }
+}
+
+
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../assets/js/script.js"></script>
+
+</body>
+</html>

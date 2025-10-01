@@ -139,15 +139,6 @@ h1, h2, h3, h4, h5, h6 {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
 }
 
-.hero-slider {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-}
-
 .hero-slide {
     position: absolute;
     top: 0;
@@ -155,10 +146,14 @@ h1, h2, h3, h4, h5, h6 {
     width: 100%;
     height: 100%;
     opacity: 0;
-    transition: opacity 1s ease-in-out;
+    transition: opacity 0.8s ease-in-out; /* Slower transition */
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
+}
+
+.hero-slide.active {
+    opacity: 1;
+    z-index: 2; /* Ensure active slide is on top */
 }
 
 .hero-slide.active {
@@ -167,17 +162,17 @@ h1, h2, h3, h4, h5, h6 {
 
 .hero-slide:nth-child(1) {
     background-image: linear-gradient(rgba(58, 90, 64, 0.4), rgba(58, 90, 64, 0.4)),
-                      url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+                      url('../images/s1.webp');
 }
 
 .hero-slide:nth-child(2) {
     background-image: linear-gradient(rgba(58, 90, 64, 0.4), rgba(58, 90, 64, 0.4)),
-                      url('https://images.unsplash.com/photo-1472851294608-062f824d29cc?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+                      url('../images/s2.jpg');
 }
 
 .hero-slide:nth-child(3) {
     background-image: linear-gradient(rgba(58, 90, 64, 0.4), rgba(58, 90, 64, 0.4)),
-                      url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+                      url('../images/s3.webp');
 }
 
 .hero-overlay {
@@ -252,10 +247,16 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 0.25rem;
     color: var(--gray-900);
     line-height: 1.3;
+
+    /* Multi-line text truncation - Webkit browsers (Chrome, Safari, Edge) */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+
+    /* Standard property for future browser compatibility */
+    line-clamp: 2;
+    box-orient: vertical;
 }
 
 .product-price {
@@ -429,7 +430,9 @@ button[class*="add-to-cart"]:active {
     min-height: 100vh;
     display: flex;
     align-items: center;
-    background-color: #f5f5dc; /* Beige background */
+    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), 
+    url('../images/login2.png') center/cover no-repeat fixed;
+
 }
 
 .login-background {
@@ -438,7 +441,7 @@ button[class*="add-to-cart"]:active {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(245, 245, 220, 0.8); /* Light beige overlay */
+    background: transparent;
     z-index: 1;
 }
 
@@ -448,7 +451,7 @@ button[class*="add-to-cart"]:active {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.05); /* Very light overlay for depth */
+    background: transparent;
     z-index: 2;
 }
 
@@ -462,6 +465,7 @@ button[class*="add-to-cart"]:active {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    min-height: auto;
 }
 
 .login-card .card-body {
@@ -1271,7 +1275,7 @@ footer .social-links a:hover {
     max-width: 400px;
 }
 
-{{ ... }}
+.toast {
     background: var(--white);
     border: none;
     border-radius: var(--radius-md);

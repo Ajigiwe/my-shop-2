@@ -1,9 +1,10 @@
 <?php
 /**
- * Storefront: Order Confirmation
- * - Requires login; shows details for a single order placed by the current user
- * - Displays items, totals, addresses, and next steps
+ * Order Confirmation Page
+ * - Shows order details after successful placement
+ * - Displays order number and next steps
  */
+
 // Include database connection
 require_once 'includes/db.php';
 
@@ -18,196 +19,173 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Get order ID from URL
-$order_id = (int)($_GET['order_id'] ?? 0);
-
-if ($order_id <= 0) {
+// Check if we have a recent order
+if (!isset($_SESSION['last_order_id'])) {
     header('Location: index.php');
     exit();
 }
 
-// Get order details (ensures the order belongs to the current user)
+$order_id = $_SESSION['last_order_id'];
+$user_id = $_SESSION['user_id'];
+
+// Get order details
 try {
-    $stmt = $pdo->prepare("SELECT o.*, u.name, u.email FROM orders o 
-                          JOIN users u ON o.user_id = u.user_id 
-                          WHERE o.order_id = ? AND o.user_id = ?");
-    $stmt->execute([$order_id, $_SESSION['user_id']]);
-    $order = $stmt->fetch();
-    
-    if (!$order) {
+    $stmt = $pdo->prepare("
+        SELECT o.*, oi.*, p.name as product_name
+        FROM orders o
+        LEFT JOIN order_items oi ON o.order_id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.product_id
+        WHERE o.order_id = ? AND o.user_id = ?
+        ORDER BY oi.order_item_id
+    ");
+    $stmt->execute([$order_id, $user_id]);
+    $order_details = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (empty($order_details)) {
         header('Location: index.php');
         exit();
     }
+
+    $order = $order_details[0];
+
 } catch(PDOException $e) {
-    error_log("Error fetching order: " . $e->getMessage());
-    header('Location: index.php');
-    exit();
+    error_log("Error fetching order details: " . $e->getMessage());
+    $order_details = [];
+    $order = [];
 }
 
-// Get order items with product name/image for summary list
-$order_items = [];
-try {
-    $stmt = $pdo->prepare("SELECT oi.*, p.name, p.image FROM order_items oi 
-                          JOIN products p ON oi.product_id = p.product_id 
-                          WHERE oi.order_id = ?");
-    $stmt->execute([$order_id]);
-    $order_items = $stmt->fetchAll();
-} catch(PDOException $e) {
-    error_log("Error fetching order items: " . $e->getMessage());
-}
+// Clear the session order ID after use
+unset($_SESSION['last_order_id']);
 
 // Set page title
 $page_title = 'Order Confirmation';
 ?>
 
-<?php include 'includes/header.php'; ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo htmlspecialchars($page_title); ?> - My Shop</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <?php include 'includes/navbar.php'; ?>
 
-<div class="container py-5">
-    <!-- Order Confirmation Header -->
-    <div class="text-center mb-5">
-        <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
-        <h1 class="text-success">Order Confirmed!</h1>
-        <p class="lead">Thank you for your order. We'll send you shipping updates at <?php echo htmlspecialchars($order['email']); ?></p>
-    </div>
-    
-    <div class="row">
-        <!-- Order Details -->
-        <div class="col-lg-8">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h4 class="mb-0">Order Details</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-sm-4"><strong>Order Number:</strong></div>
-                        <div class="col-sm-8">#<?php echo str_pad($order_id, 6, '0', STR_PAD_LEFT); ?></div>
+    <!-- Order Confirmation Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                        <h2>Order Placed Successfully!</h2>
+                        <p class="text-muted">Thank you for your order. We will deliver it soon.</p>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4"><strong>Order Date:</strong></div>
-                        <div class="col-sm-8"><?php echo date('F j, Y \a\t g:i A', strtotime($order['order_date'])); ?></div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4"><strong>Payment Method:</strong></div>
-                        <div class="col-sm-8">
-                            <?php
-                            $payment_methods = [
-                                'cash_on_delivery' => 'Cash on Delivery',
-                                'paypal' => 'PayPal',
-                                'paystack' => 'Paystack'
-                            ];
-                            echo htmlspecialchars($payment_methods[$order['payment_method']] ?? $order['payment_method']);
-                            ?>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4"><strong>Status:</strong></div>
-                        <div class="col-sm-8">
-                            <span class="badge bg-<?php 
-                                echo match($order['status']) {
-                                    'pending' => 'warning',
-                                    'processing' => 'info',
-                                    'shipped' => 'primary',
-                                    'delivered' => 'success',
-                                    'cancelled' => 'danger',
-                                    default => 'secondary'
-                                };
-                            ?>">
-                                <?php echo ucfirst($order['status']); ?>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Shipping & Billing Addresses -->
-            <div class="row">
-                <div class="col-md-6 mb-4">
+
                     <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Shipping Address</h5>
-                        </div>
                         <div class="card-body">
-                            <p class="mb-0"><?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Billing Address</h5>
-                        </div>
-                        <div class="card-body">
-                            <p class="mb-0"><?php echo nl2br(htmlspecialchars($order['billing_address'])); ?></p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Order Information</h5>
+                                    <p><strong>Order Number:</strong> <?php echo htmlspecialchars($order['order_number']); ?></p>
+                                    <p><strong>Order Date:</strong> <?php echo date('M d, Y \a\t g:i A', strtotime($order['order_date'])); ?></p>
+                                    <p><strong>Payment Method:</strong> <?php echo htmlspecialchars($order['payment_method']); ?></p>
+                                    <p><strong>Order Status:</strong>
+                                        <span class="badge bg-warning"><?php echo htmlspecialchars($order['status'] ?? ($order['order_status'] ?? 'pending')); ?></span>
+                                    </p>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <h5>Delivery Information</h5>
+                                    <p><strong>Shipping Address:</strong></p>
+                                    <p class="text-muted"><?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?></p>
+                                    <?php if (!empty(($order['notes'] ?? null) ?: ($order['order_notes'] ?? null))): ?>
+                                        <p><strong>Order Notes:</strong></p>
+                                        <p class="text-muted"><?php echo nl2br(htmlspecialchars($order['notes'] ?? $order['order_notes'])); ?></p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <h5>Order Items</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Quantity</th>
+                                            <th>Price</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $subtotal = 0;
+                                        foreach ($order_details as $item):
+                                            $item_total = $item['product_price'] * $item['quantity'];
+                                            $subtotal += $item_total;
+                                        ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($item['product_name']); ?></td>
+                                                <td><?php echo $item['quantity']; ?></td>
+                                                <td>₵<?php echo number_format($item['product_price'], 2); ?></td>
+                                                <td>₵<?php echo number_format($item_total, 2); ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th colspan="3">Subtotal:</th>
+                                            <th>₵<?php echo number_format($subtotal, 2); ?></th>
+                                        </tr>
+                                        <tr>
+                                            <th colspan="3">Tax (10%):</th>
+                                            <th>₵<?php echo number_format($subtotal * 0.1, 2); ?></th>
+                                        </tr>
+                                        <tr class="table-success">
+                                            <th colspan="3">Total:</th>
+                                            <th>₵<?php echo number_format($order['total_amount'], 2); ?></th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <div class="alert alert-info mt-4">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Next Steps:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>You will receive a confirmation call from our delivery team</li>
+                                    <li>Please ensure someone is available at the delivery address</li>
+                                    <li>Payment will be collected upon delivery</li>
+                                    <li>You can track your order status in your account</li>
+                                </ul>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <a href="index.php" class="btn btn-primary me-2">
+                                    <i class="fas fa-home me-2"></i>Continue Shopping
+                                </a>
+                                <a href="user/orders.php" class="btn btn-outline-primary">
+                                    <i class="fas fa-list me-2"></i>View My Orders
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Order Summary -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Order Summary</h5>
-                </div>
-                <div class="card-body">
-                    <?php foreach ($order_items as $item): ?>
-                        <div class="d-flex align-items-center mb-3">
-                            <img src="assets/images/<?php echo htmlspecialchars($item['image'] ?? 'placeholder.jpg'); ?>" 
-                                 class="rounded me-3" width="60" height="60" alt="<?php echo htmlspecialchars($item['name']); ?>">
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1"><?php echo htmlspecialchars($item['name']); ?></h6>
-                                <small class="text-muted">Qty: <?php echo $item['quantity']; ?> × <?php echo formatCurrency($item['price']); ?></small>
-                            </div>
-                            <div class="text-end">
-                                <strong><?php echo formatCurrency($item['quantity'] * $item['price']); ?></strong>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                    
-                    <hr>
-                    
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Subtotal</span>
-                        <span><?php echo formatCurrency($order['total_amount']); ?></span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Shipping</span>
-                        <span class="text-success">Free</span>
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-between mb-3">
-                        <strong>Total</strong>
-                        <strong class="text-primary"><?php echo formatCurrency($order['total_amount']); ?></strong>
-                    </div>
-                    
-                    <?php if ($order['payment_method'] === 'cash_on_delivery'): ?>
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            You will pay <?php echo formatCurrency($order['total_amount']); ?> when your order is delivered.
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-            
-            <!-- Next Steps -->
-            <div class="card mt-4">
-                <div class="card-body text-center">
-                    <h6>What's Next?</h6>
-                    <p class="small text-muted mb-3">We'll process your order and send you updates via email.</p>
-                    
-                    <div class="d-grid gap-2">
-                        <a href="user/orders.php" class="btn btn-primary">
-                            <i class="fas fa-list me-2"></i>View Order History
-                        </a>
-                        <a href="shop.php" class="btn btn-outline-primary">
-                            <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+    </section>
 
-<?php include 'includes/footer.php'; ?>
+    <?php include 'includes/footer.php'; ?>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

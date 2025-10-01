@@ -171,5 +171,13 @@ footer [class*="col-"] {
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Custom JS -->
+<!-- Custom JS - Only load on pages that need it -->
+<?php
+// Don't load script.js on certain pages to avoid conflicts
+$current_page = basename($_SERVER['PHP_SELF'] ?? '');
+$pages_without_script_js = ['form_test.php'];
+
+if (!in_array($current_page, $pages_without_script_js)):
+?>
 <script src="<?php echo $base; ?>assets/js/script.js"></script>
+<?php endif; ?>

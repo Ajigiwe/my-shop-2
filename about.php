@@ -1,5 +1,16 @@
 <?php
+// Start session first
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Set page title
 $page_title = 'About Us';
+
+// Check if user is logged in (for navbar display)
+$user_logged_in = isset($_SESSION['user_id']);
+$user_name = $_SESSION['user_name'] ?? '';
+$user_role = $_SESSION['user_role'] ?? '';
 ?>
 
 <!DOCTYPE html>
@@ -7,7 +18,7 @@ $page_title = 'About Us';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $page_title; ?> - ASO Online Market</title>
+    <title><?php echo htmlspecialchars($page_title); ?> - ASO Online Market</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -93,6 +104,19 @@ $page_title = 'About Us';
             </div>
         </div>
 
+        <!-- Welcome Message for Logged-in Users -->
+        <?php if ($user_logged_in): ?>
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-user-check me-2"></i>
+                    Welcome back, <?php echo htmlspecialchars($user_name); ?>!
+                    Thank you for choosing ASO Online Market for your shopping needs.
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <!-- Contact CTA -->
         <div class="row mt-5">
             <div class="col-12 text-center">
@@ -137,6 +161,29 @@ document.addEventListener('DOMContentLoaded', function() {
             toggle: false
         });
     }
+
+    // Animate value icons on scroll
+    const observerOptions = {
+        threshold: 0.5,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    // Animate value cards
+    document.querySelectorAll('.col-md-4.text-center').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
 });
 </script>
 </body>
