@@ -8,80 +8,82 @@
         $base = '../';
     }
     ?>
-    <div class="container py-4">
-        <div class="row">
+    <div class="container py-1">
+        <div class="row g-2">
             <!-- Company info -->
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="d-flex align-items-center mb-3">
-                    <i class="fas fa-store fa-2x me-3"></i>
-                    <h5 class="mb-0">ASO Online Market</h5>
+            <div class="col-lg-4 col-md-6">
+                <div class="d-flex align-items-center mb-0">
+                    <i class="fas fa-store me-1" style="font-size: 0.9rem;"></i>
+                    <h5 class="mb-0" style="font-size: 0.9rem;">ASO Online Market</h5>
                 </div>
-                <p class="mb-4">Your trusted online shopping destination offering quality products at competitive prices with excellent customer service.</p>
-                <div class="social-links d-flex gap-3">
-                    <a href="#" title="Facebook">
-                        <i class="fab fa-facebook-f fa-lg"></i>
+                <p class="mb-1" style="font-size: 0.75rem; line-height: 1.2; opacity: 0.8;">Your trusted shopping destination</p>
+                <div class="social-links d-flex gap-1">
+                    <a href="#" title="Facebook" class="d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.1); font-size: 0.8rem;">
+                        <i class="fab fa-facebook-f"></i>
                     </a>
-                    <a href="#" title="Twitter">
-                        <i class="fab fa-twitter fa-lg"></i>
+                    <a href="#" title="Twitter" class="d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.1); font-size: 0.8rem;">
+                        <i class="fab fa-twitter"></i>
                     </a>
-                    <a href="#" title="Instagram">
-                        <i class="fab fa-instagram fa-lg"></i>
-                    </a>
-                    <a href="#" title="LinkedIn">
-                        <i class="fab fa-linkedin-in fa-lg"></i>
+                    <a href="#" title="Instagram" class="d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.1); font-size: 0.8rem;">
+                        <i class="fab fa-instagram"></i>
                     </a>
                 </div>
             </div>
 
             <!-- Main Navigation -->
-            <div class="col-lg-4 col-md-6 mb-4">
-                <h6 class="mb-4">Navigation</h6>
+            <div class="col-lg-4 col-md-6">
+                <h6 class="mb-1" style="font-size: 0.85rem;">Navigation</h6>
                 <ul class="list-unstyled">
-                    <li class="mb-3">
-                        <a href="<?php echo $base; ?>index.php" class="text-decoration-none d-flex align-items-center py-2 px-3 rounded">
-                            <i class="fas fa-home me-3"></i>Home
+                    <li class="mb-1">
+                        <a href="<?php echo $base; ?>index.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.85rem;">
+                            <i class="fas fa-home me-1" style="width: 14px; text-align: center; font-size: 0.8rem;"></i>Home
                         </a>
                     </li>
-                    <li class="mb-3">
-                        <a href="<?php echo $base; ?>shop.php" class="text-decoration-none d-flex align-items-center py-2 px-3 rounded">
-                            <i class="fas fa-shopping-bag me-3"></i>Shop
+                    <li class="mb-1">
+                        <a href="<?php echo $base; ?>shop.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.85rem;">
+                            <i class="fas fa-shopping-bag me-1" style="width: 14px; text-align: center; font-size: 0.8rem;"></i>Shop
                         </a>
                     </li>
-                    <li class="mb-3">
-                        <a href="<?php echo $base; ?>about.php" class="text-decoration-none d-flex align-items-center py-2 px-3 rounded">
-                            <i class="fas fa-info-circle me-3"></i>About Us
+                    <li class="mb-1">
+                        <a href="<?php echo $base; ?>about.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.85rem;">
+                            <i class="fas fa-info-circle me-1" style="width: 14px; text-align: center; font-size: 0.8rem;"></i>About Us
                         </a>
                     </li>
-                    <li class="mb-3">
-                        <a href="<?php echo $base; ?>contact.php" class="text-decoration-none d-flex align-items-center py-2 px-3 rounded">
-                            <i class="fas fa-phone me-3"></i>Contact
+                    <li class="mb-1">
+                        <a href="<?php echo $base; ?>contact.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.85rem;">
+                            <i class="fas fa-phone me-1" style="width: 14px; text-align: center; font-size: 0.8rem;"></i>Contact
                         </a>
                     </li>
                 </ul>
             </div>
 
             <!-- Legal & Support -->
-            <div class="col-lg-4 col-md-6 mb-4">
-                <h6 class="mb-4">Legal & Support</h6>
+            <div class="col-lg-4 col-md-6">
+                <h6 class="mb-1" style="font-size: 0.85rem;">Legal & Support</h6>
                 <ul class="list-unstyled">
-                    <li class="mb-3">
-                        <a href="<?php echo $base; ?>legal/terms-conditions.php" class="text-decoration-none d-flex align-items-center py-2 px-3 rounded">
-                            <i class="fas fa-file-contract me-3"></i>Terms & Conditions
+                    <li class="mb-1">
+                        <a href="<?php echo $base; ?>legal/terms-conditions.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.8rem;">
+                            <i class="fas fa-file-contract me-1" style="width: 14px; text-align: center; font-size: 0.75rem;"></i>Terms & Conditions
                         </a>
                     </li>
-                    <li class="mb-3">
-                        <a href="<?php echo $base; ?>legal/privacy-policy.php" class="text-decoration-none d-flex align-items-center py-2 px-3 rounded">
-                            <i class="fas fa-shield-alt me-3"></i>Privacy Policy
+                    <li class="mb-1">
+                        <a href="<?php echo $base; ?>legal/privacy-policy.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.8rem;">
+                            <i class="fas fa-shield-alt me-1" style="width: 14px; text-align: center; font-size: 0.75rem;"></i>Privacy Policy
                         </a>
                     </li>
-                    <li class="mb-3">
-                        <a href="<?php echo $base; ?>legal/faq.php" class="text-decoration-none d-flex align-items-center py-2 px-3 rounded">
-                            <i class="fas fa-question-circle me-3"></i>FAQ
+                    <li class="mb-1">
+                        <a href="<?php echo $base; ?>legal/refund-returns.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.8rem;">
+                            <i class="fas fa-undo me-1" style="width: 14px; text-align: center; font-size: 0.75rem;"></i>Refund & Returns
                         </a>
                     </li>
-                    <li class="mb-3">
-                        <a href="<?php echo $base; ?>legal/shipping-policy.php" class="text-decoration-none d-flex align-items-center py-2 px-3 rounded">
-                            <i class="fas fa-truck me-3"></i>Shipping Info
+                    <li class="mb-1">
+                        <a href="<?php echo $base; ?>legal/shipping-policy.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.8rem;">
+                            <i class="fas fa-truck me-1" style="width: 14px; text-align: center; font-size: 0.75rem;"></i>Shipping Policy
+                        </a>
+                    </li>
+                    <li class="mb-1">
+                        <a href="<?php echo $base; ?>contact.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.8rem;">
+                            <i class="fas fa-headset me-1" style="width: 14px; text-align: center; font-size: 0.75rem;"></i>Contact Support
                         </a>
                     </li>
                 </ul>
@@ -90,15 +92,15 @@
     </div>
 
     <!-- Copyright -->
-    <div class="footer-bottom">
+    <div class="footer-bottom py-1" style="font-size: 0.7rem; border-top: 1px solid rgba(255,255,255,0.1);">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <p class="mb-0">&copy; <?php echo date('Y'); ?> ASO Online Market. All rights reserved.</p>
+                    <p class="mb-0" style="opacity: 0.7;">&copy; <?php echo date('Y'); ?> ASO Online Market. All rights reserved.</p>
                 </div>
                 <div class="col-md-4 text-md-end">
-                    <a href="<?php echo $base; ?>legal/privacy-policy.php" class="text-decoration-none me-3">Privacy</a>
-                    <a href="<?php echo $base; ?>legal/terms-conditions.php" class="text-decoration-none">Terms</a>
+                    <a href="<?php echo $base; ?>legal/privacy-policy.php" class="text-decoration-none me-2" style="font-size: 0.7rem; opacity: 0.7;">Privacy</a>
+                    <a href="<?php echo $base; ?>legal/terms-conditions.php" class="text-decoration-none" style="font-size: 0.7rem; opacity: 0.7;">Terms</a>
                 </div>
             </div>
         </div>
@@ -153,23 +155,28 @@ footer .row {
 
 footer [class*="col-"] {
     padding-left: 15px;
-    padding-right: 15px;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
     footer .container {
-        padding-left: 1rem;
+        padding: 0.75rem 0 0.25rem;
         padding-right: 1rem;
     }
 
     footer [class*="col-"] {
-        margin-bottom: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    footer h5 {
+        font-size: 0.8rem;
+    }
+
+    footer p {
+        font-size: 0.7rem;
     }
 }
 </style>
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- Custom JS - Only load on pages that need it -->
 <?php

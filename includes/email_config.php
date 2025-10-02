@@ -2,25 +2,16 @@
 /**
  * Email Configuration
  * - Settings for sending emails (invoices, notifications, etc.)
- *
- * CONFIGURATION OPTIONS:
- * 1. For Development: Set EMAIL_DEVELOPMENT_MODE to true (emails are logged, not sent)
- * 2. For Production with SMTP: Set EMAIL_DEVELOPMENT_MODE to false and configure SMTP settings below
- * 3. For Production with external service: Use PHPMailer or similar library
+ * 
+ * For production use, configure your server's mail settings or use an SMTP service.
+ * For development, emails will be logged to the logs directory instead of being sent.
  */
 
-// Email configuration
-define('SMTP_HOST', 'localhost'); // Change to your SMTP server (e.g., 'smtp.gmail.com')
-define('SMTP_PORT', 25); // Common ports: 25, 465 (SSL), 587 (TLS)
-define('SMTP_USERNAME', ''); // Your email username
-define('SMTP_PASSWORD', ''); // Your email password
-define('SMTP_ENCRYPTION', ''); // 'tls' or 'ssl'
-
-// Store email settings
-define('STORE_EMAIL', 'orders@yourstore.com'); // Change to your store's email
+// Store information
+define('STORE_EMAIL', 'orders@yourdomain.com'); // Your store's email
 define('STORE_NAME', 'ASO Online Market');
 
-// Development mode - Set to false for production
+// Development mode - Set to false in production to send real emails
 define('EMAIL_DEVELOPMENT_MODE', true);
 
 // Create logs directory if it doesn't exist
@@ -28,7 +19,15 @@ if (!file_exists(dirname(__FILE__) . '/../logs')) {
     mkdir(dirname(__FILE__) . '/../logs', 0755, true);
 }
 
-// Function to send email
+/**
+ * Send an email with HTML support
+ * 
+ * @param string $to Recipient email address
+ * @param string $subject Email subject
+ * @param string $message HTML email content
+ * @param string $headers Optional custom headers
+ * @return bool True if email was sent successfully, false otherwise
+ */
 function sendEmail($to, $subject, $message, $headers = '') {
     // Basic email headers
     $default_headers = "From: " . STORE_NAME . " <" . STORE_EMAIL . ">\r\n";
@@ -41,36 +40,54 @@ function sendEmail($to, $subject, $message, $headers = '') {
         $default_headers = $headers;
     }
 
-    // For development/testing, you can use PHP's built-in mail() function
-    // For production, consider using PHPMailer or similar library
-
     if (EMAIL_DEVELOPMENT_MODE) {
         // In development, log the email instead of sending it
         $log_message = "DEVELOPMENT MODE - Email not sent:\n";
         $log_message .= "To: $to\n";
         $log_message .= "Subject: $subject\n";
-        $log_message .= "Headers: $default_headers\n";
         $log_message .= "--- Message ---\n$message\n";
-        $log_message .= "---------------\n";
-
-        // Log to a file for development debugging
-        error_log($log_message, 3, dirname(__FILE__) . '/../logs/email.log');
-
-        // Return true to simulate successful sending
+        
+        $log_file = dirname(__FILE__) . '/../logs/email_' . date('Y-m-d') . '.log';
+        file_put_contents($log_file, "[" . date('Y-m-d H:i:s') . "]\n" . $log_message . "\n\n", FILE_APPEND);
         return true;
-    }
-
-    // Production: Try to send email with error handling
-    try {
-        $result = mail($to, $subject, $message, $default_headers);
-        if (!$result) {
-            error_log("Failed to send email to: $to with subject: $subject");
-        }
+    } else {
+        // In production, send the actual email
+        $result = @mail($to, $subject, $message, $default_headers);
+        
+        // Log the email attempt
+        $log_message = $result ? "Email sent successfully" : "Failed to send email";
+        $log_message .= "\nTo: $to\nSubject: $subject\n";
+        
+        $log_file = dirname(__FILE__) . '/../logs/email_' . date('Y-m-d') . '.log';
+        file_put_contents($log_file, "[" . date('Y-m-d H:i:s') . "] " . $log_message . "\n\n", FILE_APPEND);
+        
         return $result;
-    } catch (Exception $e) {
-        error_log("Email sending error: " . $e->getMessage());
-        return false;
     }
+}
+
+/**
+ * Get email log for debugging
+ * 
+ * @param int $lines Number of log entries to retrieve (most recent first)
+ * @return string Formatted log entries
+ */
+function getEmailLog($lines = 10) {
+    $log_file = dirname(__FILE__) . '/../logs/email_' . date('Y-m-d') . '.log';
+    
+    if (!file_exists($log_file)) {
+        return "No email log found for today.";
+    }
+    
+    $log_content = file($log_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $log_entries = array_chunk($log_content, 2); // Group log entries (timestamp + content)
+    $log_entries = array_slice($log_entries, -$lines);
+    
+    $formatted_log = "";
+    foreach ($log_entries as $entry) {
+        $formatted_log .= implode("\n", $entry) . "\n\n";
+    }
+    
+    return $formatted_log;
 }
 
 // Function to send invoice email
@@ -168,19 +185,4 @@ function testEmailConfiguration() {
     ];
 }
 
-// Function to get email log (for development debugging)
-function getEmailLog($lines = 10) {
-    $log_file = dirname(__FILE__) . '/../logs/email.log';
-
-    if (!file_exists($log_file)) {
-        return 'No email log file found.';
-    }
-
-    $log_content = file_get_contents($log_file);
-    $log_lines = explode("\n", $log_content);
-
-    // Return last N lines
-    $recent_lines = array_slice($log_lines, -$lines);
-    return implode("\n", $recent_lines);
-}
 ?>

@@ -114,10 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_add_to_cart'])) 
         <div class="row justify-content-center">
             <div class="col-lg-8 col-md-10">
                 <div class="search-card">
-                    <div class="search-header text-center mb-4">
-                        <h2>Browse Our Products</h2>
-                        <p>Discover quality products from our extensive collection</p>
-                    </div>
+                  
 
                     <div class="search-suggestions">
                         <div class="text-center">
@@ -194,8 +191,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_add_to_cart'])) 
                 <?php foreach ($featured_products as $product): ?>
                     <div class="col-lg-5th col-md-4 col-sm-6 mb-4">
                         <div class="card product-card h-100">
-                            <img src="assets/images/<?php echo htmlspecialchars($product['image'] ?? 'placeholder.jpg'); ?>"
-                                 class="card-img-top product-image" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                            <a href="product.php?id=<?php echo $product['product_id']; ?>">
+                                <img src="assets/images/<?php echo htmlspecialchars($product['image'] ?? 'placeholder.jpg'); ?>"
+                                     class="card-img-top product-image" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                            </a>
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title product-title">
                                     <a href="product.php?id=<?php echo $product['product_id']; ?>" class="text-decoration-none text-dark">

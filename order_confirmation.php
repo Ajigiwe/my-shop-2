@@ -153,17 +153,9 @@ $page_title = 'Order Confirmation';
                                         <?php endforeach; ?>
                                     </tbody>
                                     <tfoot>
-                                        <tr>
-                                            <th colspan="3">Subtotal:</th>
-                                            <th>₵<?php echo number_format($subtotal, 2); ?></th>
-                                        </tr>
-                                        <tr>
-                                            <th colspan="3">Tax (10%):</th>
-                                            <th>₵<?php echo number_format($subtotal * 0.1, 2); ?></th>
-                                        </tr>
                                         <tr class="table-success">
                                             <th colspan="3">Total:</th>
-                                            <th>₵<?php echo number_format($order['total_amount'], 2); ?></th>
+                                            <th>₵<?php echo number_format($subtotal, 2); ?></th>
                                         </tr>
                                     </tfoot>
                                 </table>

@@ -1612,6 +1612,31 @@ footer .social-links a:hover {
   font-size: 0.85rem !important;
 }
 
+/* Product Detail Page Image Sizing */
+.product-details-section .product-main-image {
+    max-height: 400px;
+    width: 100%;
+    object-fit: contain;
+    margin: 0 auto;
+    display: block;
+    border-radius: 12px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+}
+
+/* Image Modal */
+#imageModal .modal-dialog {
+    max-width: 90%;
+    max-height: 90vh;
+}
+
+#imageModal .modal-body img {
+    max-height: 75vh;
+    width: auto;
+    max-width: 100%;
+    margin: 0 auto;
+    display: block;
+}
+
 /* 5-up grid utility on large screens (desktop) */
 @media (min-width: 992px) {
   .col-lg-5th {

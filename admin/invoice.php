@@ -29,8 +29,11 @@ try {
         exit;
     }
 
-    // Order items + product names
-    $stmt = $pdo->prepare('SELECT oi.*, p.name FROM order_items oi JOIN products p ON p.product_id = oi.product_id WHERE oi.order_id = ?');
+    // Order items + product names with prices
+    $stmt = $pdo->prepare('SELECT oi.*, p.name, oi.product_price as price, (oi.product_price * oi.quantity) as total_price 
+                          FROM order_items oi 
+                          JOIN products p ON p.product_id = oi.product_id 
+                          WHERE oi.order_id = ?');
     $stmt->execute([$order_id]);
     $items = $stmt->fetchAll();
 } catch (PDOException $e) {

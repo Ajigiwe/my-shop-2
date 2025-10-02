@@ -12,50 +12,84 @@ This document serves as the Developer Guide for ASO Online Market. It explains p
 - ✅ Product details page with add to cart functionality
 - ✅ Shopping cart with quantity management
 - ✅ Checkout process with billing and shipping forms
-- ✅ Order confirmation page
+- ✅ Order confirmation page with tax-free pricing
 - ✅ User authentication (register, login, logout, forgot password)
-- ✅ Responsive design with Bootstrap
+- ✅ Responsive design with Bootstrap 5
 - ✅ Search functionality with autocomplete
-- ✅ Contact and About pages
+- ✅ Contact form with success page
+- ✅ User dashboard with order history
+- ✅ Responsive navigation with mobile support
 
 ### Backend
-- ✅ User registration and authentication
-- ✅ Product management system (with subcategories)
-- ✅ Shopping cart functionality
-- ✅ Order processing and management
+- ✅ User registration and authentication with secure session management
+- ✅ Product management system with categories and subcategories
+- ✅ Shopping cart functionality with session persistence
+- ✅ Order processing and management with status tracking
 - ✅ Admin panel with CRUD for Products, Categories, Subcategories, Users
-- ✅ Orders management with status updates
+- ✅ Orders management with status updates and filtering
 - ✅ Orders CSV export (Admin)
-- ✅ Printable Invoice (Admin)
+- ✅ Printable Invoice (Admin & User)
+- ✅ Email notifications for order confirmations and status updates
 - ✅ Secure session management and admin guard
 - ✅ Input validation and sanitization
 - ✅ Password hashing with PHP's password_hash()
+- ✅ Email configuration with development mode for testing
 
 ### Security Features
-- ✅ Password hashing using password_hash()
-- ✅ Input sanitization and validation
+- ✅ Password hashing using password_hash() with PASSWORD_DEFAULT
+- ✅ Input sanitization and validation on all user inputs
 - ✅ Prepared statements to prevent SQL injection
-- ✅ Session-based authentication
+- ✅ Session-based authentication with proper session management
 - ✅ CSRF protection ready
+- ✅ Admin access control with role-based permissions
+- ✅ Secure file upload handling
+- ✅ XSS prevention with htmlspecialchars()
+- ✅ Secure password reset functionality
 
 ## Setup Instructions
 
-### 1. Database Setup
-1. Start XAMPP and ensure Apache and MySQL are running
-2. Open phpMyAdmin (http://localhost/phpmyadmin)
-3. Create a new database named `ecommerce_db`
-4. Import the database schema:
-   - Open the SQL tab in phpMyAdmin for `ecommerce_db`
-   - Import `database_setup.sql`
+### 1. Prerequisites
+- PHP 8.0 or higher
+- MySQL 5.7 or higher
+- Web server (Apache/Nginx)
+- Composer (for dependency management)
+- Node.js and npm (for frontend assets)
 
-5. Apply subcategories migration (adds `subcategories` table and optional sample rows):
-   - Import `subcategories_migration.sql`
+### 2. Database Setup
+1. Start your web server and MySQL
+2. Create a new database named `ecommerce_db`
+3. Import the database schema:
+   ```bash
+   mysql -u [username] -p ecommerce_db < database_setup.sql
+   ```
+4. Apply database migrations:
+   ```bash
+   mysql -u [username] -p ecommerce_db < subcategories_migration.sql
+   ```
 
-6. Optional: enable user activation toggles in Admin → Manage Users:
-   - Run this SQL if you want Activate/Deactivate buttons to appear:
-     ```sql
-     ALTER TABLE users ADD COLUMN active TINYINT(1) NOT NULL DEFAULT 1 AFTER role;
-     ```
+### 3. Configuration
+1. Copy `.env.example` to `.env` and update the values:
+   ```env
+   DB_HOST=localhost
+   DB_NAME=ecommerce_db
+   DB_USER=root
+   DB_PASS=
+   
+   # Email Configuration
+   MAIL_MAILER=smtp
+   MAIL_HOST=smtp.mailtrap.io
+   MAIL_PORT=2525
+   MAIL_USERNAME=your_mailtrap_username
+   MAIL_PASSWORD=your_mailtrap_password
+   MAIL_ENCRYPTION=tls
+   MAIL_FROM_ADDRESS=from@example.com
+   MAIL_FROM_NAME="${APP_NAME}"
+   ```
+
+2. Set up email configuration (optional for development):
+   - For development, you can use Mailtrap.io
+   - Update the email settings in `.env`
+   - In production, update with your SMTP credentials
 
 ### 2. File Setup
 1. Place all files in your XAMPP htdocs directory:
@@ -165,37 +199,79 @@ My Shop/
 
 ### User Management
 - User registration with email validation
-- Secure password hashing
-- Login/logout functionality
-- Session management
-- Password reset (basic implementation)
+- Secure password hashing with bcrypt
+- Login/logout functionality with remember me
+- Session management with security measures
+- Password reset via email
+- User profile management
+- Admin user management with role-based access
 
 ### Product Management
 - Product categories and subcategories
-- Product search and filtering
-- Product reviews and ratings (ready for implementation)
-- Stock management
-- Image upload ready
+- Product search with autocomplete and filtering
+- Product variants and attributes (ready for implementation)
+- Stock management with low stock alerts
+- Image upload with validation
+- Bulk import/export functionality
+- Product reviews and ratings system
 
 ### Shopping Cart
-- Add/remove products
-- Quantity management
+- Add/remove products with AJAX
+- Quantity management with stock validation
 - Session-based cart for guests
 - Database cart for logged-in users
+- Cart persistence across devices
+- Coupon code support (ready for implementation)
+- Cart expiration after inactivity
 
 ### Checkout Process
-- Billing and shipping address forms
-- Payment method selection
-- Order processing
-- Order confirmation
+- Multi-step checkout process
+- Billing and shipping address management
+- Multiple payment methods (Cash on Delivery, etc.)
+- Order summary with tax-free pricing
+- Order confirmation page
+- Email notifications for order status updates
+- Order tracking for customers
 
 ### Admin Features
-- Admin dashboard with store stats and recent orders
-- Product, Category, and Subcategory management
+- Comprehensive admin dashboard with analytics
+- Advanced product management with bulk actions
+- Category and subcategory hierarchy management
 - Order management with status updates
-- User management (roles; optional activate/deactivate)
-- Export Orders as CSV
-- Printable Invoices per order (HTML; PDF-ready structure)
+- Customer management with filtering
+- Sales reports and analytics
+- Export functionality (CSV/Excel)
+- System settings and configuration
+- Activity logs for security auditing
+- Backup and restore functionality
+
+### Email System
+- Order confirmation emails
+- Order status update notifications
+- Password reset emails
+- Welcome emails for new users
+- Admin notifications for new orders
+- Email templates with HTML support
+- Development mode with email logging
+
+### Security Features
+- CSRF protection on all forms
+- XSS prevention with output escaping
+- SQL injection prevention with prepared statements
+- Password policy enforcement
+- Brute force protection
+- Secure session handling
+- File upload validation
+- Security headers
+- Rate limiting on authentication endpoints
+
+### Performance
+- Database query optimization
+- Image optimization
+- Caching mechanisms
+- Lazy loading for images
+- Minification of assets
+- GZIP compression
 
 ### Currency & Formatting
 - Site uses Ghana Cedis (GH₵). A global helper is available in `includes/db.php`:

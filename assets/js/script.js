@@ -1,5 +1,7 @@
 // Toast Notification System
-let toastContainer = null;
+if (typeof toastContainer === 'undefined') {
+    var toastContainer = null;
+}
 
 // Dropdown functionality
 function toggleDropdown(dropdownId) {

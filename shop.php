@@ -54,9 +54,12 @@ try {
 // Get products for current page
 $products = [];
 try {
-    $stmt = $pdo->prepare("SELECT p.*, c.category_name FROM products p
+    $stmt = $pdo->prepare("SELECT p.*, c.category_name, p.image as display_image
+                          FROM products p
                           JOIN categories c ON p.category_id = c.category_id
-                          $where_sql ORDER BY p.created_at DESC LIMIT $per_page OFFSET $offset");
+                          $where_sql 
+                          ORDER BY p.created_at DESC 
+                          LIMIT $per_page OFFSET $offset");
     $stmt->execute($params);
     $products = $stmt->fetchAll();
 } catch(PDOException $e) {
@@ -135,11 +138,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_add_to_cart'])) 
 <?php include 'includes/navbar.php'; ?>
 
 <!-- Page Header -->
-<section class="page-header py-5" style="background: linear-gradient(135deg, #f5f5dc 0%, rgba(245, 245, 220, 0.9) 100%);">
+<section class="page-header pt-3 pb-4" style="background: linear-gradient(135deg, #f5f5dc 0%, rgba(245, 245, 220, 0.9) 100%);">
     <div class="container">
         <div class="row">
             <div class="col-12 text-center">
-                <h1 class="display-4 fw-bold text-dark mb-3">
+                <h1 class="display-5 fw-bold text-dark mb-2">
                     <?php if ($category_name): ?>
                         <?php echo htmlspecialchars($category_name); ?>
                     <?php else: ?>
@@ -159,12 +162,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_add_to_cart'])) 
 </section>
 
 <!-- Shop Content -->
-<section class="py-5">
+<section class="pt-0 pb-4">
     <div class="container">
         <div class="row">
             <!-- Sidebar Filters -->
             <div class="col-lg-3">
-                <div class="card mb-4">
+                <div class="card mb-3">
                     <div class="card-header bg-light">
                         <h5 class="mb-0">
                             <i class="fas fa-filter me-2"></i>Categories
@@ -229,16 +232,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_add_to_cart'])) 
                         <?php foreach ($products as $product): ?>
                             <div class="col-lg-5th col-md-4 col-sm-6 mb-4">
                                 <div class="card product-card h-100">
-                                    <div class="product-image-container">
-                                        <img src="assets/images/<?php echo htmlspecialchars($product['image'] ?? 'placeholder.jpg'); ?>"
-                                             class="card-img-top product-image"
-                                             alt="<?php echo htmlspecialchars($product['name']); ?>">
-                                        <?php if ($product['stock_quantity'] <= 0): ?>
-                                            <div class="out-of-stock-overlay">
-                                                <span class="out-of-stock-text">Out of Stock</span>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
+                                    <a href="product.php?id=<?php echo $product['product_id']; ?>" class="text-decoration-none">
+                                        <div class="product-image-container">
+                                            <img src="assets/images/<?php echo htmlspecialchars($product['display_image'] ?? $product['image'] ?? 'placeholder.jpg'); ?>"
+                                                 class="card-img-top product-image"
+                                                 alt="<?php echo htmlspecialchars($product['name']); ?>"
+                                                 style="height: 200px; object-fit: contain;">
+                                            <?php if ($product['stock_quantity'] <= 0): ?>
+                                                <div class="out-of-stock-overlay">
+                                                    <span class="out-of-stock-text">Out of Stock</span>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </a>
 
                                     <div class="card-body d-flex flex-column p-2">
                                         <div class="product-info">

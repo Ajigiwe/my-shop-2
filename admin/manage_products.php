@@ -2,12 +2,16 @@
 /**
  * Admin: Manage Products
  * - Admin-only CRUD for products
- * - Handles optional image upload and optional subcategory linkage
+ * - Handles multiple image uploads and optional subcategory linkage
  * - Lists products with basic details and quick actions
  */
 require_once '../includes/db.php';
 session_start();
 require_once '../includes/admin_guard.php';
+require_once 'includes/product_images.php';
+
+// Initialize ProductImages handler
+$productImages = new ProductImages($pdo);
 
 $page_title = 'Manage Products';
 $errors = [];
@@ -64,30 +68,57 @@ function handleUpload($fieldName, $existing = '') {
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'create') {
-            // Create product payload
+                        // Create product payload
             $category_id = (int)($_POST['category_id'] ?? 0);
             $subcategory_id = isset($_POST['subcategory_id']) && $_POST['subcategory_id'] !== '' ? (int)$_POST['subcategory_id'] : null;
             $name = sanitizeInput($_POST['name'] ?? '');
             $description = sanitizeInput($_POST['description'] ?? '');
             $price = (float)($_POST['price'] ?? 0);
             $stock_quantity = (int)($_POST['stock_quantity'] ?? 0);
-            $image = handleUpload('image');
-
+            
+            // Basic validation
             if ($category_id <= 0) $errors[] = 'Category is required';
             if (!$name) $errors[] = 'Product name is required';
             if ($price <= 0) $errors[] = 'Price must be greater than 0';
             if ($stock_quantity < 0) $errors[] = 'Stock cannot be negative';
+            
+            // Check if an image is uploaded for new products
+            if ($action === 'create' && empty($_FILES['image']['name'])) {
+                $errors[] = 'A product image is required';
+            }
 
             if (empty($errors)) {
-                // Insert with or without subcategory depending on provided value
-                if ($subcategory_id) {
-                    $stmt = $pdo->prepare('INSERT INTO products (category_id, subcategory_id, name, description, price, stock_quantity, image) VALUES (?, ?, ?, ?, ?, ?, ?)');
-                    $stmt->execute([$category_id, $subcategory_id, $name, $description, $price, $stock_quantity, $image]);
-                } else {
-                    $stmt = $pdo->prepare('INSERT INTO products (category_id, name, description, price, stock_quantity, image) VALUES (?, ?, ?, ?, ?, ?)');
-                    $stmt->execute([$category_id, $name, $description, $price, $stock_quantity, $image]);
+                try {
+                    $pdo->beginTransaction();
+                    
+                    // Insert product with empty image initially
+                    if ($subcategory_id) {
+                        $stmt = $pdo->prepare('INSERT INTO products (category_id, subcategory_id, name, description, price, stock_quantity, image) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                        $stmt->execute([$category_id, $subcategory_id, $name, $description, $price, $stock_quantity, '']);
+                    } else {
+                        $stmt = $pdo->prepare('INSERT INTO products (category_id, name, description, price, stock_quantity, image) VALUES (?, ?, ?, ?, ?, ?)');
+                        $stmt->execute([$category_id, $name, $description, $price, $stock_quantity, '']);
+                    }
+                    
+                    $product_id = $pdo->lastInsertId();
+                    
+                    // Handle single image upload
+                    if (!empty($_FILES['image']['name'])) {
+                        $image = handleUpload('image');
+                        if ($image) {
+                            $stmt = $pdo->prepare('UPDATE products SET image = ? WHERE product_id = ?');
+                            $stmt->execute([$image, $product_id]);
+                        }
+                    }
+                    
+                    $pdo->commit();
+                    $success = 'Product created successfully';
+                    
+                } catch (Exception $e) {
+                    $pdo->rollBack();
+                    $errors[] = 'Error creating product: ' . $e->getMessage();
+                    error_log('Product creation error: ' . $e->getMessage());
                 }
-                $success = 'Product created successfully';
             }
         } elseif ($action === 'update') {
             // Update existing product
@@ -98,8 +129,6 @@ try {
             $description = sanitizeInput($_POST['description'] ?? '');
             $price = (float)($_POST['price'] ?? 0);
             $stock_quantity = (int)($_POST['stock_quantity'] ?? 0);
-            $existing_image = sanitizeInput($_POST['existing_image'] ?? '');
-            $image = handleUpload('image', $existing_image);
 
             if ($product_id <= 0) $errors[] = 'Invalid product';
             if ($category_id <= 0) $errors[] = 'Category is required';
@@ -108,18 +137,84 @@ try {
             if ($stock_quantity < 0) $errors[] = 'Stock cannot be negative';
 
             if (empty($errors)) {
-                $stmt = $pdo->prepare('UPDATE products SET category_id = ?, subcategory_id = ?, name = ?, description = ?, price = ?, stock_quantity = ?, image = ? WHERE product_id = ?');
-                $stmt->execute([$category_id, $subcategory_id, $name, $description, $price, $stock_quantity, $image, $product_id]);
-                $success = 'Product updated successfully';
+                try {
+                    $pdo->beginTransaction();
+                    
+                    // Update product details
+                    $stmt = $pdo->prepare('UPDATE products SET category_id = ?, subcategory_id = ?, name = ?, description = ?, price = ?, stock_quantity = ? WHERE product_id = ?');
+                    $stmt->execute([$category_id, $subcategory_id, $name, $description, $price, $stock_quantity, $product_id]);
+                    
+                    // Handle image update if a new one is uploaded
+                    if (!empty($_FILES['image']['name'])) {
+                        // Get current image to delete it later
+                        $stmt = $pdo->prepare('SELECT image FROM products WHERE product_id = ?');
+                        $stmt->execute([$product_id]);
+                        $currentImage = $stmt->fetchColumn();
+                        
+                        // Upload new image
+                        $image = handleUpload('image');
+                        if ($image) {
+                            // Update product with new image
+                            $stmt = $pdo->prepare('UPDATE products SET image = ? WHERE product_id = ?');
+                            $stmt->execute([$image, $product_id]);
+                            
+                            // Delete old image if it exists
+                            if (!empty($currentImage) && $currentImage !== $image) {
+                                $oldImagePath = realpath(__DIR__ . '/../assets/images/') . DIRECTORY_SEPARATOR . $currentImage;
+                                if (file_exists($oldImagePath)) {
+                                    @unlink($oldImagePath);
+                                }
+                            }
+                        }
+                    }
+                    
+                    $pdo->commit();
+                    $success = 'Product updated successfully';
+                    
+                    // Refresh the edit data
+                    $stmt = $pdo->prepare('SELECT * FROM products WHERE product_id = ?');
+                    $stmt->execute([$product_id]);
+                    $edit = $stmt->fetch();
+                    
+                } catch (Exception $e) {
+                    $pdo->rollBack();
+                    $errors[] = 'Error updating product: ' . $e->getMessage();
+                    error_log('Product update error: ' . $e->getMessage());
+                }
             }
         } elseif ($action === 'delete') {
             // Delete product
             $product_id = (int)($_POST['product_id'] ?? 0);
             if ($product_id <= 0) $errors[] = 'Invalid product';
             if (empty($errors)) {
-                $stmt = $pdo->prepare('DELETE FROM products WHERE product_id = ?');
-                $stmt->execute([$product_id]);
-                $success = 'Product deleted';
+                try {
+                    $pdo->beginTransaction();
+                    
+                    // Get the product image before deletion
+                    $stmt = $pdo->prepare('SELECT image FROM products WHERE product_id = ?');
+                    $stmt->execute([$product_id]);
+                    $image = $stmt->fetchColumn();
+                    
+                    // Delete the product
+                    $stmt = $pdo->prepare('DELETE FROM products WHERE product_id = ?');
+                    $stmt->execute([$product_id]);
+                    
+                    // Delete the image file if it exists
+                    if (!empty($image)) {
+                        $filePath = realpath(__DIR__ . '/../assets/images/') . DIRECTORY_SEPARATOR . $image;
+                        if (file_exists($filePath)) {
+                            @unlink($filePath);
+                        }
+                    }
+                    
+                    $pdo->commit();
+                    $success = 'Product deleted successfully';
+                    
+                } catch (Exception $e) {
+                    $pdo->rollBack();
+                    $errors[] = 'Error deleting product: ' . $e->getMessage();
+                    error_log('Product deletion error: ' . $e->getMessage());
+                }
             }
         }
     }
@@ -229,12 +324,21 @@ try {
                                 <input type="number" min="0" class="form-control" name="stock_quantity" value="<?php echo htmlspecialchars($edit['stock_quantity'] ?? ''); ?>" required>
                             </div>
                         </div>
+                        <!-- Single Image Upload -->
                         <div class="mb-3">
-                            <label class="form-label">Image</label>
-                            <input type="file" class="form-control" name="image" accept="image/*">
+                            <label for="image" class="form-label">Product Image</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*" <?php echo !$edit ? 'required' : ''; ?>>
+                            <div class="form-text">Upload a high-quality product image (JPG, PNG, GIF, WebP).</div>
+                            
                             <?php if ($edit && !empty($edit['image'])): ?>
-                                <div class="mt-2">
-                                    <img src="../assets/images/<?php echo htmlspecialchars($edit['image']); ?>" alt="Current image" class="rounded" width="120">
+                                <div class="mt-3">
+                                    <h6>Current Image</h6>
+                                    <div class="row">
+                                        <div class="col-3">
+                                            <img src="/assets/images/<?php echo htmlspecialchars($edit['image']); ?>" 
+                                                 class="img-thumbnail" style="height: 100px; width: 100%; object-fit: cover;">
+                                        </div>
+                                    </div>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -298,6 +402,78 @@ try {
         </div>
     </div>
 </div>
+
+</div>
+
+<script>
+// Handle setting primary image
+document.addEventListener('DOMContentLoaded', function() {
+    // Set primary image
+    document.querySelectorAll('.set-primary').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const imageId = this.dataset.imageId;
+            const productId = this.dataset.productId;
+            
+            fetch('ajax/set_primary_image.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `image_id=${imageId}&product_id=${productId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to set primary image: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while setting primary image');
+            });
+        });
+    });
+    
+    // Delete image
+    document.querySelectorAll('.delete-image').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (!confirm('Are you sure you want to delete this image?')) {
+                return;
+            }
+            
+            const imageId = this.dataset.imageId;
+            const productId = this.dataset.productId;
+            const imageContainer = this.closest('.col-3');
+            
+            fetch('ajax/delete_image.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `image_id=${imageId}&product_id=${productId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    imageContainer.remove();
+                    // If no images left, show message
+                    if (document.querySelectorAll('#product-images-container .col-3').length <= 1) {
+                        location.reload();
+                    }
+                } else {
+                    alert('Failed to delete image: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the image');
+            });
+        });
+    });
+});
+</script>
 
 </body>
 </html>

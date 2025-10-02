@@ -1,0 +1,138 @@
+[2025-10-02 06:23:40]
+DEVELOPMENT MODE - Email not sent:
+To: admin@example.com
+Subject: Invoice for Order #49 - ASO Online Market
+--- Message ---
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>Invoice #49</title>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .header { background: #f8f9fa; padding: 20px; text-align: center; border-bottom: 3px solid #007bff; }
+            .invoice-details { margin: 20px 0; }
+            .invoice-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            .invoice-table th, .invoice-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+            .invoice-table th { background-color: #f8f9fa; font-weight: bold; }
+            .total-row { background-color: #e9ecef; font-weight: bold; }
+            .footer { margin-top: 30px; padding: 20px; background: #f8f9fa; border-top: 1px solid #ddd; }
+        </style>
+    </head>
+    <body>
+        <div class='header'>
+            <h1>ASO Online Market</h1>
+            <h2>Invoice #49</h2>
+        </div>
+
+        <div class='invoice-details'>
+            <p><strong>Customer:</strong> Admin</p>
+            <p><strong>Order Date:</strong> October 1, 2025 at 3:24 PM</p>
+            <p><strong>Status:</strong> Pending</p>
+            <p><strong>Payment Method:</strong> Pay on Delivery</p>
+        </div>
+
+        <table class='invoice-table'>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Order Items</td>
+                    <td>View attached invoice for details</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class='total-row'>
+                    <td colspan='3'>Total Amount</td>
+                    <td>GH₵99.00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class='footer'>
+            <p>Thank you for your business!</p>
+            <p>For questions about this order, please contact us at <a href='mailto:orders@yourdomain.com'>orders@yourdomain.com</a></p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </body>
+    </html>
+
+
+[2025-10-02 06:25:20]
+DEVELOPMENT MODE - Email not sent:
+To: admin@example.com
+Subject: Invoice for Order #49 - ASO Online Market
+--- Message ---
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>Invoice #49</title>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .header { background: #f8f9fa; padding: 20px; text-align: center; border-bottom: 3px solid #007bff; }
+            .invoice-details { margin: 20px 0; }
+            .invoice-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            .invoice-table th, .invoice-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+            .invoice-table th { background-color: #f8f9fa; font-weight: bold; }
+            .total-row { background-color: #e9ecef; font-weight: bold; }
+            .footer { margin-top: 30px; padding: 20px; background: #f8f9fa; border-top: 1px solid #ddd; }
+        </style>
+    </head>
+    <body>
+        <div class='header'>
+            <h1>ASO Online Market</h1>
+            <h2>Invoice #49</h2>
+        </div>
+
+        <div class='invoice-details'>
+            <p><strong>Customer:</strong> Admin</p>
+            <p><strong>Order Date:</strong> October 1, 2025 at 3:24 PM</p>
+            <p><strong>Status:</strong> Pending</p>
+            <p><strong>Payment Method:</strong> Pay on Delivery</p>
+        </div>
+
+        <table class='invoice-table'>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Order Items</td>
+                    <td>View attached invoice for details</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class='total-row'>
+                    <td colspan='3'>Total Amount</td>
+                    <td>GH₵99.00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class='footer'>
+            <p>Thank you for your business!</p>
+            <p>For questions about this order, please contact us at <a href='mailto:orders@yourdomain.com'>orders@yourdomain.com</a></p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </body>
+    </html>
+
+

@@ -58,21 +58,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $order_for_email['email'],
                             $order_for_email['name'],
                             $order_id,
-                            $order_for_email
                         );
 
                         if ($email_sent) {
                             $success .= ' Invoice has been sent to the customer.';
                         } else {
-                            $errors[] = 'Order status updated but failed to send invoice email. Please check email configuration.';
+                            $errors[] = 'Status updated but failed to send invoice email. Please check email configuration.';
                         }
+                    } else {
+                        $errors[] = 'Could not find customer email address for this order.';
                     }
+                } else {
+                    $errors[] = 'Invalid order ID for invoice sending.';
                 }
-
-                // Refresh order data
-                $stmt = $pdo->prepare('SELECT o.*, u.name, u.email, u.phone FROM orders o JOIN users u ON u.user_id = o.user_id WHERE o.order_id = ?');
-                $stmt->execute([$order_id]);
-                $order = $stmt->fetch();
             }
         } elseif ($action === 'send_invoice') {
             $send_order_id = (int)($_POST['order_id'] ?? 0);
@@ -92,13 +90,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
 
                     if ($email_sent) {
-                        $success = 'Invoice has been sent to the customer.';
+                        $success = 'Invoice has been sent to ' . htmlspecialchars($order_for_email['email']);
                     } else {
-                        $errors[] = 'Failed to send invoice email. Please check email configuration.';
+                        $errors[] = 'Failed to send invoice email. Please check the email configuration.';
                     }
                 } else {
-                    $errors[] = 'Customer email not found.';
+                    $errors[] = 'Could not find customer email address for this order.';
                 }
+            } else {
+                $errors[] = 'Invalid order ID for invoice sending.';
             }
         }
     } catch (PDOException $e) {
@@ -120,8 +120,15 @@ try {
         exit();
     }
 
-    // Order items with product details
-    $stmt = $pdo->prepare('SELECT oi.*, p.name, p.image FROM order_items oi JOIN products p ON p.product_id = oi.product_id WHERE oi.order_id = ? ORDER BY oi.order_item_id');
+    // Order items with product details and prices
+    $stmt = $pdo->prepare('SELECT oi.*, p.name, p.image, oi.product_price as price, (oi.product_price * oi.quantity) as total_price 
+                          FROM order_items oi 
+                          JOIN products p ON p.product_id = oi.product_id 
+                          WHERE oi.order_id = ? 
+                          ORDER BY oi.order_item_id');
+    
+    // Debug: Output the SQL query and parameters
+    error_log('Order items query: ' . $stmt->queryString);
     $stmt->execute([$order_id]);
     $order_items = $stmt->fetchAll();
 
@@ -174,9 +181,6 @@ try {
                                     <a href="invoice.php?order_id=<?php echo $order_id; ?>" class="btn btn-light btn-sm" target="_blank">
                                         <i class="fas fa-file-invoice me-1"></i>View Invoice
                                     </a>
-                                    <button onclick="window.print()" class="btn btn-light btn-sm">
-                                        <i class="fas fa-print me-1"></i>Print
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -249,18 +253,33 @@ try {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td><?php echo formatCurrency($item['price']); ?></td>
+                                                        <td><?php 
+                                                            // Debug: Output the price value
+                                                            error_log('Item price: ' . print_r($item['price'], true));
+                                                            echo function_exists('formatCurrency') 
+                                                                ? formatCurrency($item['price']) 
+                                                                : '₦' . number_format($item['price'], 2); 
+                                                        ?></td>
                                                         <td>
                                                             <span class="badge bg-light text-dark"><?php echo $item['quantity']; ?></span>
                                                         </td>
-                                                        <td><strong><?php echo formatCurrency($item['price'] * $item['quantity']); ?></strong></td>
+                                                        <td><strong><?php 
+                                                            $itemTotal = $item['price'] * $item['quantity'];
+                                                            echo function_exists('formatCurrency') 
+                                                                ? formatCurrency($itemTotal)
+                                                                : '₦' . number_format($itemTotal, 2);
+                                                        ?></strong></td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
                                             <tfoot class="table-light">
                                                 <tr>
                                                     <th colspan="3" class="text-end">Order Total:</th>
-                                                    <th><?php echo formatCurrency($order['total_amount']); ?></th>
+                                                    <th><?php 
+                                                        echo function_exists('formatCurrency') 
+                                                            ? formatCurrency($order['total_amount'])
+                                                            : '₦' . number_format($order['total_amount'], 2);
+                                                    ?></th>
                                                 </tr>
                                             </tfoot>
                                         </table>
@@ -349,18 +368,16 @@ try {
                                 <h5 class="mb-0">Quick Actions</h5>
                             </div>
                             <div class="card-body">
-                                <div class="d-grid gap-2">
-                                    <a href="invoice.php?order_id=<?php echo $order_id; ?>" class="btn btn-outline-primary" target="_blank">
-                                        <i class="fas fa-file-invoice me-2"></i>Generate Invoice
-                                    </a>
-                                    <button type="button" class="btn btn-outline-info" onclick="sendInvoiceEmail(<?php echo $order_id; ?>)">
-                                        <i class="fas fa-envelope me-2"></i>Send Invoice to Customer
+                                <form method="post" class="mb-2" onsubmit="return confirm('Send invoice email to customer?')">
+                                    <input type="hidden" name="action" value="send_invoice">
+                                    <input type="hidden" name="order_id" value="<?php echo $order_id; ?>">
+                                    <button type="submit" class="btn btn-outline-success w-100">
+                                        <i class="fas fa-paper-plane me-2"></i>Send Invoice Email
                                     </button>
-                                    <a href="mailto:<?php echo htmlspecialchars($order['customer_email']); ?>?subject=Order%20Update%20-%20Order%20%23<?php echo $order_id; ?>"
-                                       class="btn btn-outline-info">
-                                        <i class="fas fa-envelope me-2"></i>Email Customer
-                                    </a>
-                                </div>
+                                </form>
+                                <a href="#" class="btn btn-outline-secondary w-100" onclick="window.history.back(); return false;">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Orders
+                                </a>
                             </div>
                         </div>
                     </div>

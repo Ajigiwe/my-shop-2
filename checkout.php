@@ -48,8 +48,8 @@ foreach ($cart_items as $item) {
     $subtotal += $item['price'] * $item['quantity'];
 }
 
-$tax = $subtotal * 0.1; // 10% tax
-$total = $subtotal + $tax;
+$tax = 0; // No tax
+$total = $subtotal; // Total is same as subtotal without tax
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -269,7 +269,7 @@ $phone = $phone ?? '';
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-2">
-                                    <strong>Tax (10%):</strong>
+                                    <strong>Tax:</strong>
                                     <strong>₵<?php echo number_format($tax, 2); ?></strong>
                                 </div>
 

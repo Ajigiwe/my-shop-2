@@ -22,7 +22,9 @@ if ($product_id <= 0) {
 
 // Get product details
 try {
-    $stmt = $pdo->prepare("SELECT p.*, c.category_name FROM products p
+    // Get product info
+    $stmt = $pdo->prepare("SELECT p.*, c.category_name 
+                          FROM products p
                           JOIN categories c ON p.category_id = c.category_id
                           WHERE p.product_id = ?");
     $stmt->execute([$product_id]);
@@ -32,6 +34,7 @@ try {
         header('Location: shop.php');
         exit();
     }
+    
 } catch(PDOException $e) {
     error_log("Error fetching product: " . $e->getMessage());
     header('Location: shop.php');
@@ -41,7 +44,8 @@ try {
 // Get related products (same category, random 4)
 $related_products = [];
 try {
-    $stmt = $pdo->prepare("SELECT p.*, c.category_name FROM products p
+    $stmt = $pdo->prepare("SELECT p.*, c.category_name 
+                          FROM products p
                           JOIN categories c ON p.category_id = c.category_id
                           WHERE p.category_id = ? AND p.product_id != ?
                           ORDER BY RAND() LIMIT 4");
@@ -135,31 +139,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 <!-- Product Details Section -->
 <section class="product-details-section py-5">
     <div class="container">
-        <div class="row g-5">
+        <div class="row g-4">
             <!-- Product Images -->
             <div class="col-lg-6">
                 <div class="product-gallery">
-                    <div class="main-image-container mb-3">
-                        <img src="assets/images/<?php echo htmlspecialchars($product['image'] ?? 'placeholder.jpg'); ?>"
-                             class="img-fluid rounded shadow-sm product-main-image"
+                    <!-- Single image display -->
+                    <div class="text-center" style="min-height: 400px; display: flex; align-items: center; justify-content: center; background-color: #f8f9fa; border-radius: 8px; padding: 1.5rem;">
+                        <img src="assets/images/<?php echo !empty($product['image']) ? htmlspecialchars($product['image']) : 'placeholder.jpg'; ?>"
+                             class="img-fluid"
                              alt="<?php echo htmlspecialchars($product['name']); ?>"
-                             data-bs-toggle="modal" data-bs-target="#imageModal">
-                    </div>
-
-                    <!-- Image Modal -->
-                    <div class="modal fade" id="imageModal" tabindex="-1">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title"><?php echo htmlspecialchars($product['name']); ?></h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body text-center">
-                                    <img src="assets/images/<?php echo htmlspecialchars($product['image'] ?? 'placeholder.jpg'); ?>"
-                                         class="img-fluid" alt="<?php echo htmlspecialchars($product['name']); ?>">
-                                </div>
-                            </div>
-                        </div>
+                             style="max-height: 450px; max-width: 100%; object-fit: contain;">
                     </div>
                 </div>
             </div>
@@ -292,15 +281,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                     <div class="col-lg-3 col-md-4 col-sm-6">
                         <div class="card product-card h-100 shadow-sm">
                             <div class="product-image-container">
-                                <img src="assets/images/<?php echo htmlspecialchars($related_product['image'] ?? 'placeholder.jpg'); ?>"
-                                     class="card-img-top product-image"
-                                     alt="<?php echo htmlspecialchars($related_product['name']); ?>"
-                                     style="height: 140px; object-fit: cover;">
-                                <?php if ($related_product['stock_quantity'] <= 0): ?>
-                                    <div class="out-of-stock-overlay">
-                                        <span class="out-of-stock-text" style="font-size: 0.75rem;">Out of Stock</span>
-                                    </div>
-                                <?php endif; ?>
+                                <a href="product.php?id=<?php echo $related_product['product_id']; ?>">
+                                    <img src="assets/images/<?php echo !empty($related_product['image']) ? htmlspecialchars($related_product['image']) : 'placeholder.jpg'; ?>"
+                                         class="card-img-top product-image"
+                                         alt="<?php echo htmlspecialchars($related_product['name']); ?>"
+                                         style="height: 140px; object-fit: cover;">
+                                    <?php if ($related_product['stock_quantity'] <= 0): ?>
+                                        <div class="out-of-stock-overlay">
+                                            <span class="out-of-stock-text" style="font-size: 0.75rem;">Out of Stock</span>
+                                        </div>
+                                    <?php endif; ?>
+                                </a>
                             </div>
 
                             <div class="card-body d-flex flex-column" style="padding: 0.75rem;">

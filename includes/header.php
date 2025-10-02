@@ -41,12 +41,35 @@ $site_name = 'ASO Online Market';
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap JS (with defer to prevent render blocking) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
 
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?php echo $base; ?>assets/css/style.css">
+    
+    <!-- Simple modal initialization -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Log to verify script is running
+        console.log('Modal initialization script loaded');
+        
+        // Initialize tooltips and popovers
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Log modal elements for debugging
+        console.log('Modal elements:', {
+            modal: document.getElementById('imageModal'),
+            buttons: document.querySelectorAll('[data-bs-toggle="modal"]')
+        });
+    });
+    </script>
 
     <!-- Custom Navbar Styles -->
     <style>
