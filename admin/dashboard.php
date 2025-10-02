@@ -117,10 +117,7 @@ $page_title = 'Admin Dashboard';
 <?php include '../includes/header.php'; ?>
 
 <div class="container-fluid py-4">
-    <!-- Welcome Message -->
-    <div class="alert alert-success">
-        <p class="mb-0">Manage your e-commerce store from this central dashboard.</p>
-    </div>
+   
     
     <!-- Statistics Cards -->
     <div class="row mb-4">

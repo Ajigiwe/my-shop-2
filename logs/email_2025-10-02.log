@@ -246,3 +246,8 @@ To: admin@example.com
 Subject: Invoice for Order #86 - ASO Online Market
 
 
+[2025-10-02 20:59:04] Email sent successfully using SMTP
+To: admin@example.com
+Subject: Order Confirmation #ORD-000087 - ASO Online Market
+
+

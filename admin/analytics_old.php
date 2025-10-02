@@ -1,10 +1,11 @@
 <?php
 /**
  * Admin: Analytics Dashboard
- * Matched with actual database schema
+ * - Comprehensive analytics with detailed charts and insights
+ * - Revenue trends, order patterns, customer behavior, product performance
  */
 
-// Enable error reporting
+// Enable error reporting for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -27,8 +28,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 // Set page title
 $page_title = 'Analytics Dashboard';
 
-// Set flag to hide sidebar
-$hide_sidebar = true;
+// Include custom analytics header (without sidebar)
+include 'includes/analytics_header.php';
 
 // Initialize variables
 $stats = [
@@ -62,138 +63,12 @@ try {
     
     if ($result) {
         $data = $result->fetch(PDO::FETCH_ASSOC);
-        $stats['total_orders'] = $data['total_orders'] ?? 0;
-        $stats['total_revenue'] = $data['total_revenue'] ?? 0;
-        $stats['avg_order_value'] = $data['avg_order_value'] ?? 0;
+        $stats['total_orders'] = $data['total_orders'];
+        $stats['total_revenue'] = $data['total_revenue'];
+        $stats['avg_order_value'] = $data['avg_order_value'];
     }
 
     // Get order status counts
-    $result = $pdo->query("SELECT 
-                            status, 
-                            COUNT(*) as count,
-                            SUM(total_amount) as amount
-                          FROM orders 
-                          GROUP BY status");
-    
-    // Initialize all possible statuses with 0 count
-    $statuses = [
-        'pending' => 0,
-        'confirmed' => 0,
-        'processing' => 0,
-        'shipped' => 0,
-        'delivered' => 0,
-        'cancelled' => 0,
-        'refunded' => 0
-    ];
-    
-    // Update with actual counts from database
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $status = strtolower($row['status']);
-        if (array_key_exists($status, $statuses)) {
-            $statuses[$status] = (int)$row['count'];
-        }
-    }
-    
-    // Prepare data for chart
-    foreach ($statuses as $status => $count) {
-        if ($count > 0) {
-            $chart_data['status_labels'][] = ucfirst($status);
-            $chart_data['status_counts'][] = $count;
-        }
-    }
-    
-    // Update stats
-    $stats['pending_orders'] = $statuses['pending'] + $statuses['confirmed'] + $statuses['processing'];
-    $stats['completed_orders'] = $statuses['delivered'];
-    
-    // Get monthly data for the last 6 months
-    $result = $pdo->query("SELECT 
-                            DATE_FORMAT(order_date, '%Y-%m') as month,
-                            COUNT(*) as order_count,
-                            COALESCE(SUM(total_amount), 0) as revenue
-                          FROM orders 
-                          WHERE order_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-                          GROUP BY DATE_FORMAT(order_date, '%Y-%m')
-                          ORDER BY month");
-    
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $chart_data['months'][] = date('M Y', strtotime($row['month'] . '-01'));
-        $chart_data['order_counts'][] = (int)$row['order_count'];
-        $chart_data['revenues'][] = (float)$row['revenue'];
-    }
-    
-    // Get payment methods
-    $result = $pdo->query("SELECT 
-                            payment_method,
-                            COUNT(*) as count,
-                            SUM(total_amount) as amount
-                          FROM orders 
-                          GROUP BY payment_method");
-    
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $chart_data['payment_methods'][] = ucfirst($row['payment_method']);
-        $chart_data['payment_totals'][] = (float)$row['amount'];
-    }
-    
-    // Get daily data for the last 7 days
-    $result = $pdo->query("SELECT 
-                            DATE(order_date) as date,
-                            COUNT(*) as order_count,
-                            COALESCE(SUM(total_amount), 0) as revenue
-                          FROM orders 
-                          WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-                          GROUP BY DATE(order_date)
-                          ORDER BY date");
-    
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $chart_data['daily_dates'][] = date('D, M j', strtotime($row['date']));
-        $chart_data['daily_orders'][] = (int)$row['order_count'];
-        $chart_data['daily_revenue'][] = (float)$row['revenue'];
-    }
-    
-} catch (PDOException $e) {
-    $error_message = "Database error: " . $e->getMessage();
-    error_log($error_message);
-    $error_message = "Error loading analytics data. Please check the error log for details.";
-}
-
-// Include admin header after setting all variables
-include 'includes/header.php';
-
-try {
-    // Debug: Check database connection
-    if (!isset($pdo)) {
-        error_log("Database connection not established");
-    } else {
-        // Test query to check if we can fetch data
-        $test_query = $pdo->query("SHOW TABLES LIKE 'orders'");
-        if ($test_query->rowCount() == 0) {
-            error_log("Orders table does not exist or is empty");
-        }
-    }
-
-    // Get basic stats
-    $query = "SELECT 
-                COUNT(*) as total_orders,
-                COALESCE(SUM(total_amount), 0) as total_revenue,
-                COALESCE(AVG(total_amount), 0) as avg_order_value
-              FROM orders";
-    
-    error_log("Executing query: " . $query);
-    $result = $pdo->query($query);
-    
-    if ($result) {
-        $data = $result->fetch(PDO::FETCH_ASSOC);
-        error_log("Query result: " . print_r($data, true));
-        
-        $stats['total_orders'] = $data['total_orders'] ?? 0;
-        $stats['total_revenue'] = $data['total_revenue'] ?? 0;
-        $stats['avg_order_value'] = $data['avg_order_value'] ?? 0;
-    } else {
-        error_log("Query failed: " . print_r($pdo->errorInfo(), true));
-    }
-
-    // Get order status counts - Matched with database schema
     $result = $pdo->query("SELECT 
                             status, 
                             COUNT(*) as count,
@@ -232,7 +107,7 @@ try {
     $stats['pending_orders'] = $statuses['pending'] + $statuses['confirmed'] + $statuses['processing'];
     $stats['completed_orders'] = $statuses['delivered'];
 
-    // Get monthly data - Using the correct column names
+    // Get monthly data
     $result = $pdo->query("SELECT 
                             DATE_FORMAT(order_date, '%Y-%m') as month,
                             COUNT(*) as order_count,
@@ -249,7 +124,7 @@ try {
         $chart_data['order_counts'][] = (int)$row['order_count'];
     }
 
-    // Get payment methods - Only Cash on Delivery and Online Payment (Paystack)
+    // Get payment methods
     $result = $pdo->query("SELECT 
                             CASE 
                                 WHEN payment_method IN ('cash_on_delivery', 'cod', 'Pay on Delivery', 'pay_on_delivery', 'payment on delivery') THEN 'Cash on Delivery'
@@ -299,143 +174,28 @@ try {
                           JOIN orders o ON oi.order_id = o.order_id
                           WHERE o.status != 'cancelled'
                           GROUP BY oi.product_id
-                          ORDER BY times_ordered DESC
+                          ORDER BY total_quantity DESC
                           LIMIT 5");
     
     $chart_data['top_products'] = $result->fetchAll(PDO::FETCH_ASSOC);
 
-    // Get most searched products (assuming you have a search_logs table)
-    try {
-        $result = $pdo->query("SELECT 
-                                query as search_term,
-                                COUNT(*) as search_count,
-                                MAX(created_at) as last_searched
-                              FROM search_logs 
-                              WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-                              GROUP BY query
-                              ORDER BY search_count DESC
-                              LIMIT 5");
-        $chart_data['top_searches'] = $result->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        // If search_logs table doesn't exist, initialize empty array
-        $chart_data['top_searches'] = [];
-    }
-
 } catch (PDOException $e) {
     $error_message = "Database error: " . $e->getMessage();
     error_log($error_message);
-    $error_message = "Error loading analytics data. Please check the error log for details.";
 }
+
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <style>
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-            margin-bottom: 1.5rem;
-        }
-        .card-header {
-            background-color: #f8f9fc;
-            border-bottom: 1px solid #e3e6f0;
-            padding: 1rem 1.25rem;
-            border-top-left-radius: 10px !important;
-            border-top-right-radius: 10px !important;
-        }
-        .card-body {
-            padding: 1.25rem;
-        }
-        .bg-primary {
-            background-color: #4e73df !important;
-        }
-        .bg-success {
-            background-color: #1cc88a !important;
-        }
-        .bg-info {
-            background-color: #36b9cc !important;
-        }
-        .bg-warning {
-            background-color: #f6c23e !important;
-        }
-        .text-white {
-            color: #fff !important;
-        }
-        .icon-circle {
-            align-items: center;
-            border-radius: 50%;
-            display: inline-flex;
-            height: 2.5rem;
-            justify-content: center;
-            width: 2.5rem;
-        }
-        .small {
-            font-size: 0.875rem;
-        }
-        .text-uppercase {
-            text-transform: uppercase !important;
-        }
-        .font-weight-bold {
-            font-weight: 700 !important;
-        }
-        .mb-0 {
-            margin-bottom: 0 !important;
-        }
-        .h5 {
-            font-size: 1.25rem;
-        }
-        .mb-4 {
-            margin-bottom: 1.5rem !important;
-        }
-        .chart-area {
-            position: relative;
-            height: 20rem;
-            width: 100%;
-        }
-        .chart-pie {
-            position: relative;
-            height: 20rem;
-            width: 100%;
-        }
-        @media (min-width: 1200px) {
-            .chart-pie {
-                height: calc(20rem - 43px) !important;
-            }
-        }
-        </style>
-    <div class="container-fluid py-4">
-        <?php if (isset($error_message)): ?>
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <?php echo htmlspecialchars($error_message); ?>
-                <?php if (isset($e)): ?>
-                    <div class="mt-2 small">
-                        <strong>Error Details:</strong> <?php echo htmlspecialchars($e->getMessage()); ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-        <?php endif; ?>
-        <?php if (isset($error_message)): ?>
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <?php echo htmlspecialchars($error_message); ?>
-            </div>
-        <?php endif; ?>
-
-        <!-- Page Heading -->
-        <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Analytics Dashboard</h1>
-            <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                <i class="fas fa-download fa-sm text-white-50"></i> Generate Report
-            </a>
-        </div>
+<?php
+// Include header
+include 'includes/header.php';
+?>
+<?php if (isset($error_message)): ?>
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <?php echo htmlspecialchars($error_message); ?>
+    </div>
+<?php endif; ?>
 
         <!-- Content Row -->
         <div class="row">
@@ -615,14 +375,11 @@ try {
         <?php endif; ?>
     </div>
 
-    <!-- Bootstrap core JavaScript-->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Page level plugins -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script>
     // Set new default font family and font color to mimic Bootstrap's default styling
-    Chart.defaults.font.family = 'Nunito', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+    Chart.defaults.font.family = 'Nunito, -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
     Chart.defaults.color = '#858796';
 
     // Function to format numbers with commas
@@ -648,10 +405,10 @@ try {
         return s.join(dec);
     }
 
-    // Area Chart - Revenue
+    // Revenue Chart
     var ctx = document.getElementById("revenueChart");
     if (ctx) {
-        var myLineChart = new Chart(ctx, {
+        new Chart(ctx, {
             type: 'line',
             data: {
                 labels: <?php echo json_encode($chart_data['months']); ?>,
@@ -991,16 +748,16 @@ try {
             '0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)
         ).substr(-2));
     }
+    </script>
 
     // Top Products Chart
     var ctx = document.getElementById("topProductsChart");
     if (ctx) {
-        // Prepare data for the chart
-        var productNames = <?php echo json_encode(array_column($chart_data['top_products'] ?? [], 'product_name')); ?>;
-        var productQuantities = <?php echo json_encode(array_column($chart_data['top_products'] ?? [], 'total_quantity')); ?>;
-        var productRevenues = <?php echo json_encode(array_column($chart_data['top_products'] ?? [], 'total_revenue')); ?>;
-
-        // Generate colors for the bars
+        // Prepare data for top products chart
+        var productNames = <?php echo json_encode(array_column($chart_data['top_products'], 'product_name')); ?>;
+        var productQuantities = <?php echo json_encode(array_column($chart_data['top_products'], 'total_quantity')); ?>;
+        var productRevenues = <?php echo json_encode(array_column($chart_data['top_products'], 'total_revenue')); ?>;
+        
         var backgroundColors = [
             'rgba(78, 115, 223, 0.8)',
             'rgba(28, 200, 138, 0.8)',
@@ -1067,69 +824,10 @@ try {
                             display: false,
                             drawBorder: false
                         }
-
-<?php
-// Helper function to get color for status
-function getStatusColor($status) {
-    $status = strtolower($status);
-    switch ($status) {
-        case 'pending':
-            return '#f6c23e'; // Yellow
-        case 'processing':
-            return '#36b9cc'; // Cyan
-        case 'shipped':
-            return '#4e73df'; // Blue
-        case 'delivered':
-            return '#1cc88a'; // Green
-        case 'cancelled':
-            return '#e74a3b'; // Red
-        case 'refunded':
-            return '#6f42c1'; // Purple
-        case 'confirmed':
-            return '#20c9a6'; // Teal
-        default:
-            return '#858796'; // Gray
+                    }
+                }
+            }
+        });
     }
-}
-
-// Helper function to get color for payment method
-function getPaymentColor($method) {
-    $method = strtolower($method);
-    if (strpos($method, 'cash') !== false || strpos($method, 'cod') !== false) {
-        return '#4e73df'; // Blue
-    } elseif (strpos($method, 'paypal') !== false) {
-        return '#003087'; // PayPal Blue
-    } elseif (strpos($method, 'paystack') !== false) {
-        return '#00b4b4'; // Paystack Teal
-    } elseif (strpos($method, 'card') !== false) {
-        return '#6f42c1'; // Purple
-    } else {
-        return '#858796'; // Gray
-    }
-}
-
-// Helper function to adjust color brightness
-function adjustBrightness($hex, $steps) {
-    // Steps should be between -255 and 255. Negative = darker, positive = lighter
-    $steps = max(-255, min(255, $steps));
-
-    // Normalize into a six character long hex string
-    $hex = str_replace('#', '', $hex);
-    if (strlen($hex) == 3) {
-        $hex = str_repeat(substr($hex,0,1), 2).str_repeat(substr($hex,1,1), 2).str_repeat(substr($hex,2,1), 2);
-    }
-
-    // Split into three parts: R, G and B
-    $color_parts = str_split($hex, 2);
-    $return = '#';
-
-    foreach ($color_parts as $color) {
-        // Convert to decimal and adjust brightness
-        $color   = hexdec($color);
-        $color   = max(0, min(255, $color + $steps));
-        $return .= str_pad(dechex($color), 2, '0', STR_PAD_LEFT);
-    }
-
-    return $return;
-}
-?>
+    </script>
+    <?php include 'includes/analytics_footer.php'; ?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin: Analytics Dashboard
+ * Admin: Analytics Dashboard - Fixed Version
  * Matched with actual database schema
  */
 
@@ -9,9 +9,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 
-// Include database connection and functions
+// Include database connection
 require_once '../includes/db.php';
-require_once '../includes/functions.php';
 
 // Start session
 if (session_status() == PHP_SESSION_NONE) {
@@ -23,12 +22,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     header('Location: ../login.php');
     exit();
 }
-
-// Set page title
-$page_title = 'Analytics Dashboard';
-
-// Set flag to hide sidebar
-$hide_sidebar = true;
 
 // Initialize variables
 $stats = [
@@ -62,135 +55,9 @@ try {
     
     if ($result) {
         $data = $result->fetch(PDO::FETCH_ASSOC);
-        $stats['total_orders'] = $data['total_orders'] ?? 0;
-        $stats['total_revenue'] = $data['total_revenue'] ?? 0;
-        $stats['avg_order_value'] = $data['avg_order_value'] ?? 0;
-    }
-
-    // Get order status counts
-    $result = $pdo->query("SELECT 
-                            status, 
-                            COUNT(*) as count,
-                            SUM(total_amount) as amount
-                          FROM orders 
-                          GROUP BY status");
-    
-    // Initialize all possible statuses with 0 count
-    $statuses = [
-        'pending' => 0,
-        'confirmed' => 0,
-        'processing' => 0,
-        'shipped' => 0,
-        'delivered' => 0,
-        'cancelled' => 0,
-        'refunded' => 0
-    ];
-    
-    // Update with actual counts from database
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $status = strtolower($row['status']);
-        if (array_key_exists($status, $statuses)) {
-            $statuses[$status] = (int)$row['count'];
-        }
-    }
-    
-    // Prepare data for chart
-    foreach ($statuses as $status => $count) {
-        if ($count > 0) {
-            $chart_data['status_labels'][] = ucfirst($status);
-            $chart_data['status_counts'][] = $count;
-        }
-    }
-    
-    // Update stats
-    $stats['pending_orders'] = $statuses['pending'] + $statuses['confirmed'] + $statuses['processing'];
-    $stats['completed_orders'] = $statuses['delivered'];
-    
-    // Get monthly data for the last 6 months
-    $result = $pdo->query("SELECT 
-                            DATE_FORMAT(order_date, '%Y-%m') as month,
-                            COUNT(*) as order_count,
-                            COALESCE(SUM(total_amount), 0) as revenue
-                          FROM orders 
-                          WHERE order_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-                          GROUP BY DATE_FORMAT(order_date, '%Y-%m')
-                          ORDER BY month");
-    
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $chart_data['months'][] = date('M Y', strtotime($row['month'] . '-01'));
-        $chart_data['order_counts'][] = (int)$row['order_count'];
-        $chart_data['revenues'][] = (float)$row['revenue'];
-    }
-    
-    // Get payment methods
-    $result = $pdo->query("SELECT 
-                            payment_method,
-                            COUNT(*) as count,
-                            SUM(total_amount) as amount
-                          FROM orders 
-                          GROUP BY payment_method");
-    
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $chart_data['payment_methods'][] = ucfirst($row['payment_method']);
-        $chart_data['payment_totals'][] = (float)$row['amount'];
-    }
-    
-    // Get daily data for the last 7 days
-    $result = $pdo->query("SELECT 
-                            DATE(order_date) as date,
-                            COUNT(*) as order_count,
-                            COALESCE(SUM(total_amount), 0) as revenue
-                          FROM orders 
-                          WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-                          GROUP BY DATE(order_date)
-                          ORDER BY date");
-    
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $chart_data['daily_dates'][] = date('D, M j', strtotime($row['date']));
-        $chart_data['daily_orders'][] = (int)$row['order_count'];
-        $chart_data['daily_revenue'][] = (float)$row['revenue'];
-    }
-    
-} catch (PDOException $e) {
-    $error_message = "Database error: " . $e->getMessage();
-    error_log($error_message);
-    $error_message = "Error loading analytics data. Please check the error log for details.";
-}
-
-// Include admin header after setting all variables
-include 'includes/header.php';
-
-try {
-    // Debug: Check database connection
-    if (!isset($pdo)) {
-        error_log("Database connection not established");
-    } else {
-        // Test query to check if we can fetch data
-        $test_query = $pdo->query("SHOW TABLES LIKE 'orders'");
-        if ($test_query->rowCount() == 0) {
-            error_log("Orders table does not exist or is empty");
-        }
-    }
-
-    // Get basic stats
-    $query = "SELECT 
-                COUNT(*) as total_orders,
-                COALESCE(SUM(total_amount), 0) as total_revenue,
-                COALESCE(AVG(total_amount), 0) as avg_order_value
-              FROM orders";
-    
-    error_log("Executing query: " . $query);
-    $result = $pdo->query($query);
-    
-    if ($result) {
-        $data = $result->fetch(PDO::FETCH_ASSOC);
-        error_log("Query result: " . print_r($data, true));
-        
-        $stats['total_orders'] = $data['total_orders'] ?? 0;
-        $stats['total_revenue'] = $data['total_revenue'] ?? 0;
-        $stats['avg_order_value'] = $data['avg_order_value'] ?? 0;
-    } else {
-        error_log("Query failed: " . print_r($pdo->errorInfo(), true));
+        $stats['total_orders'] = $data['total_orders'];
+        $stats['total_revenue'] = $data['total_revenue'];
+        $stats['avg_order_value'] = $data['avg_order_value'];
     }
 
     // Get order status counts - Matched with database schema
@@ -324,7 +191,6 @@ try {
 } catch (PDOException $e) {
     $error_message = "Database error: " . $e->getMessage();
     error_log($error_message);
-    $error_message = "Error loading analytics data. Please check the error log for details.";
 }
 ?>
 
@@ -409,19 +275,10 @@ try {
                 height: calc(20rem - 43px) !important;
             }
         }
-        </style>
+    </style>
+</head>
+<body>
     <div class="container-fluid py-4">
-        <?php if (isset($error_message)): ?>
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <?php echo htmlspecialchars($error_message); ?>
-                <?php if (isset($e)): ?>
-                    <div class="mt-2 small">
-                        <strong>Error Details:</strong> <?php echo htmlspecialchars($e->getMessage()); ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-        <?php endif; ?>
         <?php if (isset($error_message)): ?>
             <div class="alert alert-danger">
                 <i class="fas fa-exclamation-triangle me-2"></i>
@@ -1067,6 +924,14 @@ try {
                             display: false,
                             drawBorder: false
                         }
+                    }
+                }
+            }
+        });
+    }
+    </script>
+</body>
+</html>
 
 <?php
 // Helper function to get color for status

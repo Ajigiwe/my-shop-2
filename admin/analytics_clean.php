@@ -1,10 +1,10 @@
 <?php
 /**
- * Admin: Analytics Dashboard
- * Matched with actual database schema
+ * Clean Analytics Dashboard
+ * - No sidebar, just the analytics
  */
 
-// Enable error reporting
+// Enable error reporting for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -23,12 +23,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     header('Location: ../login.php');
     exit();
 }
-
-// Set page title
-$page_title = 'Analytics Dashboard';
-
-// Set flag to hide sidebar
-$hide_sidebar = true;
 
 // Initialize variables
 $stats = [
@@ -62,9 +56,9 @@ try {
     
     if ($result) {
         $data = $result->fetch(PDO::FETCH_ASSOC);
-        $stats['total_orders'] = $data['total_orders'] ?? 0;
-        $stats['total_revenue'] = $data['total_revenue'] ?? 0;
-        $stats['avg_order_value'] = $data['avg_order_value'] ?? 0;
+        $stats['total_orders'] = $data['total_orders'];
+        $stats['total_revenue'] = $data['total_revenue'];
+        $stats['avg_order_value'] = $data['avg_order_value'];
     }
 
     // Get order status counts
@@ -105,134 +99,8 @@ try {
     // Update stats
     $stats['pending_orders'] = $statuses['pending'] + $statuses['confirmed'] + $statuses['processing'];
     $stats['completed_orders'] = $statuses['delivered'];
-    
-    // Get monthly data for the last 6 months
-    $result = $pdo->query("SELECT 
-                            DATE_FORMAT(order_date, '%Y-%m') as month,
-                            COUNT(*) as order_count,
-                            COALESCE(SUM(total_amount), 0) as revenue
-                          FROM orders 
-                          WHERE order_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-                          GROUP BY DATE_FORMAT(order_date, '%Y-%m')
-                          ORDER BY month");
-    
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $chart_data['months'][] = date('M Y', strtotime($row['month'] . '-01'));
-        $chart_data['order_counts'][] = (int)$row['order_count'];
-        $chart_data['revenues'][] = (float)$row['revenue'];
-    }
-    
-    // Get payment methods
-    $result = $pdo->query("SELECT 
-                            payment_method,
-                            COUNT(*) as count,
-                            SUM(total_amount) as amount
-                          FROM orders 
-                          GROUP BY payment_method");
-    
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $chart_data['payment_methods'][] = ucfirst($row['payment_method']);
-        $chart_data['payment_totals'][] = (float)$row['amount'];
-    }
-    
-    // Get daily data for the last 7 days
-    $result = $pdo->query("SELECT 
-                            DATE(order_date) as date,
-                            COUNT(*) as order_count,
-                            COALESCE(SUM(total_amount), 0) as revenue
-                          FROM orders 
-                          WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-                          GROUP BY DATE(order_date)
-                          ORDER BY date");
-    
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $chart_data['daily_dates'][] = date('D, M j', strtotime($row['date']));
-        $chart_data['daily_orders'][] = (int)$row['order_count'];
-        $chart_data['daily_revenue'][] = (float)$row['revenue'];
-    }
-    
-} catch (PDOException $e) {
-    $error_message = "Database error: " . $e->getMessage();
-    error_log($error_message);
-    $error_message = "Error loading analytics data. Please check the error log for details.";
-}
 
-// Include admin header after setting all variables
-include 'includes/header.php';
-
-try {
-    // Debug: Check database connection
-    if (!isset($pdo)) {
-        error_log("Database connection not established");
-    } else {
-        // Test query to check if we can fetch data
-        $test_query = $pdo->query("SHOW TABLES LIKE 'orders'");
-        if ($test_query->rowCount() == 0) {
-            error_log("Orders table does not exist or is empty");
-        }
-    }
-
-    // Get basic stats
-    $query = "SELECT 
-                COUNT(*) as total_orders,
-                COALESCE(SUM(total_amount), 0) as total_revenue,
-                COALESCE(AVG(total_amount), 0) as avg_order_value
-              FROM orders";
-    
-    error_log("Executing query: " . $query);
-    $result = $pdo->query($query);
-    
-    if ($result) {
-        $data = $result->fetch(PDO::FETCH_ASSOC);
-        error_log("Query result: " . print_r($data, true));
-        
-        $stats['total_orders'] = $data['total_orders'] ?? 0;
-        $stats['total_revenue'] = $data['total_revenue'] ?? 0;
-        $stats['avg_order_value'] = $data['avg_order_value'] ?? 0;
-    } else {
-        error_log("Query failed: " . print_r($pdo->errorInfo(), true));
-    }
-
-    // Get order status counts - Matched with database schema
-    $result = $pdo->query("SELECT 
-                            status, 
-                            COUNT(*) as count,
-                            SUM(total_amount) as amount
-                          FROM orders 
-                          GROUP BY status");
-    
-    // Initialize all possible statuses with 0 count
-    $statuses = [
-        'pending' => 0,
-        'confirmed' => 0,
-        'processing' => 0,
-        'shipped' => 0,
-        'delivered' => 0,
-        'cancelled' => 0,
-        'refunded' => 0
-    ];
-    
-    // Update with actual counts from database
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $status = strtolower($row['status']);
-        if (array_key_exists($status, $statuses)) {
-            $statuses[$status] = (int)$row['count'];
-        }
-    }
-    
-    // Prepare data for chart
-    foreach ($statuses as $status => $count) {
-        if ($count > 0) {  // Only include statuses that have orders
-            $chart_data['status_labels'][] = ucfirst($status);
-            $chart_data['status_counts'][] = $count;
-        }
-    }
-    
-    // Update stats
-    $stats['pending_orders'] = $statuses['pending'] + $statuses['confirmed'] + $statuses['processing'];
-    $stats['completed_orders'] = $statuses['delivered'];
-
-    // Get monthly data - Using the correct column names
+    // Get monthly data
     $result = $pdo->query("SELECT 
                             DATE_FORMAT(order_date, '%Y-%m') as month,
                             COUNT(*) as order_count,
@@ -249,7 +117,7 @@ try {
         $chart_data['order_counts'][] = (int)$row['order_count'];
     }
 
-    // Get payment methods - Only Cash on Delivery and Online Payment (Paystack)
+    // Get payment methods
     $result = $pdo->query("SELECT 
                             CASE 
                                 WHEN payment_method IN ('cash_on_delivery', 'cod', 'Pay on Delivery', 'pay_on_delivery', 'payment on delivery') THEN 'Cash on Delivery'
@@ -299,56 +167,51 @@ try {
                           JOIN orders o ON oi.order_id = o.order_id
                           WHERE o.status != 'cancelled'
                           GROUP BY oi.product_id
-                          ORDER BY times_ordered DESC
+                          ORDER BY total_quantity DESC
                           LIMIT 5");
     
     $chart_data['top_products'] = $result->fetchAll(PDO::FETCH_ASSOC);
 
-    // Get most searched products (assuming you have a search_logs table)
-    try {
-        $result = $pdo->query("SELECT 
-                                query as search_term,
-                                COUNT(*) as search_count,
-                                MAX(created_at) as last_searched
-                              FROM search_logs 
-                              WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-                              GROUP BY query
-                              ORDER BY search_count DESC
-                              LIMIT 5");
-        $chart_data['top_searches'] = $result->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        // If search_logs table doesn't exist, initialize empty array
-        $chart_data['top_searches'] = [];
-    }
-
 } catch (PDOException $e) {
     $error_message = "Database error: " . $e->getMessage();
     error_log($error_message);
-    $error_message = "Error loading analytics data. Please check the error log for details.";
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <title>Analytics Dashboard - <?php echo htmlspecialchars($site_name ?? 'ASO Online Market'); ?></title>
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .navbar {
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
         .card {
             border: none;
-            border-radius: 10px;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
             margin-bottom: 1.5rem;
         }
         .card-header {
             background-color: #f8f9fc;
             border-bottom: 1px solid #e3e6f0;
             padding: 1rem 1.25rem;
-            border-top-left-radius: 10px !important;
-            border-top-right-radius: 10px !important;
+            border-radius: 0.35rem 0.35rem 0 0 !important;
         }
         .card-body {
             padding: 1.25rem;
@@ -409,19 +272,50 @@ try {
                 height: calc(20rem - 43px) !important;
             }
         }
-        </style>
-    <div class="container-fluid py-4">
-        <?php if (isset($error_message)): ?>
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <?php echo htmlspecialchars($error_message); ?>
-                <?php if (isset($e)): ?>
-                    <div class="mt-2 small">
-                        <strong>Error Details:</strong> <?php echo htmlspecialchars($e->getMessage()); ?>
-                    </div>
-                <?php endif; ?>
+        .content {
+            padding: 20px;
+        }
+        @media (min-width: 768px) {
+            .content {
+                padding: 20px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="dashboard.php">
+                <i class="fas fa-chart-line me-2"></i>Analytics Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.php">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> <?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin'); ?>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="../index.php"><i class="fas fa-home me-2"></i>View Site</a></li>
+                            <li><a class="dropdown-item" href="../user/profile.php"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="../logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
-        <?php endif; ?>
+        </div>
+    </nav>
+
+    <div class="content">
         <?php if (isset($error_message)): ?>
             <div class="alert alert-danger">
                 <i class="fas fa-exclamation-triangle me-2"></i>
@@ -475,24 +369,6 @@ try {
                 </div>
             </div>
 
-            <!-- Average Order Value Card -->
-            <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card border-left-info h-100 py-2">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                    Average Order Value</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">GH₵<?php echo number_format($stats['avg_order_value'], 2); ?></div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-tag fa-2x text-gray-300"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Pending Orders Card -->
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card border-left-warning h-100 py-2">
@@ -510,133 +386,158 @@ try {
                     </div>
                 </div>
             </div>
+
+            <!-- Completed Orders Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-info h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Completed Orders</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo number_format($stats['completed_orders']); ?></div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <?php if ($stats['total_orders'] > 0): ?>
-        <!-- Content Row -->
+        <!-- Charts Row -->
         <div class="row">
             <!-- Area Chart -->
             <div class="col-xl-8 col-lg-7">
-                <div class="card shadow mb-4">
-                    <!-- Card Header -->
-                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                        <h6 class="m-0 font-weight-bold text-primary">Revenue Overview</h6>
-                    </div>
-                    <!-- Card Body -->
-                    <div class="card-body">
-                        <div class="chart-area">
-                            <canvas id="revenueChart"></canvas>
-                        </div>
+                <div class="card shadow mb-4
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Revenue Overview</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="dropdownMenuLink">
+                            <li><a class="dropdown-item" href="#">This Year</a></li>
+                            <li><a class="dropdown-item" href="#">Last Year</a></li>
+                            <li><a class="dropdown-item" href="#">All Time</a></li>
+                        </ul>
                     </div>
                 </div>
-            </div>
-
-            <!-- Pie Chart -->
-            <div class="col-xl-4 col-lg-5">
-                <div class="card shadow mb-4">
-                    <!-- Card Header -->
-                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                        <h6 class="m-0 font-weight-bold text-primary">Order Status</h6>
-                    </div>
-                    <!-- Card Body -->
-                    <div class="card-body">
-                        <div class="chart-pie pt-4 pb-2">
-                            <canvas id="statusChart"></canvas>
-                        </div>
-                        <div class="mt-4 text-center small">
-                            <?php foreach ($chart_data['status_labels'] as $index => $label): ?>
-                                <span class="mr-2">
-                                    <i class="fas fa-circle" style="color: <?php echo getStatusColor($label); ?>"></i> <?php echo $label; ?>
-                                </span>
-                            <?php endforeach; ?>
-                        </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Content Row -->
-        <div class="row">
-            <!-- Payment Methods -->
-            <div class="col-lg-6 mb-4">
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">Payment Methods</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-pie pt-4 pb-2">
-                            <canvas id="paymentChart"></canvas>
-                        </div>
-                        <div class="mt-4 text-center small">
-                            <?php foreach ($chart_data['payment_methods'] as $index => $method): ?>
-                                <span class="mr-2">
-                                    <i class="fas fa-circle" style="color: <?php echo getPaymentColor($method); ?>"></i> <?php echo $method; ?>
-                                </span>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
+        <!-- Pie Chart -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Order Status</h6>
                 </div>
-            </div>
-
-            <!-- Daily Activity -->
-            <div class="col-lg-6 mb-4">
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">Daily Activity (Last 30 Days)</h6>
+                <!-- Card Body -->
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="statusChart"></canvas>
                     </div>
-                    <div class="card-body">
-                        <div class="chart-area">
-                            <canvas id="dailyActivityChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Most Bought Products Chart -->
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">Top 5 Bestselling Products</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-bar">
-                            <canvas id="topProductsChart"></canvas>
-                        </div>
-                        <div class="mt-4 small text-muted">
-                            <i class="fas fa-info-circle"></i> Shows top 5 most purchased products by quantity
-                        </div>
+                    <div class="mt-4 text-center small">
+                        <?php foreach ($chart_data['status_labels'] as $index => $label): ?>
+                            <span class="me-3">
+                                <i class="fas fa-circle" style="color: <?php echo getStatusColor($label); ?>"></i> 
+                                <?php echo $label; ?>
+                            </span>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
         </div>
-        <?php else: ?>
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle me-2"></i>
-                No order data available. Start making sales to see analytics.
+    </div>
+
+    <!-- Second Row -->
+    <div class="row">
+        <!-- Payment Methods -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Payment Methods</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="paymentChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        <?php foreach ($chart_data['payment_methods'] as $index => $method): ?>
+                            <span class="me-3">
+                                <i class="fas fa-circle" style="color: <?php echo getPaymentColor($method); ?>"></i> 
+                                <?php echo $method; ?>
+                            </span>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             </div>
-        <?php endif; ?>
+        </div>
+
+        <!-- Daily Orders -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Daily Orders (Last 30 Days)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="dailyOrdersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top Products</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar">
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap core JavaScript-->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
     // Set new default font family and font color to mimic Bootstrap's default styling
-    Chart.defaults.font.family = 'Nunito', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+    Chart.defaults.font.family = 'Nunito, -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
     Chart.defaults.color = '#858796';
 
     // Function to format numbers with commas
     function number_format(number, decimals, dec_point, thousands_sep) {
-        number = (number + '').replace(',', '').replace(' ', '');
+        // Format number with commas and decimals
+        number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
         var n = !isFinite(+number) ? 0 : +number,
             prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
             sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
             dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
             s = '',
-            toFixedFix = function(n, prec) {
+            toFixedFix = function (n, prec) {
                 var k = Math.pow(10, prec);
                 return '' + Math.round(n * k) / k;
             };
+        
         s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
         if (s[0].length > 3) {
             s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, sep);
@@ -648,7 +549,26 @@ try {
         return s.join(dec);
     }
 
-    // Area Chart - Revenue
+    // Helper function to get color for status
+    function getStatusColor(status) {
+        const colors = {
+            'Pending': '#f6c23e',
+            'Processing': '#36b9cc',
+            'Shipped': '#4e73df',
+            'Delivered': '#1cc88a',
+            'Cancelled': '#e74a3b',
+            'Refunded': '#6c757d',
+            'Confirmed': '#4e73df'
+        };
+        return colors[status] || '#858796';
+    }
+
+    // Helper function to get color for payment method
+    function getPaymentColor(method) {
+        return method === 'Cash on Delivery' ? '#1cc88a' : '#4e73df';
+    }
+
+    // Revenue Chart
     var ctx = document.getElementById("revenueChart");
     if (ctx) {
         var myLineChart = new Chart(ctx, {
@@ -668,7 +588,7 @@ try {
                     pointHoverBorderColor: "rgba(78, 115, 223, 1)",
                     pointHitRadius: 10,
                     pointBorderWidth: 2,
-                    data: <?php echo json_encode($chart_data['revenues']); ?>,
+                    data: <?php echo json_encode($chart_data['revenues']); ?>
                 }],
             },
             options: {
@@ -716,7 +636,7 @@ try {
                         backgroundColor: "rgb(255,255,255)",
                         bodyColor: "#858796",
                         titleMarginBottom: 10,
-                        titleColor: '#6e707e',
+                        titleFontColor: '#6e707e',
                         titleFontSize: 14,
                         borderColor: '#dddfeb',
                         borderWidth: 1,
@@ -744,7 +664,7 @@ try {
         });
     }
 
-    // Pie Chart - Order Status
+    // Status Chart
     var ctx = document.getElementById("statusChart");
     if (ctx) {
         var myPieChart = new Chart(ctx, {
@@ -753,24 +673,20 @@ try {
                 labels: <?php echo json_encode($chart_data['status_labels']); ?>,
                 datasets: [{
                     data: <?php echo json_encode($chart_data['status_counts']); ?>,
-                    backgroundColor: [
-                        '<?php echo getStatusColor('Pending'); ?>',
-                        '<?php echo getStatusColor('Processing'); ?>',
-                        '<?php echo getStatusColor('Shipped'); ?>',
-                        '<?php echo getStatusColor('Delivered'); ?>',
-                        '<?php echo getStatusColor('Cancelled'); ?>',
-                        '<?php echo getStatusColor('Refunded'); ?>',
-                        '<?php echo getStatusColor('Confirmed'); ?>'
-                    ],
-                    hoverBackgroundColor: [
-                        '<?php echo adjustBrightness(getStatusColor('Pending'), -10); ?>',
-                        '<?php echo adjustBrightness(getStatusColor('Processing'), -10); ?>',
-                        '<?php echo adjustBrightness(getStatusColor('Shipped'), -10); ?>',
-                        '<?php echo adjustBrightness(getStatusColor('Delivered'), -10); ?>',
-                        '<?php echo adjustBrightness(getStatusColor('Cancelled'), -10); ?>',
-                        '<?php echo adjustBrightness(getStatusColor('Refunded'), -10); ?>',
-                        '<?php echo adjustBrightness(getStatusColor('Confirmed'), -10); ?>'
-                    ],
+                    backgroundColor: <?php 
+                        $colors = [];
+                        foreach ($chart_data['status_labels'] as $label) {
+                            $colors[] = getStatusColor($label);
+                        }
+                        echo json_encode($colors);
+                    ?>,
+                    hoverBackgroundColor: <?php 
+                        $hoverColors = [];
+                        foreach ($chart_data['status_labels'] as $label) {
+                            $hoverColors[] = adjustBrightness(getStatusColor($label), -10);
+                        }
+                        echo json_encode($hoverColors);
+                    ?>,
                     hoverBorderColor: "rgba(234, 236, 244, 1)",
                 }],
             },
@@ -785,24 +701,18 @@ try {
                     yPadding: 15,
                     displayColors: false,
                     caretPadding: 10,
-                    callbacks: {
-                        label: function(tooltipItem, data) {
-                            var dataset = data.datasets[tooltipItem.datasetIndex];
-                            var total = dataset.data.reduce(function(previousValue, currentValue, currentIndex, array) {
-                                return previousValue + currentValue;
-                            });
-                            var currentValue = dataset.data[tooltipItem.index];
-                            var percentage = Math.floor(((currentValue/total) * 100)+0.5);
-                            return data.labels[tooltipItem.index] + ': ' + currentValue + ' (' + percentage + '%)';
-                        }
-                    }
                 },
                 cutout: '70%',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
             },
         });
     }
 
-    // Pie Chart - Payment Methods
+    // Payment Chart
     var ctx = document.getElementById("paymentChart");
     if (ctx) {
         var myPieChart = new Chart(ctx, {
@@ -811,22 +721,8 @@ try {
                 labels: <?php echo json_encode($chart_data['payment_methods']); ?>,
                 datasets: [{
                     data: <?php echo json_encode($chart_data['payment_totals']); ?>,
-                    backgroundColor: [
-                        '<?php echo getPaymentColor('Cash On Delivery'); ?>',
-                        '<?php echo getPaymentColor('Paypal'); ?>',
-                        '<?php echo getPaymentColor('Paystack'); ?>',
-                        '<?php echo getPaymentColor('Pay On Delivery'); ?>',
-                        '<?php echo getPaymentColor('COD'); ?>',
-                        '<?php echo getPaymentColor('Other'); ?>'
-                    ],
-                    hoverBackgroundColor: [
-                        '<?php echo adjustBrightness(getPaymentColor('Cash On Delivery'), -10); ?>',
-                        '<?php echo adjustBrightness(getPaymentColor('Paypal'), -10); ?>',
-                        '<?php echo adjustBrightness(getPaymentColor('Paystack'), -10); ?>',
-                        '<?php echo adjustBrightness(getPaymentColor('Pay On Delivery'), -10); ?>',
-                        '<?php echo adjustBrightness(getPaymentColor('COD'), -10); ?>',
-                        '<?php echo adjustBrightness(getPaymentColor('Other'), -10); ?>'
-                    ],
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
+                    hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a'],
                     hoverBorderColor: "rgba(234, 236, 244, 1)",
                 }],
             },
@@ -843,23 +739,29 @@ try {
                     caretPadding: 10,
                     callbacks: {
                         label: function(tooltipItem, data) {
-                            var dataset = data.datasets[tooltipItem.datasetIndex];
-                            var total = dataset.data.reduce(function(previousValue, currentValue, currentIndex, array) {
-                                return previousValue + currentValue;
-                            });
-                            var currentValue = dataset.data[tooltipItem.index];
-                            var percentage = Math.floor(((currentValue/total) * 100)+0.5);
-                            return data.labels[tooltipItem.index] + ': GH₵' + number_format(currentValue, 2) + ' (' + percentage + '%)';
+                            var label = data.labels[tooltipItem.index] || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (data.datasets[0].data[tooltipItem.index] !== null) {
+                                label += 'GH₵' + number_format(data.datasets[0].data[tooltipItem.index], 2);
+                            }
+                            return label;
                         }
                     }
                 },
                 cutout: '70%',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
             },
         });
     }
 
-    // Bar Chart - Daily Activity
-    var ctx = document.getElementById("dailyActivityChart");
+    // Daily Orders Chart
+    var ctx = document.getElementById("dailyOrdersChart");
     if (ctx) {
         var myLineChart = new Chart(ctx, {
             type: 'bar',
@@ -869,22 +771,15 @@ try {
                     {
                         label: "Orders",
                         backgroundColor: "#4e73df",
+                        hoverBackgroundColor: "#2e59d9",
                         borderColor: "#4e73df",
                         data: <?php echo json_encode($chart_data['daily_orders']); ?>
                     },
                     {
                         label: "Revenue",
-                        type: "line",
                         backgroundColor: "#1cc88a",
+                        hoverBackgroundColor: "#17a673",
                         borderColor: "#1cc88a",
-                        pointBackgroundColor: "#1cc88a",
-                        pointBorderColor: "#1cc88a",
-                        pointHoverRadius: 3,
-                        pointHoverBackgroundColor: "#1cc88a",
-                        pointHoverBorderColor: "#1cc88a",
-                        pointHitRadius: 10,
-                        pointBorderWidth: 2,
-                        fill: false,
                         data: <?php echo json_encode($chart_data['daily_revenue']); ?>
                     }
                 ],
@@ -925,31 +820,17 @@ try {
                             zeroLineBorderDash: [2]
                         }
                     },
-                    y1: {
-                        position: 'right',
-                        grid: {
-                            display: false,
-                            drawBorder: false
-                        },
-                        ticks: {
-                            maxTicksLimit: 5,
-                            padding: 10,
-                            callback: function(value, index, values) {
-                                return 'GH₵' + number_format(value);
-                            }
-                        }
-                    }
                 },
                 plugins: {
                     legend: {
                         display: true,
-                        position: 'bottom'
+                        position: 'top'
                     },
                     tooltip: {
                         backgroundColor: "rgb(255,255,255)",
                         bodyColor: "#858796",
                         titleMarginBottom: 10,
-                        titleColor: '#6e707e',
+                        titleFontColor: '#6e707e',
                         titleFontSize: 14,
                         borderColor: '#dddfeb',
                         borderWidth: 1,
@@ -965,15 +846,11 @@ try {
                                 if (label) {
                                     label += ': ';
                                 }
-                                if (context.datasetIndex === 1) {
-                                    // For the line chart (revenue)
-                                    if (context.parsed.y !== null) {
+                                if (context.parsed.y !== null) {
+                                    if (context.datasetIndex === 1) {
                                         label += 'GH₵' + number_format(context.parsed.y, 2);
-                                    }
-                                } else {
-                                    // For the bar chart (orders)
-                                    if (context.parsed.y !== null) {
-                                        label += context.parsed.y;
+                                    } else {
+                                        label += number_format(context.parsed.y);
                                     }
                                 }
                                 return label;
@@ -985,22 +862,14 @@ try {
         });
     }
 
-    // Function to adjust color brightness
-    function adjustBrightness(color, amount) {
-        return '#' + color.replace(/^#/, '').replace(/../g, color => (
-            '0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)
-        ).substr(-2));
-    }
-
     // Top Products Chart
     var ctx = document.getElementById("topProductsChart");
     if (ctx) {
-        // Prepare data for the chart
-        var productNames = <?php echo json_encode(array_column($chart_data['top_products'] ?? [], 'product_name')); ?>;
-        var productQuantities = <?php echo json_encode(array_column($chart_data['top_products'] ?? [], 'total_quantity')); ?>;
-        var productRevenues = <?php echo json_encode(array_column($chart_data['top_products'] ?? [], 'total_revenue')); ?>;
-
-        // Generate colors for the bars
+        // Prepare data for top products chart
+        var productNames = <?php echo json_encode(array_column($chart_data['top_products'], 'product_name')); ?>;
+        var productQuantities = <?php echo json_encode(array_column($chart_data['top_products'], 'total_quantity')); ?>;
+        var productRevenues = <?php echo json_encode(array_column($chart_data['top_products'], 'total_revenue')); ?>;
+        
         var backgroundColors = [
             'rgba(78, 115, 223, 0.8)',
             'rgba(28, 200, 138, 0.8)',
@@ -1067,69 +936,18 @@ try {
                             display: false,
                             drawBorder: false
                         }
-
-<?php
-// Helper function to get color for status
-function getStatusColor($status) {
-    $status = strtolower($status);
-    switch ($status) {
-        case 'pending':
-            return '#f6c23e'; // Yellow
-        case 'processing':
-            return '#36b9cc'; // Cyan
-        case 'shipped':
-            return '#4e73df'; // Blue
-        case 'delivered':
-            return '#1cc88a'; // Green
-        case 'cancelled':
-            return '#e74a3b'; // Red
-        case 'refunded':
-            return '#6f42c1'; // Purple
-        case 'confirmed':
-            return '#20c9a6'; // Teal
-        default:
-            return '#858796'; // Gray
-    }
-}
-
-// Helper function to get color for payment method
-function getPaymentColor($method) {
-    $method = strtolower($method);
-    if (strpos($method, 'cash') !== false || strpos($method, 'cod') !== false) {
-        return '#4e73df'; // Blue
-    } elseif (strpos($method, 'paypal') !== false) {
-        return '#003087'; // PayPal Blue
-    } elseif (strpos($method, 'paystack') !== false) {
-        return '#00b4b4'; // Paystack Teal
-    } elseif (strpos($method, 'card') !== false) {
-        return '#6f42c1'; // Purple
-    } else {
-        return '#858796'; // Gray
-    }
-}
-
-// Helper function to adjust color brightness
-function adjustBrightness($hex, $steps) {
-    // Steps should be between -255 and 255. Negative = darker, positive = lighter
-    $steps = max(-255, min(255, $steps));
-
-    // Normalize into a six character long hex string
-    $hex = str_replace('#', '', $hex);
-    if (strlen($hex) == 3) {
-        $hex = str_repeat(substr($hex,0,1), 2).str_repeat(substr($hex,1,1), 2).str_repeat(substr($hex,2,1), 2);
+                    }
+                }
+            }
+        });
     }
 
-    // Split into three parts: R, G and B
-    $color_parts = str_split($hex, 2);
-    $return = '#';
-
-    foreach ($color_parts as $color) {
-        // Convert to decimal and adjust brightness
-        $color   = hexdec($color);
-        $color   = max(0, min(255, $color + $steps));
-        $return .= str_pad(dechex($color), 2, '0', STR_PAD_LEFT);
+    // Function to adjust color brightness
+    function adjustBrightness(color, amount) {
+        return '#' + color.replace(/^#/, '').replace(/../g, color => 
+            ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2)
+        );
     }
-
-    return $return;
-}
-?>
+    </script>
+</body>
+</html>
