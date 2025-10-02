@@ -1,6 +1,7 @@
 <?php
-// Include database connection
+// Include database connection and email configuration
 require_once 'includes/db.php';
+require_once 'includes/email_config.php';
 
 // Start session
 if (session_status() == PHP_SESSION_NONE) {
@@ -37,16 +38,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $stmt->fetch();
             
             if ($user) {
-                // In a real application, you would:
-                // 1. Generate a secure reset token
-                // 2. Store it in the database with expiration
-                // 3. Send an email with the reset link
+                // Generate secure token
+                $token = bin2hex(random_bytes(32));
+                $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
                 
-                // For demo purposes, we'll just show a success message
-                $success = 'If an account with this email exists, you will receive password reset instructions shortly.';
+                // Store token in database
+                $stmt = $pdo->prepare("
+                    INSERT INTO password_resets (email, token, expires_at) 
+                    VALUES (?, ?, ?)
+                    ON DUPLICATE KEY UPDATE 
+                        token = VALUES(token),
+                        created_at = NOW(),
+                        expires_at = VALUES(expires_at)
+                ");
+                $stmt->execute([$email, $token, $expires]);
+                
+                // Send reset email
+                $resetLink = SITE_URL . "reset_password.php?token=" . urlencode($token) . "&email=" . urlencode($email);
+                $subject = "Password Reset Request - " . STORE_NAME;
+                $message = "
+                    <p>Hello " . htmlspecialchars($user['name']) . ",</p>
+                    <p>You requested a password reset. Click the link below to reset your password:</p>
+                    <p><a href='$resetLink' style='padding: 10px 15px; background: #0d6efd; color: white; text-decoration: none; border-radius: 4px;'>Reset Password</a></p>
+                    <p>Or copy and paste this link in your browser:<br>
+                    <code>$resetLink</code></p>
+                    <p>This link will expire in 1 hour.</p>
+                    <p>If you didn't request this, please ignore this email.</p>
+                ";
+                
+                if (sendEmail($email, $subject, $message)) {
+                    $success = 'Password reset link has been sent to your email. It will expire in 1 hour.';
+                    // Clear the email field after successful submission
+                    $email = '';
+                } else {
+                    $errors[] = 'Failed to send reset email. Please try again.';
+                }
                 
                 // Log the password reset request
-                error_log("Password reset requested for email: $email");
+                error_log("Password reset email sent to: $email");
             } else {
                 // Don't reveal if email exists or not for security
                 $success = 'If an account with this email exists, you will receive password reset instructions shortly.';

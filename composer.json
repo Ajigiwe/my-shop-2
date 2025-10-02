@@ -1,0 +1,22 @@
+{
+    "name": "user/myshop2",
+    "description": "\"My Shop E-commerce Website\"",
+    "type": "project",
+    "require": {
+        "phpmailer/phpmailer": "^6.11",
+        "vlucas/phpdotenv": "^5.5",
+        "yabacon/paystack-php": "^2.2"
+    },
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "User\\Myshop2\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Emmanuel Atio"
+        }
+    ],
+    "minimum-stability": "stable"
+}

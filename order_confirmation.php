@@ -5,8 +5,9 @@
  * - Displays order number and next steps
  */
 
-// Include database connection
+// Include database connection and email configuration
 require_once 'includes/db.php';
+require_once 'includes/email_config.php';
 
 // Start session
 if (session_status() == PHP_SESSION_NONE) {
@@ -19,37 +20,96 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Check if we have a recent order
-if (!isset($_SESSION['last_order_id'])) {
+// Get order ID from URL parameter or session
+if (isset($_GET['order_id'])) {
+    $order_id = (int)$_GET['order_id'];
+    // Store in session for page refreshes
+    $_SESSION['last_order_id'] = $order_id;
+} elseif (isset($_SESSION['last_order_id'])) {
+    $order_id = $_SESSION['last_order_id'];
+} else {
+    // No order ID found, redirect to home
     header('Location: index.php');
     exit();
 }
 
-$order_id = $_SESSION['last_order_id'];
-$user_id = $_SESSION['user_id'];
+$user_id = $_SESSION['user_id'] ?? 0;
+
+if (!$user_id) {
+    header('Location: login.php');
+    exit();
+}
 
 // Get order details
 try {
+    // First, get the basic order info with the email from the order
     $stmt = $pdo->prepare("
-        SELECT o.*, oi.*, p.name as product_name
+        SELECT o.*, u.name as customer_name, 
+               COALESCE(o.email, u.email) as customer_email
         FROM orders o
-        LEFT JOIN order_items oi ON o.order_id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.product_id
+        JOIN users u ON o.user_id = u.user_id
         WHERE o.order_id = ? AND o.user_id = ?
-        ORDER BY oi.order_item_id
     ");
     $stmt->execute([$order_id, $user_id]);
-    $order_details = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (empty($order_details)) {
+    if (empty($order)) {
         header('Location: index.php');
         exit();
     }
 
-    $order = $order_details[0];
+    // Then get the order items
+    $stmt = $pdo->prepare("
+        SELECT oi.*, p.name as product_name, p.price as product_price
+        FROM order_items oi
+        LEFT JOIN products p ON oi.product_id = p.product_id
+        WHERE oi.order_id = ?
+        ORDER BY oi.order_item_id
+    ");
+    $stmt->execute([$order_id]);
+    $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Prepare order details for email
+    $email_order_details = [
+        'items' => [],
+        'shipping' => 0, // Update this if you have shipping costs
+        'tax' => $order['tax_amount'] ?? 0,
+        'shipping_address' => $order['shipping_address'] ?? 'Not specified',
+        'billing_address' => $order['billing_address'] ?? ($order['shipping_address'] ?? 'Not specified'),
+        'payment_method' => $order['payment_method'] ?? 'Pay on Delivery',
+        'order_date' => $order['order_date']
+    ];
+    
+    // Format items for email
+    foreach ($order_items as $item) {
+        $email_order_details['items'][] = [
+            'name' => $item['product_name'],
+            'price' => $item['product_price'],
+            'quantity' => $item['quantity']
+        ];
+    }
+    
+    // Send order confirmation email
+    $email_sent = sendOrderConfirmationEmail(
+        $order['customer_email'],
+        $order['customer_name'],
+        $order['order_number'],
+        $email_order_details
+    );
+    
+    // Log if email was sent or failed
+    if ($email_sent) {
+        error_log("Order confirmation email sent for order #" . $order['order_number']);
+    } else {
+        error_log("Failed to send order confirmation email for order #" . $order['order_number']);
+    }
+    
+    // Set order items for the confirmation page
+    $order_details = $order_items;
+    $order = $order; // Keep the order info separate
 
 } catch(PDOException $e) {
-    error_log("Error fetching order details: " . $e->getMessage());
+    error_log("Error processing order confirmation: " . $e->getMessage());
     $order_details = [];
     $order = [];
 }
@@ -141,16 +201,20 @@ $page_title = 'Order Confirmation';
                                         <?php
                                         $subtotal = 0;
                                         foreach ($order_details as $item):
-                                            $item_total = $item['product_price'] * $item['quantity'];
-                                            $subtotal += $item_total;
+                                            if (isset($item['product_name']) && isset($item['quantity']) && isset($item['product_price'])) {
+                                                $item_total = $item['product_price'] * $item['quantity'];
+                                                $subtotal += $item_total;
                                         ?>
                                             <tr>
                                                 <td><?php echo htmlspecialchars($item['product_name']); ?></td>
-                                                <td><?php echo $item['quantity']; ?></td>
+                                                <td><?php echo htmlspecialchars($item['quantity']); ?></td>
                                                 <td>₵<?php echo number_format($item['product_price'], 2); ?></td>
                                                 <td>₵<?php echo number_format($item_total, 2); ?></td>
                                             </tr>
-                                        <?php endforeach; ?>
+                                        <?php 
+                                            }
+                                        endforeach; 
+                                        ?>
                                     </tbody>
                                     <tfoot>
                                         <tr class="table-success">

@@ -1,4 +1,10 @@
 <?php
+// Load environment variables
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require __DIR__ . '/vendor/autoload.php';
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+}
 /**
  * Storefront: Home
  * - Welcomes users and highlights featured products

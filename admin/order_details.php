@@ -37,9 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'Invalid status selected';
             } else {
                 // Get current order status before updating
+                // Get current status first
                 $current_order = $pdo->prepare('SELECT status FROM orders WHERE order_id = ?');
                 $current_order->execute([$order_id]);
                 $current_status = $current_order->fetch()['status'];
+                error_log("Before update - Current status: " . $current_status . ", New status to set: " . $new_status);
 
                 // Update order status
                 $stmt = $pdo->prepare('UPDATE orders SET status = ? WHERE order_id = ?');
@@ -48,51 +50,105 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // If status was updated to "delivered", send invoice email
                 if ($current_status !== 'delivered' && $new_status === 'delivered') {
-                    // Get order details for email
-                    $stmt = $pdo->prepare('SELECT o.*, u.name, u.email FROM orders o JOIN users u ON u.user_id = o.user_id WHERE o.order_id = ?');
+                    // Get fresh order details after update to ensure we have the latest status
+                    $stmt = $pdo->prepare('SELECT o.*, u.name, u.email, o.status as current_status FROM orders o JOIN users u ON u.user_id = o.user_id WHERE o.order_id = ?');
                     $stmt->execute([$order_id]);
                     $order_for_email = $stmt->fetch();
+                    
+                    // Debug log the fetched data
+                    error_log("After update - Fetched order data: " . print_r($order_for_email, true));
 
                     if ($order_for_email && !empty($order_for_email['email'])) {
+                        // Get order items for the invoice
+                        $stmt = $pdo->prepare('SELECT oi.*, p.name as product_name, p.price as product_price 
+                                            FROM order_items oi 
+                                            JOIN products p ON oi.product_id = p.product_id 
+                                            WHERE oi.order_id = ?');
+                        $stmt->execute([$order_id]);
+                        $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        
+                        // Debug log the status being used
+                        $status_to_use = $order_for_email['current_status'] ?? $new_status;
+                        error_log("Using status for email: " . $status_to_use);
+                        
+                        // Prepare order details array
+                        $order_details = [
+                            'order_id' => $order_id,
+                            'items' => $order_items,
+                            'subtotal' => $order_for_email['total_amount'],
+                            'shipping' => 0, // Add shipping cost if applicable
+                            'total' => $order_for_email['total_amount'],
+                            'order_date' => $order_for_email['order_date'],
+                            'status' => $status_to_use, // Use the status from the fresh query
+                            'payment_method' => $order_for_email['payment_method'] ?? 'not_specified' // Add payment method if available
+                        ];
+                        
+                        // Debug log the final order details
+                        error_log("Order details being sent to email: " . print_r($order_details, true));
+                        
                         $email_sent = sendInvoiceEmail(
                             $order_for_email['email'],
                             $order_for_email['name'],
                             $order_id,
+                            $order_details
                         );
-
+                        
                         if ($email_sent) {
                             $success .= ' Invoice has been sent to the customer.';
                         } else {
                             $errors[] = 'Status updated but failed to send invoice email. Please check email configuration.';
                         }
                     } else {
-                        $errors[] = 'Could not find customer email address for this order.';
+                        // Only show error if we couldn't find the order or email
+                        $errors[] = 'Could not find customer email for this order. Invoice not sent.';
                     }
-                } else {
-                    $errors[] = 'Invalid order ID for invoice sending.';
                 }
             }
         } elseif ($action === 'send_invoice') {
             $send_order_id = (int)($_POST['order_id'] ?? 0);
 
-            if ($send_order_id === $order_id) {
+            if ($send_order_id > 0) {
                 // Get order details for email
                 $stmt = $pdo->prepare('SELECT o.*, u.name, u.email FROM orders o JOIN users u ON u.user_id = o.user_id WHERE o.order_id = ?');
-                $stmt->execute([$order_id]);
+                $stmt->execute([$send_order_id]);
                 $order_for_email = $stmt->fetch();
 
-                if ($order_for_email && !empty($order_for_email['email'])) {
-                    $email_sent = sendInvoiceEmail(
-                        $order_for_email['email'],
-                        $order_for_email['name'],
-                        $order_id,
-                        $order_for_email
-                    );
-
-                    if ($email_sent) {
-                        $success = 'Invoice has been sent to ' . htmlspecialchars($order_for_email['email']);
+                if ($order_for_email) {
+                    if (empty($order_for_email['email'])) {
+                        $errors[] = 'Customer email not found for this order.';
                     } else {
-                        $errors[] = 'Failed to send invoice email. Please check the email configuration.';
+                        // Get order items for the invoice
+                        $stmt = $pdo->prepare('SELECT oi.*, p.name as product_name, p.price as product_price 
+                                             FROM order_items oi 
+                                             JOIN products p ON oi.product_id = p.product_id 
+                                             WHERE oi.order_id = ?');
+                        $stmt->execute([$send_order_id]);
+                        $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        
+                        // Prepare order details with current status
+                        $order_details = [
+                            'order_id' => $send_order_id,
+                            'items' => $order_items,
+                            'subtotal' => $order_for_email['total_amount'],
+                            'shipping' => 0, // Add shipping cost if applicable
+                            'total' => $order_for_email['total_amount'],
+                            'order_date' => $order_for_email['order_date'],
+                            'status' => $order_for_email['status'] ?? 'processing',
+                            'payment_method' => $order_for_email['payment_method'] ?? 'not_specified'
+                        ];
+                        
+                        $email_sent = sendInvoiceEmail(
+                            $order_for_email['email'],
+                            $order_for_email['name'],
+                            $send_order_id,
+                            $order_details
+                        );
+
+                        if ($email_sent) {
+                            $success = 'Invoice has been sent to ' . htmlspecialchars($order_for_email['email']);
+                        } else {
+                            $errors[] = 'Failed to send invoice email. Please check the email configuration.';
+                        }
                     }
                 } else {
                     $errors[] = 'Could not find customer email address for this order.';

@@ -83,6 +83,18 @@ if ($pdo !== null) {
                 </li>
             </ul>
 
+            <!-- Search Form -->
+            <form class="d-flex me-3" action="<?php echo $is_subdirectory ? '../search.php' : 'search.php'; ?>" method="GET" style="flex-grow: 1; max-width: 400px;">
+                <div class="input-group">
+                    <input type="text" class="form-control form-control-sm" name="q" placeholder="Search products..." 
+                           value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>" 
+                           aria-label="Search products" required>
+                    <button class="btn btn-outline-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+
             <!-- Right side menu -->
             <ul class="navbar-nav">
                 <?php if (isset($_SESSION['user_id'])): ?>
@@ -107,16 +119,6 @@ if ($pdo !== null) {
                         </div>
                     </li>
 
-                    <!-- Cart with badge -->
-                    <li class="nav-item">
-                        <a class="nav-link position-relative" href="<?php echo $is_subdirectory ? '../cart.php' : 'cart.php'; ?>">
-                            <i class="fas fa-shopping-cart"></i>
-                            <?php if ($cart_count > 0): ?>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    <?php echo $cart_count; ?>
-                                </span>
-                            <?php endif; ?>
-                        </a>
                     </li>
                 <?php else: ?>
                     <!-- User is not logged in -->

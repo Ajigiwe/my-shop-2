@@ -222,12 +222,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                         </div>
                     <?php endif; ?>
 
-                    <!-- Action Buttons -->
+                    <!-- Share Button -->
                     <div class="product-actions mb-4">
                         <div class="d-flex gap-2 flex-wrap">
-                            <button class="btn btn-outline-primary" onclick="addToWishlist(<?php echo $product_id; ?>)">
-                                <i class="fas fa-heart me-2"></i>Add to Wishlist
-                            </button>
                             <button class="btn btn-outline-secondary" onclick="shareProduct()">
                                 <i class="fas fa-share-alt me-2"></i>Share
                             </button>
@@ -421,29 +418,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
-// Wishlist functionality
-function addToWishlist(productId) {
-    fetch('ajax/add_to_wishlist.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `product_id=${productId}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast(data.message, 'success', 2000);
-        } else {
-            showToast(data.message, 'warning', 2000);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Error adding to wishlist', 'danger', 2000);
-    });
-}
 
 // Share functionality
 function shareProduct() {

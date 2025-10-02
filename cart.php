@@ -246,12 +246,21 @@ try {
                                     </div>
 
                                     <?php if (!empty($cart_items)): ?>
-                                        <div class="ms-auto text-end pe-2 pe-md-3 py-2" style="padding-top: 1rem; padding-bottom: 1rem;">
-                                             <a href="checkout.php" class="btn btn-success btn-sm" style="border-radius: 8px; padding: 6px 12px; font-weight: 600;">
-                                                 <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
-                                             </a>
-                                         </div>
-                                     <?php endif; ?>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="text-end">
+                                                <h5 class="mb-0">
+                                                    <span class="text-muted">Total:</span>
+                                                    <span class="ms-2 fw-bold text-success"><?php echo formatCurrency($total); ?></span>
+                                                </h5>
+                                                <small class="text-muted">Including all applicable taxes</small>
+                                            </div>
+                                            <div class="d-flex flex-column gap-2">
+                                                <a href="checkout.php" class="btn btn-success" style="border-radius: 8px; padding: 10px 24px; font-weight: 600; white-space: nowrap;">
+                                                    <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
+                                                </a>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
