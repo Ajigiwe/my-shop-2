@@ -695,12 +695,8 @@ $page_title = 'Checkout - ' . ($payment_method === 'paystack' ? 'Pay with Paysta
                             // Force a hard redirect with delay to see console
                             console.log('Redirecting in 3 seconds to:', redirectUrl);
                             
-                            // Show redirect message on page
-                            $('body').prepend('<div id="redirect-message" style="position: fixed; top: 0; left: 0; width: 100%; background: #28a745; color: white; padding: 10px; text-align: center; z-index: 9999;">Redirecting to Paystack in 3 seconds... <button onclick="clearTimeout(window.redirectTimeout); document.getElementById(\'redirect-message\').remove();" style="margin-left: 10px; background: white; color: #28a745; border: none; padding: 5px 10px; border-radius: 3px;">Cancel</button></div>');
-                            
-                            window.redirectTimeout = setTimeout(function() {
-                                window.location.replace(redirectUrl);
-                            }, 3000);
+                            // Redirect immediately
+                            window.location.replace(redirectUrl);
                             return false;
                         } else {
                             // Handle error response
