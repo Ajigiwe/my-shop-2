@@ -1,155 +1,95 @@
 <?php
 /**
  * Paystack Payment Verification
- * - Handles Paystack payment verification callback
- * - Updates order status based on payment status
+ * Handles payment verification callback from Paystack
  */
 
-// Include database connection and config
+// Include database connection and Paystack configuration
 require_once 'includes/db.php';
+require_once 'vendor/autoload.php';
 require_once 'includes/paystack_config.php';
-require_once 'vendor/autoload.php'; // For Composer autoloading
 
 // Start session
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Get the order ID from the URL
-$order_id = $_GET['order_id'] ?? 0;
+// Get payment reference from URL
+$reference = $_GET['reference'] ?? '';
 
-if (!$order_id) {
-    die('Invalid order ID');
+// Debug logging
+error_log("Payment verification called with reference: " . $reference);
+error_log("GET parameters: " . print_r($_GET, true));
+
+if (empty($reference)) {
+    error_log("No payment reference provided, redirecting to cart");
+    header('Location: cart.php?error=invalid_reference');
+    exit();
 }
 
 try {
-    // Get order details
-    $stmt = $pdo->prepare("SELECT * FROM orders WHERE order_id = ?");
-    $stmt->execute([$order_id]);
-    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Verify payment with Paystack
+    $verification_response = verifyPaystackPayment($reference);
     
-    if (!$order) {
-        die('Order not found');
-    }
-    
-    // Initialize Paystack
-    $paystack = new Yabacon\Paystack(PAYSTACK_SECRET_KEY);
-    
-    // Get the payment reference from the order
-    $reference = $order['payment_reference'] ?? '';
-    
-    if (empty($reference)) {
-        throw new Exception('No payment reference found for this order');
-    }
-    
-    // Verify the payment
-    $response = $paystack->transaction->verify([
-        'reference' => $reference
-    ]);
-    
-    // Check if payment was successful
-    if ($response->status && $response->data->status === 'success') {
-        // Payment was successful
-        $amount_paid = $response->data->amount / 100; // Convert from kobo to currency
+    if ($verification_response->status && $verification_response->data->status === 'success') {
+        $payment_data = $verification_response->data;
         
-        // Update order status
-        $stmt = $pdo->prepare("
-            UPDATE orders 
-            SET status = 'paid', 
-                payment_status = 'completed',
-                payment_reference = ?,
-                payment_amount = ?,
-                payment_date = NOW()
-            WHERE order_id = ?
-        ");
+        // Get order by payment reference
+        $stmt = $pdo->prepare("SELECT * FROM orders WHERE payment_reference = ?");
+        $stmt->execute([$reference]);
+        $order = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        $stmt->execute([
-            $reference,
-            $amount_paid,
-            $order_id
-        ]);
+        error_log("Order lookup result: " . print_r($order, true));
         
-        // Get order details for email
-        $stmt = $pdo->prepare("
-            SELECT o.*, u.name, u.email 
-            FROM orders o 
-            JOIN users u ON u.user_id = o.user_id 
-            WHERE o.order_id = ?
-        ");
-        $stmt->execute([$order_id]);
-        $order_details = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($order) {
+            // Update order status to confirmed
+            $stmt = $pdo->prepare("UPDATE orders SET status = 'confirmed', payment_status = 'completed' WHERE order_id = ?");
+            $stmt->execute([$order['order_id']]);
+            error_log("Order status updated to confirmed for order: " . $order['order_id']);
+            
+            // Clear user's cart
+            $stmt = $pdo->prepare("DELETE FROM cart WHERE user_id = ?");
+            $stmt->execute([$order['user_id']]);
+            error_log("Cart cleared for user: " . $order['user_id']);
+            
+            // Redirect to success page
+            $redirect_url = 'order_confirmation.php?order_id=' . $order['order_id'] . '&payment=success';
+            error_log("Redirecting to: " . $redirect_url);
+            header('Location: ' . $redirect_url);
+            exit();
+        } else {
+            // Order not found
+            header('Location: cart.php?error=order_not_found');
+            exit();
+        }
+    } else {
+        // Payment failed
+        $order_id = null;
         
-        // Send order confirmation email
-        if ($order_details && !empty($order_details['email'])) {
-            // Get order items for the invoice
-            $stmt = $pdo->prepare("
-                SELECT oi.*, p.name as product_name, p.price as product_price 
-                FROM order_items oi 
-                JOIN products p ON oi.product_id = p.product_id 
-                WHERE oi.order_id = ?
-            ");
+        // Try to get order by reference
+        $stmt = $pdo->prepare("SELECT order_id FROM orders WHERE payment_reference = ?");
+        $stmt->execute([$reference]);
+        $order_result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($order_result) {
+            $order_id = $order_result['order_id'];
+            
+            // Update order status to cancelled
+            $stmt = $pdo->prepare("UPDATE orders SET status = 'cancelled', payment_status = 'failed' WHERE order_id = ?");
             $stmt->execute([$order_id]);
-            $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Prepare order details for email
-            $email_data = [
-                'order_id' => $order_id,
-                'items' => $order_items,
-                'subtotal' => $order_details['total_amount'],
-                'shipping' => 0, // Add shipping if applicable
-                'total' => $order_details['total_amount'],
-                'order_date' => $order_details['order_date'],
-                'status' => 'paid',
-                'payment_method' => 'Paystack',
-                'payment_reference' => $reference
-            ];
-            
-            // Include email config and send confirmation
-            require_once 'includes/email_config.php';
-            
-            // Send order confirmation email
-            sendOrderConfirmationEmail(
-                $order_details['email'],
-                $order_details['name'],
-                $order_id,
-                $email_data
-            );
-            
-            // Send invoice email
-            sendInvoiceEmail(
-                $order_details['email'],
-                $order_details['name'],
-                $order_id,
-                $email_data
-            );
         }
         
-        // Redirect to success page
-        header('Location: order_confirmation.php?order_id=' . $order_id . '&status=success');
+        // Redirect to failure page
+        $redirect_url = 'cart.php?error=payment_failed';
+        if ($order_id) {
+            $redirect_url .= '&order_id=' . $order_id;
+        }
+        header('Location: ' . $redirect_url);
         exit();
-        
-    } else {
-        // Payment failed or is pending
-        throw new Exception('Payment verification failed: ' . ($response->message ?? 'Unknown error'));
     }
-    
 } catch (Exception $e) {
-    // Log the error
     error_log('Payment verification error: ' . $e->getMessage());
-    
-    // Update order status to failed
-    if (isset($pdo)) {
-        $stmt = $pdo->prepare("
-            UPDATE orders 
-            SET status = 'payment_failed',
-                payment_status = 'failed',
-                notes = CONCAT(IFNULL(notes, ''), ' Payment failed: ', ?)
-            WHERE order_id = ?
-        ");
-        $stmt->execute([$e->getMessage(), $order_id]);
-    }
-    
-    // Redirect to failure page
-    header('Location: order_confirmation.php?order_id=' . $order_id . '&status=failed&error=' . urlencode($e->getMessage()));
+    header('Location: cart.php?error=verification_failed');
     exit();
 }
+?>

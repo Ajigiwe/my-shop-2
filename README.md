@@ -290,13 +290,13 @@ My Shop/
 - CSRF protection can be added
 
 ## Future Enhancements
-- Payment gateway integration (PayPal, Paystack)
+- Payment gateway integration (PayPal)
 - Email notifications
 - Product reviews and ratings
 - Wishlist functionality
 - Advanced search filters
 - PDF invoice generation (dompdf/mpdf)
-- Payment gateway integration (PayPal, Paystack)
+- Payment gateway integration (PayPal)
 - Email notifications
 - Product reviews and ratings
 - Wishlist functionality

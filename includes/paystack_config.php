@@ -1,106 +1,158 @@
 <?php
 /**
- * Payment Gateway Configuration
- * - Paystack and other payment gateway settings
+ * Paystack Configuration
+ * Handles Paystack API integration for payment processing
  */
 
-// Paystack Configuration - Using Environment Variables
-define('PAYSTACK_PUBLIC_KEY', $_ENV['PAYSTACK_PUBLIC_KEY'] ?? 'pk_test_38b1635c9aa6964ab1c5669bd0b9d40a3e512e06');
-define('PAYSTACK_SECRET_KEY', $_ENV['PAYSTACK_SECRET_KEY'] ?? 'sk_test_64b697acfffffff3c9e1f6c03eab9bc8cbe7f38d');
-define('PAYSTACK_PAYMENT_URL', 'https://api.paystack.co/transaction/initialize');
-define('PAYSTACK_VERIFY_URL', 'https://api.paystack.co/transaction/verify/');
+// Include environment loader and Composer autoloader
+require_once __DIR__ . '/env_loader.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
-// PayPal Configuration (for future implementation)
-define('PAYPAL_CLIENT_ID', '');
-define('PAYPAL_CLIENT_SECRET', '');
-define('PAYPAL_MODE', 'sandbox'); // 'sandbox' or 'live'
+// Initialize Paystack with environment variables
+$paystack_public_key = $_ENV['PAYSTACK_PUBLIC_KEY'] ?? '';
+$paystack_secret_key = $_ENV['PAYSTACK_SECRET_KEY'] ?? '';
 
-// Payment settings - Correctly encoded callback URL
-define('CURRENCY', 'GHS'); // Ghana Cedi for Paystack
-define('PAYMENT_CALLBACK_URL', 'http://127.0.0.1/My%20Shop2/verify_payment.php'); // URL encoded space
-define('PAYMENT_RETURN_URL', 'https://yourdomain.com/verify_payment.php'); // Replace with your actual domain
+// Validate that keys are set
+if (empty($paystack_public_key) || empty($paystack_secret_key)) {
+    error_log('Paystack keys not configured in .env file');
+    throw new Exception('Paystack configuration missing. Please check your .env file.');
+}
+
+// Initialize Paystack
+$paystack = new \Yabacon\Paystack($paystack_secret_key);
 
 /**
- * Initialize Paystack payment
- *
- * @param array $payment_data Payment data including amount, email, order_id, etc.
- * @return array|bool Returns payment initialization response or false on error
+ * Initialize Paystack payment using direct cURL
+ * @param array $data Payment data
+ * @return object Response from Paystack
  */
-function initializePaystackPayment($payment_data) {
-    $secret = PAYSTACK_SECRET_KEY;
-    $url = "https://api.paystack.co/transaction/initialize";
-
-    $payload = json_encode($payment_data);
-
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "Authorization: Bearer $secret",
-        "Content-Type: application/json",
-    ]);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+function initializePaystackPayment($data) {
+    global $paystack_secret_key;
+    
+    $url = 'https://api.paystack.co/transaction/initialize';
+    
+    $fields = [
+        'amount' => $data['amount'],
+        'email' => $data['email'],
+        'reference' => $data['reference'],
+        'callback_url' => $data['callback_url'] ?? '',
+        'metadata' => $data['metadata'] ?? []
+    ];
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-
-    $resp = curl_exec($ch);
-    if (curl_errno($ch)) {
-        error_log('Paystack init curl error: ' . curl_error($ch));
-        curl_close($ch);
-        return false;
-    }
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Authorization: Bearer ' . $paystack_secret_key,
+        'Content-Type: application/json'
+    ]);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
     curl_close($ch);
-
-    $json = json_decode($resp, true);
-    error_log('Paystack init response: ' . print_r($json, true));
-    return $json;
+    
+    if ($error) {
+        error_log('cURL error: ' . $error);
+        throw new Exception('Network error: ' . $error);
+    }
+    
+    if ($httpCode !== 200) {
+        error_log('HTTP error: ' . $httpCode . ' - ' . $response);
+        throw new Exception('API error: HTTP ' . $httpCode);
+    }
+    
+    $result = json_decode($response);
+    
+    if (!$result) {
+        error_log('Invalid JSON response: ' . $response);
+        throw new Exception('Invalid response from Paystack API');
+    }
+    
+    return $result;
 }
 
 /**
- * Verify Paystack payment
- *
+ * Verify Paystack payment using direct cURL
  * @param string $reference Payment reference
- * @return array|bool Returns payment verification data or false on error
+ * @return object Payment verification response
  */
 function verifyPaystackPayment($reference) {
+    global $paystack_secret_key;
+    
+    $url = 'https://api.paystack.co/transaction/verify/' . $reference;
+    
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, PAYSTACK_VERIFY_URL . $reference);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Authorization: Bearer ' . PAYSTACK_SECRET_KEY,
-        'Content-Type: application/json',
+        'Authorization: Bearer ' . $paystack_secret_key,
+        'Content-Type: application/json'
     ]);
-
-    // Disable SSL verification for development
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-
+    
     $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
     curl_close($ch);
-
-    if ($http_code === 200) {
-        return json_decode($response, true);
+    
+    if ($error) {
+        error_log('cURL error: ' . $error);
+        throw new Exception('Network error: ' . $error);
     }
+    
+    if ($httpCode !== 200) {
+        error_log('HTTP error: ' . $httpCode . ' - ' . $response);
+        throw new Exception('API error: HTTP ' . $httpCode);
+    }
+    
+    $result = json_decode($response);
+    
+    if (!$result) {
+        error_log('Invalid JSON response: ' . $response);
+        throw new Exception('Invalid response from Paystack API');
+    }
+    
+    return $result;
+}
 
-    error_log('Paystack payment verification failed: ' . $response);
-    return false;
+/**
+ * Get Paystack public key for frontend
+ * @return string Public key
+ */
+function getPaystackPublicKey() {
+    global $paystack_public_key;
+    return $paystack_public_key;
+}
+
+/**
+ * Generate unique transaction reference
+ * @return string Unique reference
+ */
+function generateTransactionReference() {
+    return 'TXN_' . time() . '_' . uniqid();
 }
 
 /**
  * Format amount for Paystack (convert to kobo)
- *
- * @param float $amount Amount in naira
+ * @param float $amount Amount in main currency
  * @return int Amount in kobo
  */
 function formatAmountForPaystack($amount) {
-    return (int)($amount * 100); // Convert to kobo
+    // Convert to kobo (multiply by 100)
+    return (int)($amount * 100);
 }
 
 /**
- * Format amount from Paystack (convert from kobo to naira)
- *
+ * Format amount from Paystack (convert from kobo)
  * @param int $amount Amount in kobo
- * @return float Amount in naira
+ * @return float Amount in main currency
  */
 function formatAmountFromPaystack($amount) {
-    return $amount / 100; // Convert from kobo to naira
+    // Convert from kobo (divide by 100)
+    return $amount / 100;
 }
 ?>

@@ -2,6 +2,9 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+// Start output buffering to catch any unexpected output
+ob_start();
+
 session_start();
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
@@ -19,6 +22,32 @@ try {
     // Check if this is an AJAX request
     $is_ajax = isset($_POST['is_ajax']) && $_POST['is_ajax'] === '1';
     
+    // Test database connection first
+    if (!isset($pdo) || !$pdo) {
+        error_log("Database connection failed, using fallback mode");
+        
+        // In fallback mode, just redirect to Paystack without processing order
+        $payment_method = $_POST['payment_method'] ?? 'paystack';
+        if ($payment_method === 'paystack') {
+            // Redirect directly to Paystack checkout page
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'message' => 'Redirecting to Paystack...',
+                'redirect' => 'checkout_paystack.php?order_id=fallback_' . time()
+            ]);
+            exit();
+        } else {
+            // For COD, show error since we can't process without database
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Database connection failed. Please try again later.'
+            ]);
+            exit();
+        }
+    }
+    
     // Get form data
     $phone = sanitizeInput($_POST['phone'] ?? '');
     $shipping_address = sanitizeInput($_POST['shipping_address'] ?? '');
@@ -26,6 +55,10 @@ try {
     $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
     $order_notes = sanitizeInput($_POST['order_notes'] ?? '');
     $payment_method = $_POST['payment_method'] ?? 'paystack';
+    
+    // Debug: Log the received payment method
+    error_log("Received payment method: " . $payment_method);
+    error_log("Is AJAX request: " . ($is_ajax ? 'Yes' : 'No'));
     
     // Get user ID from session
     $user_id = $_SESSION['user_id'] ?? 0;
@@ -130,9 +163,14 @@ try {
         // Set redirect URL based on payment method
         if ($payment_method === 'paystack') {
             $response['redirect'] = 'checkout_paystack.php?order_id=' . $order_id;
+            error_log("Paystack redirect set: " . $response['redirect']);
         } else {
             $response['redirect'] = 'order_confirmation.php?order_id=' . $order_id;
+            error_log("COD redirect set: " . $response['redirect']);
         }
+        
+        // Debug: Log the complete response
+        error_log("Process checkout response: " . json_encode($response));
         
         // Send order confirmation email using PHPMailer
         try {
@@ -205,5 +243,17 @@ header('Cache-Control: no-cache, must-revalidate');
 header('Pragma: no-cache');
 header('Expires: 0');
 
+// Debug: Log the final response being sent
+$json_response = json_encode($response);
+error_log("Final JSON response: " . $json_response);
+
+// Check if JSON encoding was successful
+if (json_last_error() !== JSON_ERROR_NONE) {
+    error_log("JSON encoding error: " . json_last_error_msg());
+    $response = ['success' => false, 'message' => 'Server error: Invalid response format'];
+    $json_response = json_encode($response);
+}
+
 // Output the JSON response
-die(json_encode($response));
+echo $json_response;
+exit();

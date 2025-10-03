@@ -4,7 +4,7 @@ use PHPMailer\PHPMailer\Exception;
 
 /**
  * Checkout Page
- * - Handles order placement for both Pay on Delivery and Paystack payment methods
+ * - Handles order placement for Pay on Delivery payment method
  * - Creates order record and order items
  * - Redirects to appropriate payment processor or confirmation page
  */
@@ -226,10 +226,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 'redirect' => 'order_confirmation.php?order_id=' . $order_id
             ];
             
-            // If Paystack, set the redirect URL
+            // Set redirect URL based on payment method
             if ($payment_method === 'paystack') {
                 $response['redirect'] = 'checkout_paystack.php?order_id=' . $order_id;
-            } else if ($payment_method === 'cod' || $payment_method === 'pay_on_delivery') {
+            } else {
                 $response['redirect'] = 'order_confirmation.php?order_id=' . $order_id;
             }
             
@@ -436,7 +436,7 @@ $page_title = 'Checkout - ' . ($payment_method === 'paystack' ? 'Pay with Paysta
                 <div class="checkout-card h-100">
                     <div class="p-4">
                         <h2 class="h4 mb-4"><i class="fas fa-shipping-fast me-2"></i>Billing & Shipping Details</h2>
-                        <form method="POST" id="checkout-form" action="process_checkout.php" target="form-iframe">
+                        <form method="POST" id="checkout-form" action="process_checkout_simple.php">
                             <input type="hidden" name="payment_method" id="payment_method" value="paystack">
                             <input type="hidden" name="is_ajax" id="is_ajax" value="0">
                             <input type="hidden" name="action" id="action" value="process_order">
@@ -607,18 +607,23 @@ $page_title = 'Checkout - ' . ($payment_method === 'paystack' ? 'Pay with Paysta
             }, 300);
         }
 
-        // Handle form submission
+        // Handle form submission - ALWAYS prevent default
         $('#checkout-form').on('submit', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             
             const paymentMethod = $('input[name="payment_method_radio"]:checked').val();
             const isPaystack = paymentMethod === 'paystack';
             
             // Set payment method in hidden field
-            $('#payment_method').val(isPaystack ? 'paystack' : 'pay_on_delivery');
+            $('#payment_method').val(isPaystack ? 'paystack' : 'cash_on_delivery');
             
             // Set is_ajax flag
             $('#is_ajax').val('1');
+            
+            // Debug: Log the payment method being sent
+            console.log('Payment method being sent:', $('#payment_method').val());
+            console.log('Is AJAX:', $('#is_ajax').val());
             
             // Prevent multiple submissions
             if (isSubmitting) {
@@ -640,14 +645,21 @@ $page_title = 'Checkout - ' . ($payment_method === 'paystack' ? 'Pay with Paysta
             console.log('Submitting form:', formData);
             
             // Submit the form via AJAX
+            console.log('Starting AJAX request to process_checkout.php');
             $.ajax({
-                url: 'process_checkout.php',
+                url: 'process_checkout_simple.php',
                 method: 'POST',
                 data: formData,
                 dataType: 'json',
+                timeout: 30000, // 30 second timeout
+                beforeSend: function(xhr) {
+                    console.log('AJAX request being sent...');
+                },
                 success: function(response, status, xhr) {
                     console.log('AJAX Success - Raw Response:', response);
                     console.log('Status:', status);
+                    console.log('Response Type:', typeof response);
+                    console.log('Response Length:', response ? response.length : 'null');
                     
                     // Re-enable the submit button
                     isSubmitting = false;
@@ -662,6 +674,8 @@ $page_title = 'Checkout - ' . ($payment_method === 'paystack' ? 'Pay with Paysta
                         }
                         
                         console.log('Processed Response:', jsonResponse);
+                        console.log('Response Success:', jsonResponse ? jsonResponse.success : 'null');
+                        console.log('Response Redirect:', jsonResponse ? jsonResponse.redirect : 'null');
                         
                         if (jsonResponse && jsonResponse.success) {
                             // Store order ID in session storage
@@ -675,10 +689,19 @@ $page_title = 'Checkout - ' . ($payment_method === 'paystack' ? 'Pay with Paysta
                                            (jsonResponse.order_id ? 'order_confirmation.php?order_id=' + jsonResponse.order_id : 'order_confirmation.php');
                             
                             console.log('Preparing to redirect to:', redirectUrl);
+                            console.log('Response redirect field:', jsonResponse.redirect);
+                            console.log('Payment method selected:', paymentMethod);
                             
-                            // Force a hard redirect
-                            window.location.replace(redirectUrl);
-                            return;
+                            // Force a hard redirect with delay to see console
+                            console.log('Redirecting in 3 seconds to:', redirectUrl);
+                            
+                            // Show redirect message on page
+                            $('body').prepend('<div id="redirect-message" style="position: fixed; top: 0; left: 0; width: 100%; background: #28a745; color: white; padding: 10px; text-align: center; z-index: 9999;">Redirecting to Paystack in 3 seconds... <button onclick="clearTimeout(window.redirectTimeout); document.getElementById(\'redirect-message\').remove();" style="margin-left: 10px; background: white; color: #28a745; border: none; padding: 5px 10px; border-radius: 3px;">Cancel</button></div>');
+                            
+                            window.redirectTimeout = setTimeout(function() {
+                                window.location.replace(redirectUrl);
+                            }, 3000);
+                            return false;
                         } else {
                             // Handle error response
                             const errorMessage = (jsonResponse && jsonResponse.message) || 'An unknown error occurred. Please try again.';
@@ -700,6 +723,8 @@ $page_title = 'Checkout - ' . ($payment_method === 'paystack' ? 'Pay with Paysta
                 error: function(xhr, status, error) {
                     console.error('AJAX Error:', status, error);
                     console.error('Response text:', xhr.responseText);
+                    console.error('Status code:', xhr.status);
+                    console.error('Ready state:', xhr.readyState);
                     
                     // Re-enable the submit button
                     isSubmitting = false;
@@ -718,8 +743,16 @@ $page_title = 'Checkout - ' . ($payment_method === 'paystack' ? 'Pay with Paysta
                     }
                     
                     showError(errorMessage);
+                    return false;
+                },
+                complete: function(xhr, status) {
+                    console.log('AJAX request completed with status:', status);
+                    console.log('HTTP Status:', xhr.status);
                 }
             });
+            
+            // Always prevent form submission
+            return false;
         });
     });
         
