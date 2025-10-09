@@ -50,7 +50,7 @@ try {
 $order_items = [];
 if ($order) {
     try {
-        $stmt = $pdo->prepare("SELECT oi.*, p.name, p.image, oi.product_price as price, (oi.product_price * oi.quantity) as total_price
+        $stmt = $pdo->prepare("SELECT oi.*, p.name, p.image, oi.price, (oi.price * oi.quantity) as total_price
                               FROM order_items oi
                               JOIN products p ON p.product_id = oi.product_id
                               WHERE oi.order_id = ?
@@ -131,7 +131,8 @@ $page_title = 'Order #' . str_pad($order_id, 6, '0', STR_PAD_LEFT);
                             </div>
                             <div class="col-md-6 text-md-end">
                                 <span class="badge fs-6 p-2 <?php
-                                    echo match($order['status']) {
+                                    $status = $order['status'] ?? $order['order_status'] ?? 'pending';
+                                    echo match($status) {
                                         'pending' => 'bg-warning',
                                         'processing' => 'bg-info',
                                         'shipped' => 'bg-primary',
@@ -140,7 +141,7 @@ $page_title = 'Order #' . str_pad($order_id, 6, '0', STR_PAD_LEFT);
                                         default => 'bg-secondary'
                                     };
                                 ?>">
-                                    <?php echo ucfirst($order['status']); ?>
+                                    <?php echo ucfirst($status); ?>
                                 </span>
                             </div>
                         </div>
@@ -238,7 +239,7 @@ $page_title = 'Order #' . str_pad($order_id, 6, '0', STR_PAD_LEFT);
                                         'cancelled' => ['icon' => 'fa-times-circle', 'label' => 'Cancelled', 'color' => 'danger']
                                     ];
 
-                                    $current_status = $order['status'];
+                                    $current_status = $order['status'] ?? $order['order_status'] ?? 'pending';
                                     $status_keys = array_keys($statuses);
                                     $current_index = array_search($current_status, $status_keys);
                                     ?>

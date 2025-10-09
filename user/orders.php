@@ -1,4 +1,7 @@
-<?php
+: Undefined array key "status" in
+C:\xampp\htdocs\My Shop2\admin\order_details.php
+on line
+458<?php
 /**
  * User: My Orders
  * - Requires login; shows the authenticated user's orders with counts and totals
@@ -23,7 +26,16 @@ $page_title = 'My Orders';
 
 // Get user's orders (with item count per order)
 $orders = [];
+$debug_info = [];
+
 try {
+    // First, let's check if the user has any orders at all
+    $stmt = $pdo->prepare("SELECT COUNT(*) as order_count FROM orders WHERE user_id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $order_count = $stmt->fetch()['order_count'];
+    $debug_info['total_orders'] = $order_count;
+    
+    // Now get the detailed orders
     $stmt = $pdo->prepare("SELECT o.*, COUNT(oi.order_item_id) as item_count 
                           FROM orders o 
                           LEFT JOIN order_items oi ON o.order_id = oi.order_id 
@@ -32,8 +44,16 @@ try {
                           ORDER BY o.order_date DESC");
     $stmt->execute([$_SESSION['user_id']]);
     $orders = $stmt->fetchAll();
+    $debug_info['fetched_orders'] = count($orders);
+    
+    // Debug: Log the first order if any
+    if (!empty($orders)) {
+        $debug_info['first_order'] = $orders[0];
+    }
+    
 } catch(PDOException $e) {
     error_log("Error fetching orders: " . $e->getMessage());
+    $debug_info['error'] = $e->getMessage();
 }
 ?>
 
@@ -100,8 +120,8 @@ try {
 </head>
 <body>
 <?php include '../includes/navbar.php'; ?>
-   
-    
+
+<div class="container mt-4">
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -110,6 +130,22 @@ try {
                     <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
                 </a>
             </div>
+            
+            <?php if (!empty($debug_info)): ?>
+                <div class="alert alert-info">
+                    <h6>Debug Information:</h6>
+                    <p><strong>User ID:</strong> <?php echo $_SESSION['user_id']; ?></p>
+                    <p><strong>Total Orders in DB:</strong> <?php echo $debug_info['total_orders'] ?? 'Unknown'; ?></p>
+                    <p><strong>Fetched Orders:</strong> <?php echo $debug_info['fetched_orders'] ?? 'Unknown'; ?></p>
+                    <?php if (isset($debug_info['error'])): ?>
+                        <p><strong>Error:</strong> <?php echo htmlspecialchars($debug_info['error']); ?></p>
+                    <?php endif; ?>
+                    <?php if (isset($debug_info['first_order'])): ?>
+                        <p><strong>First Order Sample:</strong></p>
+                        <pre><?php print_r($debug_info['first_order']); ?></pre>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
             
             <?php if (empty($orders)): ?>
                 <div class="card">
@@ -146,7 +182,8 @@ try {
                                             <td><?php echo $order['item_count']; ?> items</td>
                                             <td>
                                                 <span class="badge bg-<?php 
-                                                    echo match($order['status']) {
+                                                    $status = $order['status'] ?? $order['order_status'] ?? 'pending';
+                                                    echo match($status) {
                                                         'pending' => 'warning',
                                                         'processing' => 'info',
                                                         'shipped' => 'primary',
@@ -155,17 +192,18 @@ try {
                                                         default => 'secondary'
                                                     };
                                                 ?>">
-                                                    <?php echo ucfirst($order['status']); ?>
+                                                    <?php echo ucfirst($status); ?>
                                                 </span>
                                             </td>
-                                            <td><?php echo formatCurrency($order['total_amount']); ?></td>
+                                            <td><?php echo '₵' . number_format($order['total_amount'], 2); ?></td>
                                             <td>
                                                 <?php
                                                 $payment_methods = [
                                                     'cash_on_delivery' => 'COD',
                                                     'paypal' => 'PayPal',
                                                 ];
-                                                echo htmlspecialchars($payment_methods[$order['payment_method']] ?? $order['payment_method']);
+                                                $payment_method = $order['payment_method'] ?? 'cash_on_delivery';
+                                                echo htmlspecialchars($payment_methods[$payment_method] ?? $payment_method);
                                                 ?>
                                             </td>
                                             <td>
@@ -211,9 +249,7 @@ try {
                 </div>
             <?php endif; ?>
         </div>
-    </div>
-</div>
-
+        </div>
     </div>
 </div>
 

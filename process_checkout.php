@@ -111,15 +111,18 @@ try {
         // Generate order number
         $order_number = 'ORD-' . strtoupper(uniqid());
         
-        // Insert order
-        $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, payment_method, shipping_address, billing_address) 
-                              VALUES (?, ?, ?, ?, ?)");
+        // Insert order with all fields
+        $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, payment_method, shipping_address, billing_address, order_notes, email, phone) 
+                              VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([
             $user_id,
             $subtotal,
             $payment_method === 'paystack' ? 'paystack' : 'cash_on_delivery',
             $shipping_address,
-            $billing_address ?: $shipping_address
+            $billing_address ?: $shipping_address,
+            $order_notes,
+            $email,
+            $phone
         ]);
         
         // Get the order ID

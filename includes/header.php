@@ -48,6 +48,38 @@ $site_name = 'ASO Online Market';
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?php echo $base; ?>assets/css/style.css">
+    
+    <!-- Mobile Scaling JavaScript -->
+    <script>
+    // Handle mobile scaling issues
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fix any scaling issues with interactive elements
+        if (window.innerWidth <= 768) {
+            // Ensure all form elements work properly
+            const formElements = document.querySelectorAll('input, textarea, select, button');
+            formElements.forEach(element => {
+                element.style.transform = 'scale(1)';
+            });
+            
+            // Fix any Bootstrap components that might have scaling issues
+            const bootstrapComponents = document.querySelectorAll('.modal, .dropdown-menu, .tooltip, .popover, .toast');
+            bootstrapComponents.forEach(component => {
+                component.style.transform = 'scale(1)';
+            });
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth <= 768) {
+                // Re-apply fixes on resize
+                const formElements = document.querySelectorAll('input, textarea, select, button');
+                formElements.forEach(element => {
+                    element.style.transform = 'scale(1)';
+                });
+            }
+        });
+    });
+    </script>
     <link rel="stylesheet" href="<?php echo $base; ?>assets/css/search.css">
     
     <!-- Simple modal initialization -->
@@ -69,6 +101,7 @@ $site_name = 'ASO Online Market';
         });
     });
     </script>
+
 
     <!-- Custom Navbar Styles -->
     <style>

@@ -43,7 +43,7 @@ try {
         
         if ($order) {
             // Update order status to confirmed
-            $stmt = $pdo->prepare("UPDATE orders SET status = 'confirmed', payment_status = 'completed' WHERE order_id = ?");
+            $stmt = $pdo->prepare("UPDATE orders SET order_status = 'confirmed', payment_status = 'completed' WHERE order_id = ?");
             $stmt->execute([$order['order_id']]);
             error_log("Order status updated to confirmed for order: " . $order['order_id']);
             
@@ -75,7 +75,7 @@ try {
             $order_id = $order_result['order_id'];
             
             // Update order status to cancelled
-            $stmt = $pdo->prepare("UPDATE orders SET status = 'cancelled', payment_status = 'failed' WHERE order_id = ?");
+            $stmt = $pdo->prepare("UPDATE orders SET order_status = 'cancelled', payment_status = 'failed' WHERE order_id = ?");
             $stmt->execute([$order_id]);
         }
         

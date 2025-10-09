@@ -3,7 +3,8 @@ if (typeof toastContainer === 'undefined') {
     var toastContainer = null;
 }
 
-// Dropdown functionality
+// Dropdown functionality - DISABLED to prevent conflicts with Bootstrap
+/*
 function toggleDropdown(dropdownId) {
     const dropdown = document.getElementById(dropdownId);
     if (dropdown) {
@@ -27,8 +28,10 @@ document.addEventListener('click', function(event) {
         });
     }
 });
+*/
 
-// Custom dropdown functionality (simpler and more reliable)
+// Custom dropdown functionality - DISABLED to prevent conflicts with Bootstrap
+/*
 function toggleCustomDropdown(event, menuId) {
     event.preventDefault();
     event.stopPropagation();
@@ -55,6 +58,7 @@ document.addEventListener('click', function(event) {
         });
     }
 });
+*/
 
 // Initialize toast container
 function initializeToastContainer() {

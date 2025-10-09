@@ -72,13 +72,13 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM products");
     $stats['total_products'] = $stmt->fetch()['total'] ?? 0;
 
-    // Get order status counts
+    // Get order status counts - FIXED: Use order_status instead of status
     $stmt = $pdo->query("SELECT 
-                        status, 
+                        order_status, 
                         COUNT(*) as count,
                         SUM(total_amount) as amount
                       FROM orders 
-                      GROUP BY status");
+                      GROUP BY order_status");
     
     // Initialize all possible statuses with 0 count
     $statuses = [
@@ -93,7 +93,7 @@ try {
     
     // Update with actual counts from database
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $status = strtolower($row['status']);
+        $status = strtolower($row['order_status']);
         if (array_key_exists($status, $statuses)) {
             $statuses[$status] = (int)$row['count'];
         }
@@ -111,14 +111,14 @@ try {
     $stats['pending_orders'] = $statuses['pending'] + $statuses['confirmed'] + $statuses['processing'];
     $stats['completed_orders'] = $statuses['delivered'];
     
-    // Get monthly data for the last 12 months
+    // Get monthly data for the last 12 months - FIXED: Use order_status instead of status
     $stmt = $pdo->query("SELECT 
                         DATE_FORMAT(order_date, '%Y-%m') as month,
                         COUNT(*) as order_count,
                         COALESCE(SUM(total_amount), 0) as revenue
                       FROM orders 
                       WHERE order_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-                      AND status != 'cancelled'
+                      AND order_status != 'cancelled'
                       GROUP BY DATE_FORMAT(order_date, '%Y-%m')
                       ORDER BY month");
     
@@ -147,14 +147,14 @@ try {
         $chart_data['payment_totals'][] = (float)$row['amount'];
     }
     
-    // Get daily data for the last 30 days
+    // Get daily data for the last 30 days - FIXED: Use order_status instead of status
     $stmt = $pdo->query("SELECT 
                         DATE(order_date) as date,
                         COUNT(*) as order_count,
                         COALESCE(SUM(total_amount), 0) as revenue
                       FROM orders 
                       WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                      AND status != 'cancelled'
+                      AND order_status != 'cancelled'
                       GROUP BY DATE(order_date)
                       ORDER BY date");
     
@@ -164,7 +164,7 @@ try {
         $chart_data['daily_revenue'][] = (float)$row['revenue'];
     }
 
-    // Get most bought products
+    // Get most bought products - FIXED: Use order_status instead of status
     $stmt = $pdo->query("SELECT 
                         p.name as product_name,
                         p.image as product_image,
@@ -174,7 +174,7 @@ try {
                       FROM order_items oi
                       JOIN products p ON oi.product_id = p.product_id
                       JOIN orders o ON oi.order_id = o.order_id
-                      WHERE o.status != 'cancelled'
+                      WHERE o.order_status != 'cancelled'
                       GROUP BY oi.product_id
                       ORDER BY times_ordered DESC
                       LIMIT 5");

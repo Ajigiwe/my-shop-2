@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     // Show success toast with 2 second duration
-                    showToast(data.message, 'success', 2000);
+                    showToast(data.message, 'success', 1000);
                 } else {
                     showToast(data.message, 'danger', 2000);
                 }

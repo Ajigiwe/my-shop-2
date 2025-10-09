@@ -101,122 +101,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $total += $item['price'] * $item['quantity'];
             }
             
-            // Log the start of order processing
+            // Generate unique order number
+            $order_number = 'ORD-' . time() . '-' . uniqid();
             
             // Start transaction
             $pdo->beginTransaction();
             
-            // Create order with payment method
-            $order_number = 'POD' . date('Ymd') . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
-            
+            // Insert order into database
             $stmt = $pdo->prepare("
-                INSERT INTO orders (
-                    user_id, order_number, total_amount, status, 
-                    payment_method, shipping_address, billing_address, 
-                    phone, email, notes, created_at, updated_at
-                ) VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                INSERT INTO orders (user_id, total_amount, payment_method, shipping_address, billing_address, order_notes, status, order_date, order_number) 
+                VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), ?)
             ");
-            
             $stmt->execute([
                 $user_id,
-                $order_number,
                 $total,
                 $payment_method,
                 $shipping_address,
                 $billing_address,
-                $phone,
-                $email,
-                $order_notes
+                $order_notes,
+                $order_number
             ]);
             
             $order_id = $pdo->lastInsertId();
             
             // Insert order items
-            $stmt = $pdo->prepare("
-                INSERT INTO order_items (
-                    order_id, product_id, product_name, product_price, 
-                    quantity, price, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, NOW())
-            ");
-            
             foreach ($cart_items as $item) {
-                // Get product details
-                $productStmt = $pdo->prepare("SELECT name, price FROM products WHERE product_id = ?");
-                $productStmt->execute([$item['product_id']]);
-                $product = $productStmt->fetch(PDO::FETCH_ASSOC);
-                
-                if ($product) {
-                    $stmt->execute([
-                        $order_id,
-                        $item['product_id'],
-                        $product['name'],
-                        $product['price'],
-                        $item['quantity'],
-                        $item['price'] * $item['quantity']
-                    ]);
-                    
-                    // Update product stock
-                    $update_stock = $pdo->prepare("UPDATE products SET stock_quantity = stock_quantity - ? WHERE product_id = ?");
-                    $update_stock->execute([$item['quantity'], $item['product_id']]);
-                }
+                $stmt = $pdo->prepare("
+                    INSERT INTO order_items (order_id, product_id, quantity, price) 
+                    VALUES (?, ?, ?, ?)
+                ");
+                $stmt->execute([
+                    $order_id,
+                    $item['product_id'],
+                    $item['quantity'],
+                    $item['price']
+                ]);
             }
             
-            // Clear the cart after successful order
-            $clear_cart = $pdo->prepare("DELETE FROM cart WHERE user_id = ?");
-            $clear_cart->execute([$user_id]);
+            // Clear cart
+            $stmt = $pdo->prepare("DELETE FROM cart WHERE user_id = ?");
+            $stmt->execute([$user_id]);
             
             // Commit transaction
             $pdo->commit();
             
-            // Store order ID in session for payment processing
-            $_SESSION['current_order_id'] = $order_id;
-            
             // Send order confirmation email
             try {
                 $to = $email;
-                $subject = "Order Confirmation #$order_number";
+                $subject = "Order Confirmation - Order #$order_id";
                 $message = "
                     <h2>Thank you for your order!</h2>
-                    <p>Your order #$order_number has been received and is being processed.</p>
-                    <p><strong>Order Details:</strong></p>
-                    <p>Order Number: $order_number</p>
-                    <p>Order Total: " . formatCurrency($total) . "</p>
-                    <p>Payment Method: " . ucwords(str_replace('_', ' ', $payment_method)) . "</p>
-                    <p>We'll notify you once your order ships. Thank you for shopping with us!</p>
+                    <p>Your order has been received and is being processed.</p>
+                    <p><strong>Order ID:</strong> $order_id</p>
+                    <p><strong>Total Amount:</strong> " . formatCurrency($total) . "</p>
+                    <p><strong>Payment Method:</strong> " . ucfirst(str_replace('_', ' ', $payment_method)) . "</p>
                 ";
                 
-                // Send email using PHPMailer
                 $mail = new PHPMailer(true);
                 
-                try {
-                    // Server settings
-                    $mail->isSMTP();
-                    $mail->Host = 'smtp.gmail.com';
-                    $mail->SMTPAuth = true;
-                    $mail->Username = 'minatoflash82@gmail.com';
-                    $mail->Password = 'negp ydit srrh gveq';
-                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                    $mail->Port = 587;
-                    
-                    // Recipients
-                    $mail->setFrom('minatoflash82@gmail.com', 'ASO Online Market');
-                    $mail->addAddress($to);
-                    
-                    // Content
-                    $mail->isHTML(true);
-                    $mail->Subject = $subject;
-                    $mail->Body    = $message;
-                    
-                    $mail->send();
-                    error_log("Order confirmation email sent to: $to");
-                    
-                } catch (Exception $e) {
-                    error_log("Email could not be sent. Mailer Error: {$mail->ErrorInfo}");
-                }
+                // Server settings
+                $mail->isSMTP();
+                $mail->Host       = 'smtp.gmail.com';
+                $mail->SMTPAuth   = true;
+                $mail->Username   = 'minatoflash82@gmail.com';
+                $mail->Password   = 'your-app-password';
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = 587;
+                
+                // Recipients
+                $mail->setFrom('minatoflash82@gmail.com', 'ASO Online Market');
+                $mail->addAddress($to);
+                
+                // Content
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body    = $message;
+                
+                $mail->send();
+                error_log("Order confirmation email sent to: $to");
                 
             } catch (Exception $e) {
-                // Log email error but don't fail the order
-                error_log("Failed to send order confirmation email: " . $e->getMessage());
+                error_log("Email could not be sent. Mailer Error: {$mail->ErrorInfo}");
             }
             
             // Return JSON response for AJAX
@@ -228,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             
             // Set redirect URL based on payment method
             if ($payment_method === 'paystack') {
-                $response['redirect'] = 'checkout_paystack.php?order_id=' . $order_id;
+                $response['redirect'] = 'checkout_paystack_fixed.php?order_id=' . $order_id;
             } else {
                 $response['redirect'] = 'order_confirmation.php?order_id=' . $order_id;
             }
@@ -287,53 +252,60 @@ $page_title = 'Checkout - ' . ($payment_method === 'paystack' ? 'Pay with Paysta
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($page_title); ?> - ASO Online Market</title>
+    
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Other CSS and JS includes -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
     
     <style>
         .checkout-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem 15px;
-        }
-        
-        .checkout-card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-            height: 100%;
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
+            min-height: 100vh;
         }
         
         .checkout-header {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .checkout-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .checkout-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .form-section {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+        }
+        
+        .form-section-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
             padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .checkout-header h1 {
-            margin: 0;
-            font-size: 2rem;
-            font-weight: 700;
-        }
-        
-        .form-label {
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: var(--gray-700);
+            font-weight: 600;
         }
         
         .form-control, .form-select {
-            padding: 0.75rem 1rem;
             border: 1px solid var(--gray-300);
-            border-radius: 8px;
-            transition: var(--transition);
+            border-radius: var(--radius);
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
         }
         
         .form-control:focus, .form-select:focus {
@@ -341,437 +313,565 @@ $page_title = 'Checkout - ' . ($payment_method === 'paystack' ? 'Pay with Paysta
             box-shadow: 0 0 0 0.2rem rgba(58, 90, 64, 0.25);
         }
         
+        .form-label {
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+        
+        .payment-method-card {
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: white;
+        }
+        
+        .payment-method-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .payment-method-card.selected {
+            border-color: var(--primary-color);
+            background: var(--gray-50);
+            box-shadow: var(--shadow-sm);
+        }
+        
         .btn-checkout {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             border: none;
             color: white;
             padding: 1rem 2rem;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: var(--radius);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            transition: var(--transition);
+            transition: all 0.3s ease;
             width: 100%;
         }
         
         .btn-checkout:hover {
-            background-color: var(--primary-dark);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-checkout:disabled {
+            opacity: 0.6;
+            transform: none;
         }
         
         .order-summary-card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
             overflow: hidden;
-            height: 100%;
         }
         
         .order-summary-header {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
-            padding: 1.25rem 1.5rem;
+            padding: 1.5rem;
             font-weight: 600;
-            font-size: 1.1rem;
         }
         
         .order-item {
-            padding: 1.25rem 1.5rem;
+            padding: 1.5rem;
             border-bottom: 1px solid var(--gray-200);
+            transition: background-color 0.2s ease;
+        }
+        
+        .order-item:hover {
+            background: var(--gray-50);
         }
         
         .order-item:last-child {
             border-bottom: none;
         }
         
-        .order-total {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--primary-color);
-        }
-        
-        .product-img {
+        .product-image {
             width: 60px;
             height: 60px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: var(--radius);
             border: 1px solid var(--gray-200);
         }
         
         .quantity-badge {
-            background-color: var(--primary-color);
+            background: var(--primary-color);
             color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius);
             font-weight: 600;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .order-total {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .security-badge {
+            background: var(--success-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            color: var(--gray-500);
+        }
+        
+        .step.active {
+            color: var(--primary-color);
+        }
+        
+        .step.completed {
+            color: var(--success-color);
+        }
+        
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--gray-300);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 0.75rem;
+        }
+        
+        .step.active .step-number {
+            background: var(--primary-color);
+        }
+        
+        .step.completed .step-number {
+            background: var(--success-color);
+        }
+        
+        .step-connector {
+            width: 40px;
+            height: 2px;
+            background: var(--gray-300);
+            margin: 0 1rem;
+        }
+        
+        .step.completed + .step-connector {
+            background: var(--success-color);
         }
     </style>
 </head>
-<body>
-    <!-- Navigation -->
-    <?php include 'includes/navbar.php'; ?>
+<body class="checkout-container">
 
-    <div class="checkout-header">
-        <div class="container">
-            <h1>Checkout</h1>
-            <p class="mb-0">Complete your purchase</p>
+<?php include 'includes/navbar.php'; ?>
+
+<!-- Checkout Header -->
+<div class="checkout-header">
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-credit-card me-3"></i>Checkout
+                </h1>
+                <p class="lead mb-0">Complete your purchase securely</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Step Indicator -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="step-indicator justify-content-center">
+                <div class="step completed">
+                    <div class="step-number">1</div>
+                    <span>Cart</span>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step active">
+                    <div class="step-number">2</div>
+                    <span>Checkout</span>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <span>Payment</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="container checkout-container">
-        <?php if (!empty($errors)): ?>
-            <div class="alert alert-danger">
-                <ul class="mb-0">
-                    <?php foreach ($errors as $error): ?>
-                        <li><?php echo htmlspecialchars($error); ?></li>
-                    <?php endforeach; ?>
-                </ul>
+    <?php if (!empty($errors)): ?>
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-danger border-0 shadow-sm">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:
+                    </h6>
+                    <ul class="mb-0">
+                        <?php foreach ($errors as $error): ?>
+                            <li><?php echo htmlspecialchars($error); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
             </div>
-        <?php endif; ?>
+        </div>
+    <?php endif; ?>
 
-        <div class="row g-4">
-            <!-- Billing & Shipping Details -->
-            <div class="col-lg-8">
-                <div class="checkout-card h-100">
-                    <div class="p-4">
-                        <h2 class="h4 mb-4"><i class="fas fa-shipping-fast me-2"></i>Billing & Shipping Details</h2>
-                        <form method="POST" id="checkout-form" action="process_checkout_simple.php">
-                            <input type="hidden" name="payment_method" id="payment_method" value="paystack">
-                            <input type="hidden" name="is_ajax" id="is_ajax" value="0">
-                            <input type="hidden" name="action" id="action" value="process_order">
+    <div class="row g-4">
+        <!-- Checkout Form -->
+        <div class="col-lg-8">
+            <div class="form-section">
+                <div class="form-section-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shipping-fast me-2"></i>Billing & Shipping Details
+                    </h4>
+                </div>
+                
+                <div class="p-4">
+                    <form method="POST" id="checkout-form" action="process_checkout_simple.php">
+                        <input type="hidden" name="payment_method" id="payment_method" value="paystack">
+                        <input type="hidden" name="is_ajax" id="is_ajax" value="0">
+                        <input type="hidden" name="action" id="action" value="process_order">
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope me-2"></i>Email Address <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" class="form-control" id="email" name="email" required 
+                                       value="<?php echo htmlspecialchars($email); ?>"
+                                       placeholder="Enter your email address">
+                            </div>
                             
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" id="email" name="email" required 
-                                           value="<?php echo htmlspecialchars($email); ?>">
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">
+                                    <i class="fas fa-phone me-2"></i>Phone Number <span class="text-danger">*</span>
+                                </label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required
+                                       value="<?php echo htmlspecialchars($phone); ?>"
+                                       placeholder="Enter your phone number">
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="shipping_address" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Shipping Address <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" id="shipping_address" name="shipping_address" 
+                                          rows="3" required placeholder="Enter your complete shipping address"><?php echo htmlspecialchars($shipping_address); ?></textarea>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="same-billing-address" checked>
+                                    <label class="form-check-label" for="same-billing-address">
+                                        <i class="fas fa-check-circle me-2"></i>Billing address is the same as shipping address
+                                    </label>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control" id="phone" name="phone" required
-                                           value="<?php echo htmlspecialchars($phone); ?>">
-                                </div>
-                                <div class="col-12">
-                                    <label for="shipping_address" class="form-label">Shipping Address <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="shipping_address" name="shipping_address" 
-                                              rows="3" required><?php echo htmlspecialchars($shipping_address); ?></textarea>
-                                </div>
-                                <div class="col-12">
+                            </div>
+                            
+                            <div class="col-12" id="billing-address-container" style="display: none;">
+                                <label for="billing_address" class="form-label">
+                                    <i class="fas fa-building me-2"></i>Billing Address
+                                </label>
+                                <textarea class="form-control" id="billing_address" name="billing_address" 
+                                          rows="3" placeholder="Enter your billing address"><?php echo htmlspecialchars($billing_address); ?></textarea>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="order_notes" class="form-label">
+                                    <i class="fas fa-sticky-note me-2"></i>Order Notes (Optional)
+                                </label>
+                                <textarea class="form-control" id="order_notes" name="order_notes" 
+                                          placeholder="Special delivery instructions or notes about your order"
+                                          rows="3"><?php echo htmlspecialchars($order_notes); ?></textarea>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Payment Method Selection -->
+                        <h5 class="mb-4">
+                            <i class="fas fa-credit-card me-2"></i>Payment Method
+                        </h5>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="payment-method-card" data-payment="paystack">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="same-billing-address" checked>
-                                        <label class="form-check-label" for="same-billing-address">
-                                            Billing address is the same as shipping address
+                                        <input class="form-check-input payment-method" type="radio" name="payment_method_radio" 
+                                               id="paystack" value="paystack" checked>
+                                        <label class="form-check-label w-100" for="paystack">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-credit-card fa-2x me-3 text-primary"></i>
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold">Pay with Paystack</h6>
+                                                    <small class="text-muted">Secure online payment</small>
+                                                </div>
+                                            </div>
                                         </label>
                                     </div>
                                 </div>
-                                <div class="col-12" id="billing-address-container" style="display: none;">
-                                    <label for="billing_address" class="form-label">Billing Address</label>
-                                    <textarea class="form-control" id="billing_address" name="billing_address" 
-                                              rows="3"><?php echo htmlspecialchars($billing_address); ?></textarea>
-                                </div>
-                                <div class="col-12">
-                                    <label for="order_notes" class="form-label">Order Notes (Optional)</label>
-                                    <textarea class="form-control" id="order_notes" name="order_notes" 
-                                              placeholder="Notes about your order, e.g. special delivery instructions"
-                                              rows="3"><?php echo htmlspecialchars($order_notes); ?></textarea>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="payment-method-card" data-payment="cod">
+                                    <div class="form-check">
+                                        <input class="form-check-input payment-method" type="radio" name="payment_method_radio" 
+                                               id="cod" value="cod">
+                                        <label class="form-check-label w-100" for="cod">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-truck fa-2x me-3 text-primary"></i>
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold">Pay on Delivery</h6>
+                                                    <small class="text-muted">Pay with cash upon delivery</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <hr class="my-4">
-
-                            <h5 class="mb-3"><i class="fas fa-credit-card me-2"></i>Payment Method</h5>
-                            <div class="payment-methods mb-4">
-                                <div class="form-check mb-3 p-3 border rounded">
-                                    <input class="form-check-input payment-method" type="radio" name="payment_method_radio" 
-                                           id="paystack" value="paystack" checked>
-                                    <label class="form-check-label d-flex align-items-center ms-2" for="paystack">
-                                        <i class="fas fa-credit-card fa-lg me-2 text-primary"></i>
-                                        <div>
-                                            <div class="fw-semibold">Pay with Paystack</div>
-                                            <small class="text-muted">Pay securely using your credit/debit card</small>
-                                        </div>
-                                    </label>
-                                </div>
-                                <div class="form-check p-3 border rounded">
-                                    <input class="form-check-input payment-method" type="radio" name="payment_method_radio" 
-                                           id="cod" value="cod">
-                                    <label class="form-check-label d-flex align-items-center ms-2" for="cod">
-                                        <i class="fas fa-truck fa-lg me-2 text-primary"></i>
-                                        <div>
-                                            <div class="fw-semibold">Pay on Delivery</div>
-                                            <small class="text-muted">Pay with cash upon delivery</small>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-
+                        <div class="mt-4">
                             <button type="submit" class="btn btn-checkout" id="submit-btn">
-                                <i class="fas fa-lock me-2"></i>Place Order
+                                <i class="fas fa-lock me-2"></i>Place Order Securely
                             </button>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                 </div>
             </div>
-            
-            <!-- Order Summary -->
-            <div class="col-lg-4">
-                <div class="order-summary-card">
-                    <div class="order-summary-header">
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="order-summary-card">
+                <div class="order-summary-header">
+                    <h5 class="mb-0">
                         <i class="fas fa-receipt me-2"></i>Order Summary
-                    </div>
-                    <div class="order-items">
-                        <?php 
-                        $subtotal = 0;
-                        foreach ($cart_items as $item): 
-                            $item_total = $item['price'] * $item['quantity'];
-                            $subtotal += $item_total;
-                        ?>
-                            <div class="order-item">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="d-flex">
-                                        <img src="assets/images/<?php echo htmlspecialchars($item['image']); ?>" 
-                                             alt="<?php echo htmlspecialchars($item['name']); ?>" 
-                                             class="product-img me-3">
-                                        <div>
-                                            <h6 class="mb-1"><?php echo htmlspecialchars($item['name']); ?></h6>
-                                            <?php if (!empty($item['size']) || !empty($item['color'])): ?>
-                                                <p class="text-muted small mb-0">
-                                                    <?php 
-                                                        echo (!empty($item['size']) ? 'Size: ' . htmlspecialchars($item['size']) : '') . 
-                                                             (!empty($item['size']) && !empty($item['color']) ? ' • ' : '') .
-                                                             (!empty($item['color']) ? 'Color: ' . htmlspecialchars($item['color']) : '');
-                                                    ?>
-                                                </p>
-                                            <?php endif; ?>
-                                            <div class="mt-2">
-                                                <span class="quantity-badge">Qty: <?php echo $item['quantity']; ?></span>
-                                                <span class="ms-2 fw-medium"><?php echo formatCurrency($item['price']); ?> each</span>
-                                            </div>
+                    </h5>
+                </div>
+                
+                <div class="order-items">
+                    <?php 
+                    $subtotal = 0;
+                    foreach ($cart_items as $item): 
+                        $item_total = $item['price'] * $item['quantity'];
+                        $subtotal += $item_total;
+                    ?>
+                        <div class="order-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="d-flex">
+                                    <img src="assets/images/<?php echo htmlspecialchars($item['image']); ?>" 
+                                         alt="<?php echo htmlspecialchars($item['name']); ?>" 
+                                         class="product-image me-3">
+                                    <div>
+                                        <h6 class="mb-1 fw-bold"><?php echo htmlspecialchars($item['name']); ?></h6>
+                                        <div class="mt-2">
+                                            <span class="quantity-badge">Qty: <?php echo $item['quantity']; ?></span>
+                                            <span class="ms-2 fw-medium text-muted"><?php echo formatCurrency($item['price']); ?> each</span>
                                         </div>
                                     </div>
-                                    <div class="text-end">
-                                        <div class="fw-semibold"><?php echo formatCurrency($item_total); ?></div>
-                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-success"><?php echo formatCurrency($item_total); ?></div>
                                 </div>
                             </div>
-                        <?php endforeach; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <div class="p-4 border-top">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Subtotal:</span>
+                        <span class="fw-medium"><?php echo formatCurrency($subtotal); ?></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Shipping:</span>
+                        <span class="text-success fw-medium">Free</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-top pt-3">
+                        <span class="fw-bold fs-5">Total:</span>
+                        <span class="order-total"><?php echo formatCurrency($subtotal); ?></span>
                     </div>
                     
-                    <div class="p-4 border-top">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Subtotal:</span>
-                            <span class="fw-medium"><?php echo formatCurrency($subtotal); ?></span>
+                    <div class="mt-4 text-center">
+                        <div class="security-badge">
+                            <i class="fas fa-shield-alt me-2"></i>Secure Checkout
                         </div>
-                        <div class="d-flex justify-content-between mb-3">
-                            <span class="text-muted">Shipping:</span>
-                            <span class="text-success fw-medium">Free</span>
-                        </div>
-                        <div class="d-flex justify-content-between border-top pt-3">
-                            <span class="fw-bold">Total:</span>
-                            <span class="order-total"><?php echo formatCurrency($subtotal); ?></span>
-                        </div>
+                        <p class="small text-muted mt-2 mb-0">
+                            Your payment information is encrypted and secure
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    <script>
-    $(document).ready(function() {
-        let isSubmitting = false;
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-        // Function to show error messages
-        function showError(message) {
-            const errorAlert = `
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
-            
-            // Remove any existing alerts
-            $('.alert.alert-danger').remove();
-            
-            // Prepend the error alert to the container
-            $('.checkout-container').prepend(errorAlert);
-            
-            // Scroll to the top to show the error
-            $('html, body').animate({
-                scrollTop: $('.checkout-container').offset().top - 50
-            }, 300);
+
+<script>
+$(document).ready(function() {
+    let isSubmitting = false;
+
+    // Payment method selection
+    $('.payment-method-card').on('click', function() {
+        $('.payment-method-card').removeClass('selected');
+        $(this).addClass('selected');
+        $(this).find('input[type="radio"]').prop('checked', true);
+    });
+
+    // Billing address toggle
+    $('#same-billing-address').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#billing-address-container').slideUp();
+        } else {
+            $('#billing-address-container').slideDown();
         }
+    });
 
-        // Handle form submission - ALWAYS prevent default
-        $('#checkout-form').on('submit', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const paymentMethod = $('input[name="payment_method_radio"]:checked').val();
-            const isPaystack = paymentMethod === 'paystack';
-            
-            // Set payment method in hidden field
-            $('#payment_method').val(isPaystack ? 'paystack' : 'cash_on_delivery');
-            
-            // Set is_ajax flag
-            $('#is_ajax').val('1');
-            
-            // Debug: Log the payment method being sent
-            console.log('Payment method being sent:', $('#payment_method').val());
-            console.log('Is AJAX:', $('#is_ajax').val());
-            
-            // Prevent multiple submissions
-            if (isSubmitting) {
-                console.log('Form submission already in progress');
+    // Function to show error messages
+    function showError(message) {
+        const errorAlert = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        
+        // Remove any existing alerts
+        $('.alert.alert-danger').remove();
+        
+        // Prepend the error alert to the container
+        $('.checkout-container').prepend(errorAlert);
+        
+        // Scroll to the top to show the error
+        $('html, body').animate({
+            scrollTop: $('.checkout-container').offset().top - 50
+        }, 300);
+    }
+
+    // Handle form submission
+    $('#checkout-form').on('submit', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const paymentMethod = $('input[name="payment_method_radio"]:checked').val();
+        const isPaystack = paymentMethod === 'paystack';
+        
+        // Set payment method in hidden field
+        $('#payment_method').val(isPaystack ? 'paystack' : 'cash_on_delivery');
+        
+        // Set is_ajax flag
+        $('#is_ajax').val('1');
+        
+        // Prevent multiple submissions
+        if (isSubmitting) {
+            return false;
+        }
+        
+        isSubmitting = true;
+        const submitBtn = $('#submit-btn');
+        const originalBtnText = submitBtn.html();
+        
+        // Show loading state
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...');
+        
+        // Get form data
+        const formData = $(this).serialize();
+        
+        // Submit the form via AJAX
+        $.ajax({
+            url: 'process_checkout.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            timeout: 30000,
+            success: function(response, status, xhr) {
+                // Re-enable the submit button
+                isSubmitting = false;
+                submitBtn.prop('disabled', false).html(originalBtnText);
+                
+                try {
+                    let jsonResponse = response;
+                    if (typeof response === 'string') {
+                        jsonResponse = JSON.parse(response);
+                    }
+                    
+                    if (jsonResponse && jsonResponse.success) {
+                        // Store order ID in session storage
+                        if (jsonResponse.order_id) {
+                            sessionStorage.setItem('last_order_id', jsonResponse.order_id);
+                        }
+                        
+                        // Determine redirect URL
+                        let redirectUrl = jsonResponse.redirect || 
+                                       (jsonResponse.order_id ? 'order_confirmation.php?order_id=' + jsonResponse.order_id : 'order_confirmation.php');
+                        
+                        // Redirect immediately
+                        window.location.replace(redirectUrl);
+                        return false;
+                    } else {
+                        const errorMessage = (jsonResponse && jsonResponse.message) || 'An unknown error occurred. Please try again.';
+                        showError(errorMessage);
+                    }
+                    
+                } catch (e) {
+                    showError('An error occurred while processing your order. Please try again.');
+                }
+                
+                // Scroll to the top to show any error message
+                $('html, body').animate({
+                    scrollTop: $('.checkout-container').offset().top - 50
+                }, 500);
+            },
+            error: function(xhr, status, error) {
+                // Re-enable the submit button
+                isSubmitting = false;
+                submitBtn.prop('disabled', false).html(originalBtnText);
+                
+                let errorMessage = 'An error occurred while processing your request. Please try again.';
+                
+                // Try to parse error response
+                try {
+                    const errorResponse = JSON.parse(xhr.responseText);
+                    if (errorResponse && errorResponse.message) {
+                        errorMessage = errorResponse.message;
+                    }
+                } catch (e) {
+                    // Use default error message
+                }
+                
+                showError(errorMessage);
                 return false;
             }
-            
-            isSubmitting = true;
-            const submitBtn = $('#submit-btn');
-            const originalBtnText = submitBtn.html();
-            
-            // Show loading state
-            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...');
-            
-            // Get form data
-            const formData = $(this).serialize();
-            
-            // Log the form data for debugging
-            console.log('Submitting form:', formData);
-            
-            // Submit the form via AJAX
-            console.log('Starting AJAX request to process_checkout.php');
-            $.ajax({
-                url: 'process_checkout_simple.php',
-                method: 'POST',
-                data: formData,
-                dataType: 'json',
-                timeout: 30000, // 30 second timeout
-                beforeSend: function(xhr) {
-                    console.log('AJAX request being sent...');
-                },
-                success: function(response, status, xhr) {
-                    console.log('AJAX Success - Raw Response:', response);
-                    console.log('Status:', status);
-                    console.log('Response Type:', typeof response);
-                    console.log('Response Length:', response ? response.length : 'null');
-                    
-                    // Re-enable the submit button
-                    isSubmitting = false;
-                    submitBtn.prop('disabled', false).html(originalBtnText);
-                    
-                    try {
-                        // If response is a string, try to parse it as JSON
-                        let jsonResponse = response;
-                        if (typeof response === 'string') {
-                            console.log('Parsing string response as JSON');
-                            jsonResponse = JSON.parse(response);
-                        }
-                        
-                        console.log('Processed Response:', jsonResponse);
-                        console.log('Response Success:', jsonResponse ? jsonResponse.success : 'null');
-                        console.log('Response Redirect:', jsonResponse ? jsonResponse.redirect : 'null');
-                        
-                        if (jsonResponse && jsonResponse.success) {
-                            // Store order ID in session storage
-                            if (jsonResponse.order_id) {
-                                console.log('Storing order ID in session:', jsonResponse.order_id);
-                                sessionStorage.setItem('last_order_id', jsonResponse.order_id);
-                            }
-                            
-                            // Determine redirect URL
-                            let redirectUrl = jsonResponse.redirect || 
-                                           (jsonResponse.order_id ? 'order_confirmation.php?order_id=' + jsonResponse.order_id : 'order_confirmation.php');
-                            
-                            console.log('Preparing to redirect to:', redirectUrl);
-                            console.log('Response redirect field:', jsonResponse.redirect);
-                            console.log('Payment method selected:', paymentMethod);
-                            
-                            // Force a hard redirect with delay to see console
-                            console.log('Redirecting in 3 seconds to:', redirectUrl);
-                            
-                            // Redirect immediately
-                            window.location.replace(redirectUrl);
-                            return false;
-                        } else {
-                            // Handle error response
-                            const errorMessage = (jsonResponse && jsonResponse.message) || 'An unknown error occurred. Please try again.';
-                            console.error('Checkout error:', errorMessage);
-                            showError(errorMessage);
-                        }
-                        
-                    } catch (e) {
-                        console.error('Error processing response:', e);
-                        console.error('Raw response text:', xhr.responseText);
-                        showError('An error occurred while processing your order. Please try again.');
-                    }
-                    
-                    // Scroll to the top to show any error message
-                    $('html, body').animate({
-                        scrollTop: $('.checkout-container').offset().top - 50
-                    }, 500);
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', status, error);
-                    console.error('Response text:', xhr.responseText);
-                    console.error('Status code:', xhr.status);
-                    console.error('Ready state:', xhr.readyState);
-                    
-                    // Re-enable the submit button
-                    isSubmitting = false;
-                    submitBtn.prop('disabled', false).html(originalBtnText);
-                    
-                    let errorMessage = 'An error occurred while processing your request. Please try again.';
-                    
-                    // Try to parse error response
-                    try {
-                        const errorResponse = JSON.parse(xhr.responseText);
-                        if (errorResponse && errorResponse.message) {
-                            errorMessage = errorResponse.message;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing error response:', e);
-                    }
-                    
-                    showError(errorMessage);
-                    return false;
-                },
-                complete: function(xhr, status) {
-                    console.log('AJAX request completed with status:', status);
-                    console.log('HTTP Status:', xhr.status);
-                }
-            });
-            
-            // Always prevent form submission
-            return false;
         });
-    });
         
-        // Function to show error messages
-        function showError(message) {
-            const errorAlert = `
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
-            
-            // Remove any existing alerts
-            $('.alert.alert-danger').remove();
-            
-            // Prepend the error alert to the container
-            $('.checkout-container').prepend(errorAlert);
-            
-            // Scroll to the top to show the error
-            $('html, body').animate({
-                scrollTop: $('.checkout-container').offset().top - 50
-            }, 300);
-        }
-    </script>
+        return false;
+    });
+});
+</script>
+
 </body>
 </html>

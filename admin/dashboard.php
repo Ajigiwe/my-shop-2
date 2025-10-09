@@ -250,7 +250,8 @@ $page_title = 'Admin Dashboard';
                                             <td><?php echo date('M j, Y', strtotime($order['order_date'])); ?></td>
                                             <td>
                                                 <span class="badge bg-<?php 
-                                                    echo match($order['status']) {
+                                                    $status = $order['order_status'] ?? 'pending';
+                                                    echo match($status) {
                                                         'pending' => 'warning',
                                                         'processing' => 'info',
                                                         'shipped' => 'primary',
@@ -259,7 +260,7 @@ $page_title = 'Admin Dashboard';
                                                         default => 'secondary'
                                                     };
                                                 ?>">
-                                                    <?php echo ucfirst($order['status']); ?>
+                                                    <?php echo ucfirst($status); ?>
                                                 </span>
                                             </td>
                                             <td><?php echo formatCurrency($order['total_amount']); ?></td>

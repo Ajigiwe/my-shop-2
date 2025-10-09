@@ -1,7 +1,7 @@
 <?php
 /**
  * Admin: Manage Users
- * - Admin-only actions to change roles, reset passwords, and optionally activate/deactivate users
+ * - Admin-only actions to change roles and optionally activate/deactivate users
  * - Detects if the "active" column exists to enable status actions without breaking when missing
  */
 require_once '../includes/db.php';
@@ -59,17 +59,6 @@ try {
                 $stmt = $pdo->prepare('UPDATE users SET active = 1 WHERE user_id = ?');
                 $stmt->execute([$user_id]);
                 $success = 'User activated';
-            }
-        } elseif ($action === 'reset_password') {
-            // Reset password to a new random temporary value
-            $user_id = (int)($_POST['user_id'] ?? 0);
-            if ($user_id <= 0) $errors[] = 'Invalid user';
-            $newPass = bin2hex(random_bytes(4)); // 8 hex chars
-            if (empty($errors)) {
-                $hash = password_hash($newPass, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare('UPDATE users SET password = ? WHERE user_id = ?');
-                $stmt->execute([$hash, $user_id]);
-                $success = 'Password reset. New temporary password: ' . $newPass;
             }
         }
     }
@@ -179,13 +168,6 @@ try {
                                 <?php endif; ?>
                                 <td><?php echo date('M j, Y', strtotime($u['created_at'])); ?></td>
                                 <td>
-                                    <form method="POST" action="" class="d-inline">
-                                        <input type="hidden" name="action" value="reset_password">
-                                        <input type="hidden" name="user_id" value="<?php echo $u['user_id']; ?>">
-                                        <button class="btn btn-sm btn-outline-warning" type="submit" onclick="return confirm('Reset password for this user?');">
-                                            <i class="fas fa-key"></i>
-                                        </button>
-                                    </form>
                                     <?php if ($hasActiveColumn): ?>
                                         <?php if ((int)$u['active'] === 1): ?>
                                             <form method="POST" action="" class="d-inline">

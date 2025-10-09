@@ -310,5 +310,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Debug: Check if floating cart is visible -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cartFloat = document.querySelector('.cart-float');
+    const whatsappFloat = document.querySelector('.whatsapp-float');
+    
+    console.log('🔍 Floating Cart Debug:');
+    console.log('Cart element found:', cartFloat);
+    console.log('WhatsApp element found:', whatsappFloat);
+    
+    if (cartFloat) {
+        console.log('Cart position:', window.getComputedStyle(cartFloat).position);
+        console.log('Cart z-index:', window.getComputedStyle(cartFloat).zIndex);
+        console.log('Cart display:', window.getComputedStyle(cartFloat).display);
+        console.log('Cart visibility:', window.getComputedStyle(cartFloat).visibility);
+    }
+    
+    if (whatsappFloat) {
+        console.log('WhatsApp position:', window.getComputedStyle(whatsappFloat).position);
+        console.log('WhatsApp z-index:', window.getComputedStyle(whatsappFloat).zIndex);
+        console.log('WhatsApp display:', window.getComputedStyle(whatsappFloat).display);
+        console.log('WhatsApp visibility:', window.getComputedStyle(whatsappFloat).visibility);
+    }
+});
+</script>
 </body>
 </html>

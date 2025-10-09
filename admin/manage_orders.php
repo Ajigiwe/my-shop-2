@@ -379,7 +379,8 @@ function getSortIcon($column, $current_sort, $current_order) {
                                     <td><?php echo date('M j, Y g:i A', strtotime($o['order_date'])); ?></td>
                                     <td>
                                         <span class="badge bg-<?php
-                                            echo match($o['status']) {
+                                            $status = $o['order_status'] ?? 'pending';
+                                            echo match($status) {
                                                 'pending' => 'warning',
                                                 'processing' => 'info',
                                                 'shipped' => 'primary',
@@ -387,7 +388,7 @@ function getSortIcon($column, $current_sort, $current_order) {
                                                 'cancelled' => 'danger',
                                                 default => 'secondary'
                                             };
-                                        ?>"><?php echo ucfirst($o['status']); ?></span>
+                                        ?>"><?php echo ucfirst($status); ?></span>
                                     </td>
                                     <td><?php echo htmlspecialchars($o['payment_method']); ?></td>
                                     <td><?php echo (int)$o['item_count']; ?></td>

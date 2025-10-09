@@ -245,14 +245,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_add_to_cart'])) 
                     <i class="fas fa-shipping-fast fa-3x text-primary"></i>
                 </div>
                 <h4>Free Shipping</h4>
-                <p>Free shipping on orders over GH₵50</p>
+                <p>Free shipping on orders over GH₵500</p>
             </div>
             <div class="col-md-4 text-center mb-4">
                 <div class="mb-3">
                     <i class="fas fa-undo fa-3x text-primary"></i>
                 </div>
                 <h4>Easy Returns</h4>
-                <p>30-day return policy</p>
+                <p>3-day return policy</p>
             </div>
             <div class="col-md-4 text-center mb-4">
                 <div class="mb-3">
@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     // Show success toast
-                    showToast(data.message, 'success', 2000);
+                    showToast(data.message, 'success', 1000);
 
                     // Update cart count in navbar if it exists
                     const cartCountElement = document.querySelector('.cart-count');

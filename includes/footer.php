@@ -108,10 +108,11 @@
 </footer>
 
 <!-- Floating Cart Widget -->
-<a href="cart.php"
-   class="cart-float"
+<a href="<?php echo $base; ?>cart.php"
+   class="cart-float cart-pulse"
    title="View Cart"
-   aria-label="View Shopping Cart">
+   aria-label="View Shopping Cart"
+   style="z-index: 9999 !important; display: block !important;">
     <i class="fas fa-shopping-cart"></i>
     <span class="cart-count">0</span>
 </a>
@@ -121,35 +122,39 @@
    target="_blank"
    class="whatsapp-float whatsapp-pulse"
    title="Chat with us on WhatsApp"
-   aria-label="Contact us on WhatsApp">
+   aria-label="Contact us on WhatsApp"
+   style="z-index: 9999 !important; display: block !important;">
 </a>
 
 <style>
 /* Floating Cart Button */
 .cart-float {
     position: fixed;
-    width: 60px;
-    height: 60px;
-    bottom: 100px;
+    width: 45px;
+    height: 45px;
+    top: 80px;
     right: 30px;
-    background-color: #ff6b6b;
+    background: linear-gradient(135deg, #2d5016 0%, #4a7c59 100%);
     color: #fff;
-    border-radius: 50%;
+    border-radius: 12px;
     text-align: center;
-    font-size: 24px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
+    font-size: 18px;
+    box-shadow: 0 8px 25px rgba(45, 80, 22, 0.4);
+    z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
 }
 
 .cart-float:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
-    background: #ff5252;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 12px 35px rgba(45, 80, 22, 0.6);
+    background: linear-gradient(135deg, #4a7c59 0%, #2d5016 100%);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .cart-float:active {
@@ -160,22 +165,45 @@
     position: absolute;
     top: -5px;
     right: -5px;
-    background-color: #ff0e0e;
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
     color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
+    border-radius: 10px;
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    border: 2px solid white;
+    line-height: 1;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 3px 12px rgba(39, 174, 96, 0.4);
+    padding: 0 4px;
+    backdrop-filter: blur(5px);
+}
+
+/* Cart pulse animation */
+.cart-pulse {
+    animation: cart-pulse 2s infinite;
+}
+
+@keyframes cart-pulse {
+    0% {
+        box-shadow: 0 8px 25px rgba(45, 80, 22, 0.4), 0 0 0 0 rgba(45, 80, 22, 0.7);
+    }
+    70% {
+        box-shadow: 0 8px 25px rgba(45, 80, 22, 0.4), 0 0 0 12px rgba(45, 80, 22, 0);
+    }
+    100% {
+        box-shadow: 0 8px 25px rgba(45, 80, 22, 0.4), 0 0 0 0 rgba(45, 80, 22, 0);
+    }
 }
 
 /* Adjust WhatsApp button position */
 .whatsapp-float {
     bottom: 30px !important;
+    left: 30px !important;
+    right: auto !important;
 }
 
 

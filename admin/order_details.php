@@ -38,38 +38,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 // Get current order status before updating
                 // Get current status first
-                $current_order = $pdo->prepare('SELECT status FROM orders WHERE order_id = ?');
+                $current_order = $pdo->prepare('SELECT order_status FROM orders WHERE order_id = ?');
                 $current_order->execute([$order_id]);
-                $current_status = $current_order->fetch()['status'];
-                error_log("Before update - Current status: " . $current_status . ", New status to set: " . $new_status);
+                $current_order_data = $current_order->fetch();
+                $current_status = $current_order_data['order_status'] ?? 'pending';
 
-                // Update order status
-                $stmt = $pdo->prepare('UPDATE orders SET status = ? WHERE order_id = ?');
+                // Update order status using order_status column
+                $stmt = $pdo->prepare('UPDATE orders SET order_status = ? WHERE order_id = ?');
                 $stmt->execute([$new_status, $order_id]);
                 $success = 'Order status updated successfully';
 
                 // If status was updated to "delivered", send invoice email
                 if ($current_status !== 'delivered' && $new_status === 'delivered') {
                     // Get fresh order details after update to ensure we have the latest status
-                    $stmt = $pdo->prepare('SELECT o.*, u.name, u.email, o.status as current_status FROM orders o JOIN users u ON u.user_id = o.user_id WHERE o.order_id = ?');
+                    $stmt = $pdo->prepare('SELECT o.*, u.name, u.email, o.order_status as current_status FROM orders o JOIN users u ON u.user_id = o.user_id WHERE o.order_id = ?');
                     $stmt->execute([$order_id]);
                     $order_for_email = $stmt->fetch();
                     
-                    // Debug log the fetched data
-                    error_log("After update - Fetched order data: " . print_r($order_for_email, true));
 
                     if ($order_for_email && !empty($order_for_email['email'])) {
                         // Get order items for the invoice
-                        $stmt = $pdo->prepare('SELECT oi.*, p.name as product_name, p.price as product_price 
+                        $stmt = $pdo->prepare('SELECT oi.*, p.name as product_name, oi.price as product_price 
                                             FROM order_items oi 
                                             JOIN products p ON oi.product_id = p.product_id 
                                             WHERE oi.order_id = ?');
                         $stmt->execute([$order_id]);
                         $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         
-                        // Debug log the status being used
                         $status_to_use = $order_for_email['current_status'] ?? $new_status;
-                        error_log("Using status for email: " . $status_to_use);
                         
                         // Prepare order details array
                         $order_details = [
@@ -84,7 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ];
                         
                         // Debug log the final order details
-                        error_log("Order details being sent to email: " . print_r($order_details, true));
                         
                         $email_sent = sendInvoiceEmail(
                             $order_for_email['email'],
@@ -118,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $errors[] = 'Customer email not found for this order.';
                     } else {
                         // Get order items for the invoice
-                        $stmt = $pdo->prepare('SELECT oi.*, p.name as product_name, p.price as product_price 
+                        $stmt = $pdo->prepare('SELECT oi.*, p.name as product_name, oi.price as product_price 
                                              FROM order_items oi 
                                              JOIN products p ON oi.product_id = p.product_id 
                                              WHERE oi.order_id = ?');
@@ -158,7 +153,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     } catch (PDOException $e) {
-        error_log('Order update error: ' . $e->getMessage());
         $errors[] = 'Database error occurred';
     }
 }
@@ -177,19 +171,16 @@ try {
     }
 
     // Order items with product details and prices
-    $stmt = $pdo->prepare('SELECT oi.*, p.name, p.image, oi.product_price as price, (oi.product_price * oi.quantity) as total_price 
+    $stmt = $pdo->prepare('SELECT oi.*, p.name, p.image, oi.price, (oi.price * oi.quantity) as total_price 
                           FROM order_items oi 
                           JOIN products p ON p.product_id = oi.product_id 
                           WHERE oi.order_id = ? 
                           ORDER BY oi.order_item_id');
     
-    // Debug: Output the SQL query and parameters
-    error_log('Order items query: ' . $stmt->queryString);
     $stmt->execute([$order_id]);
     $order_items = $stmt->fetchAll();
 
 } catch (PDOException $e) {
-    error_log('Error fetching order details: ' . $e->getMessage());
     $order = null;
     $order_items = [];
 }
@@ -311,7 +302,6 @@ try {
                                                         </td>
                                                         <td><?php 
                                                             // Debug: Output the price value
-                                                            error_log('Item price: ' . print_r($item['price'], true));
                                                             echo function_exists('formatCurrency') 
                                                                 ? formatCurrency($item['price']) 
                                                                 : '₦' . number_format($item['price'], 2); 
@@ -360,7 +350,7 @@ try {
                                         <select class="form-select" name="status" id="status" required>
                                             <option value="">Select Status</option>
                                             <?php foreach ($valid_statuses as $status): ?>
-                                                <option value="<?php echo $status; ?>" <?php echo ($order['status'] === $status) ? 'selected' : ''; ?>>
+                                                <option value="<?php echo $status; ?>" <?php echo (($order['order_status'] ?? 'pending') === $status) ? 'selected' : ''; ?>>
                                                     <?php echo ucfirst($status); ?>
                                                 </option>
                                             <?php endforeach; ?>
@@ -455,7 +445,7 @@ try {
                                 'cancelled' => 'Order Cancelled'
                             ];
 
-                            $current_status = $order['status'];
+                            $current_status = $order['order_status'] ?? 'pending';
                             $status_keys = array_keys($valid_statuses);
                             $current_index = array_search($current_status, $status_keys);
                             ?>

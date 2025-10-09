@@ -60,7 +60,7 @@ try {
 
     // Then get the order items
     $stmt = $pdo->prepare("
-        SELECT oi.*, p.name as product_name, p.price as product_price
+        SELECT oi.*, p.name as product_name, oi.price as product_price
         FROM order_items oi
         LEFT JOIN products p ON oi.product_id = p.product_id
         WHERE oi.order_id = ?
@@ -91,17 +91,17 @@ try {
     
     // Send order confirmation email
     $email_sent = sendOrderConfirmationEmail(
-        $order['customer_email'],
-        $order['customer_name'],
-        $order['order_number'],
+        $order['customer_email'] ?? '',
+        $order['customer_name'] ?? 'Customer',
+        $order['order_number'] ?? 'N/A',
         $email_order_details
     );
     
     // Log if email was sent or failed
     if ($email_sent) {
-        error_log("Order confirmation email sent for order #" . $order['order_number']);
+        error_log("Order confirmation email sent for order #" . ($order['order_number'] ?? 'N/A'));
     } else {
-        error_log("Failed to send order confirmation email for order #" . $order['order_number']);
+        error_log("Failed to send order confirmation email for order #" . ($order['order_number'] ?? 'N/A'));
     }
     
     // Set order items for the confirmation page
@@ -153,9 +153,9 @@ $page_title = 'Order Confirmation';
                             <div class="row">
                                 <div class="col-md-6">
                                     <h5>Order Information</h5>
-                                    <p><strong>Order Number:</strong> <?php echo htmlspecialchars($order['order_number']); ?></p>
-                                    <p><strong>Order Date:</strong> <?php echo date('M d, Y \a\t g:i A', strtotime($order['order_date'])); ?></p>
-                                    <p><strong>Payment Method:</strong> <?php echo htmlspecialchars($order['payment_method']); ?></p>
+                                    <p><strong>Order Number:</strong> <?php echo htmlspecialchars($order['order_number'] ?? 'N/A'); ?></p>
+                                    <p><strong>Order Date:</strong> <?php echo date('M d, Y \a\t g:i A', strtotime($order['order_date'] ?? 'now')); ?></p>
+                                    <p><strong>Payment Method:</strong> <?php echo htmlspecialchars($order['payment_method'] ?? 'Pay on Delivery'); ?></p>
                                     <p><strong>Order Status:</strong>
                                         <span class="badge bg-warning"><?php echo htmlspecialchars($order['status'] ?? ($order['order_status'] ?? 'pending')); ?></span>
                                     </p>
@@ -176,7 +176,7 @@ $page_title = 'Order Confirmation';
                                         <p><strong>Phone:</strong> <?php echo htmlspecialchars($phoneDisplay); ?></p>
                                     <?php endif; ?>
                                     <p><strong>Shipping Address:</strong></p>
-                                    <p class="text-muted"><?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?></p>
+                                    <p class="text-muted"><?php echo nl2br(htmlspecialchars($order['shipping_address'] ?? 'Not specified')); ?></p>
                                     <?php if (!empty(($order['notes'] ?? null) ?: ($order['order_notes'] ?? null))): ?>
                                         <p><strong>Order Notes:</strong></p>
                                         <p class="text-muted"><?php echo nl2br(htmlspecialchars($order['notes'] ?? $order['order_notes'])); ?></p>

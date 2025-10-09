@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast(data.message, 'success', 2000);
+                    showToast(data.message, 'success', 1000);
 
                     // Update cart count in navbar if it exists
                     const cartCountElement = document.querySelector('.cart-count');

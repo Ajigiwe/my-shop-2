@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast(data.message, 'success', 2000);
+                    showToast(data.message, 'success', 1000);
                 } else {
                     showToast(data.message, 'danger', 2000);
                 }
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast(data.message, 'success', 2000);
+                    showToast(data.message, 'success', 1000);
                 } else {
                     showToast(data.message, 'danger', 2000);
                 }
@@ -429,7 +429,7 @@ function shareProduct() {
     } else {
         // Fallback: copy to clipboard
         navigator.clipboard.writeText(window.location.href).then(() => {
-            showToast('Product link copied to clipboard!', 'success', 2000);
+            showToast('Product link copied to clipboard!', 'success', 1000);
         }).catch(() => {
             showToast('Could not copy link', 'warning', 2000);
         });

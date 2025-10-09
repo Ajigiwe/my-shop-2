@@ -150,15 +150,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                             <div class="mb-3">
                                 <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password"
-                                       minlength="6" required>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" name="password"
+                                           minlength="6" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                    </button>
+                                </div>
                                 <div class="form-text">Password must be at least 6 characters long</div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="confirm_password" class="form-label">Confirm Password</label>
-                                <input type="password" class="form-control" id="confirm_password"
-                                       name="confirm_password" required>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="confirm_password"
+                                           name="confirm_password" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                                        <i class="fas fa-eye" id="toggleConfirmPasswordIcon"></i>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="mb-3 form-check">
@@ -183,3 +193,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 </section>
+
+<script>
+// Password toggle functionality for password field
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const passwordField = document.getElementById('password');
+    const toggleIcon = document.getElementById('togglePasswordIcon');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    } else {
+        passwordField.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+});
+
+// Password toggle functionality for confirm password field
+document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+    const confirmPasswordField = document.getElementById('confirm_password');
+    const toggleIcon = document.getElementById('toggleConfirmPasswordIcon');
+    
+    if (confirmPasswordField.type === 'password') {
+        confirmPasswordField.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    } else {
+        confirmPasswordField.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+});
+</script>
