@@ -29,6 +29,17 @@ function run_git_cmd($cmd) {
     return $output;
 }
 
+// Automatically initialize git and set remote origin if it doesn't exist
+if (!file_exists(__DIR__ . '/.git')) {
+    echo "No Git repository found on server. Initializing...\n";
+    run_git_cmd("git init");
+    run_git_cmd("git remote add origin https://github.com/Ajigiwe/my-shop-2.git");
+    // Ensure we fetch from remote branch
+    run_git_cmd("git fetch origin");
+    // Align master/main branch
+    run_git_cmd("git checkout -b main");
+}
+
 // 1. Fetch the latest changes from GitHub
 run_git_cmd("git fetch --all");
 
