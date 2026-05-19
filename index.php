@@ -66,8 +66,8 @@ include 'includes/header.php';
     
     <?php if ($is_facing_style): ?>
         <!-- GORGEOUS FACING HERO CARDS SECTION -->
-        <section class="relative bg-gradient-to-br from-[#f5f7fa] to-[#c3cfe2] pt-4 pb-6 px-4 overflow-hidden border-b border-[#EEEEEE] flex flex-col items-center w-full z-20">
-            <div class="max-w-[1200px] w-full mx-auto relative mt-2">
+        <section class="relative bg-gradient-to-br from-[#f5f7fa] to-[#c3cfe2] pt-2 pb-6 px-4 overflow-hidden border-b border-[#EEEEEE] flex flex-col items-center w-full z-20 -mt-2 md:-mt-4">
+            <div class="max-w-[1200px] w-full mx-auto relative mt-0">
 
                 <!-- HERO CAROUSEL WRAPPER -->
                 <div class="facing-carousel-wrapper">
@@ -315,11 +315,11 @@ include 'includes/header.php';
         </section>
     <?php else: ?>
         <!-- Hero Slider Section -->
-        <section class="relative bg-[#F9F9F9] overflow-hidden border-b border-[#EEEEEE]">
+        <section class="relative bg-[#F9F9F9] overflow-hidden border-b border-[#EEEEEE] -mt-2 md:-mt-4">
             <div class="swiper heroSwiper pb-0">
                 <div class="swiper-wrapper">
                     <?php foreach ($hero_slides as $slide): ?>
-                        <div class="swiper-slide overflow-visible pt-2 pb-6 md:pt-4 md:pb-8 bg-transparent px-4">
+                        <div class="swiper-slide overflow-visible pt-0 pb-6 md:pt-0 md:pb-8 bg-transparent px-4">
                             <?php if ($hero_style === 'split'): ?>
                                 <!-- SPLIT SCREEN LAYOUT SLIDE -->
                                 <div class="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 rounded-[2rem] overflow-hidden bg-white border border-[#EEEEEE] shadow-2xl min-h-[420px] w-full">
@@ -587,7 +587,7 @@ include 'includes/header.php';
         
         @media (max-width: 1024px) {
             .heroSwiper {
-                padding: 20px 0 20px 0;
+                padding: 0 0 20px 0;
             }
             .heroSwiper .swiper-slide {
                 opacity: 1 !important;
@@ -607,7 +607,7 @@ include 'includes/header.php';
 
         @media (max-width: 640px) {
             .heroSwiper {
-                padding: 10px 0 10px 0 !important;
+                padding: 0 0 10px 0 !important;
             }
             .heroSwiper .swiper-slide {
                 padding: 0 8px !important;
