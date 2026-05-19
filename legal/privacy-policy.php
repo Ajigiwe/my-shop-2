@@ -6,7 +6,7 @@ $page_title = 'Privacy Policy';
 include '../includes/header.php';
 ?>
 
-<main class="bg-[#F9F9F9] min-h-screen py-24">
+<main class="bg-[#F9F9F9] min-h-screen pt-6 pb-16">
     <div class="max-w-[1000px] mx-auto px-6">
         <div class="text-center mb-16">
             <span class="inline-block bg-white border border-[#EEEEEE] text-[#1A1A1A] text-[12px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest mb-6 shadow-sm">
