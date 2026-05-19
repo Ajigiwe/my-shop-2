@@ -4,6 +4,11 @@ echo        ASO Online Market - Auto Deploy
 echo ==============================================
 echo.
 
+:: CONFIGURATION
+:: Change these if your domain name or security token changes
+set LIVE_URL=https://asoonlinemarket.com
+set DEPLOY_SECRET=asodeploy123
+
 :: Stage all changes
 echo Staging changes...
 git add .
@@ -32,7 +37,17 @@ if %ERRORLEVEL% neq 0 (
 echo.
 echo ==============================================
 echo SUCCESS: Code pushed to GitHub!
-echo GitHub Actions is now syncing changes to your host.
+echo Triggering live server deployment...
+echo ==============================================
+echo.
+
+curl -k "%LIVE_URL%/deploy.php?token=%DEPLOY_SECRET%"
+
+echo.
+echo.
+echo ==============================================
+echo Sync attempt finished. Check output above.
 echo ==============================================
 echo.
 pause
+
