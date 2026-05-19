@@ -48,10 +48,14 @@ if (isset($pdo)) {
                 <span class="material-symbols-outlined text-[24px]" id="hamburgerIcon">menu</span>
             </button>
 
-            <!-- Logo -->
-            <a href="<?php echo $link_base; ?>index.php" class="flex items-center transition-transform hover:scale-105 h-full py-1">
-                <img src="<?php echo $link_base; ?>assets/images/logo-v3.png" alt="<?php echo htmlspecialchars($site_name); ?>" class="h-10 lg:h-12 w-auto object-contain" />
-            </a>
+            <!-- Logo & Brand Name -->
+            <span class="flex items-center gap-2">
+                <a href="<?php echo $link_base; ?>index.php" class="flex items-center transition-transform hover:scale-105 h-full py-1">
+                    <img src="<?php echo $link_base; ?>assets/images/logo-v3.png" alt="<?php echo htmlspecialchars($site_name); ?>" class="h-10 lg:h-12 w-auto object-contain" />
+                </a>
+                <h2 class="shop-text text-[20px] lg:text-[22px] font-semibold leading-none tracking-tight select-none" style="color: <?php echo $primary_color; ?>;">Aso Online</h2>
+            </span>
+            
             
             <!-- Desktop Navigation -->
             <nav class="hidden md:flex items-center gap-8 ml-xl">

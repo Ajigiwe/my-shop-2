@@ -66,7 +66,7 @@ include 'includes/header.php';
     
     <?php if ($is_facing_style): ?>
         <!-- GORGEOUS FACING HERO CARDS SECTION -->
-        <section class="relative bg-gradient-to-br from-[#f5f7fa] to-[#c3cfe2] pt-2 pb-6 px-4 overflow-hidden border-b border-[#EEEEEE] flex flex-col items-center w-full z-20 -mt-2 md:-mt-4">
+        <section class="relative bg-gradient-to-br  pt-2 pb-6 px-4 overflow-hidden border-b border-[#EEEEEE] flex flex-col items-center w-full z-20 -mt-2 md:-mt-4">
             <div class="max-w-[1200px] w-full mx-auto relative mt-0">
 
                 <!-- HERO CAROUSEL WRAPPER -->
@@ -106,7 +106,7 @@ include 'includes/header.php';
                                             <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/20 z-10 pointer-events-none"></div>
                                         <?php endif; ?>
                                         
-                                        <div class="relative z-20 w-full h-full flex flex-col items-center justify-center pointer-events-none">
+                                        <div class="relative z-20 w-full h-full flex flex-col items-center justify-center pointer-events-none  carousal-on-div">
                                             <?php if (!$image_src): ?>
                                                 <div class="facing-card-icon pointer-events-auto"><?php echo $emoji; ?></div>
                                             <?php endif; ?>
@@ -151,7 +151,7 @@ include 'includes/header.php';
                                             <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/20 z-10 pointer-events-none"></div>
                                         <?php endif; ?>
                                         
-                                        <div class="relative z-20 w-full h-full flex flex-col items-center justify-center pointer-events-none">
+                                        <div class="relative z-20 w-full h-full flex flex-col items-center justify-center pointer-events-none  carousal-on-div">
                                             <?php if (!$image_src): ?>
                                                 <div class="facing-card-icon text-4xl mb-3 pointer-events-auto"><?php echo $emoji; ?></div>
                                             <?php endif; ?>
@@ -190,7 +190,7 @@ include 'includes/header.php';
                                             <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/20 z-10 pointer-events-none"></div>
                                         <?php endif; ?>
                                         
-                                        <div class="relative z-20 w-full h-full flex flex-col items-center justify-center pointer-events-none">
+                                        <div class="relative z-20 w-full h-full flex flex-col items-center justify-center pointer-events-none  carousal-on-div">
                                             <?php if (!$image_src): ?>
                                                 <div class="facing-card-icon text-4xl mb-3 pointer-events-auto"><?php echo $emoji; ?></div>
                                             <?php endif; ?>
@@ -239,7 +239,7 @@ include 'includes/header.php';
                                             <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/20 z-10 pointer-events-none"></div>
                                         <?php endif; ?>
                                         
-                                        <div class="relative z-20 w-full h-full flex flex-col items-center justify-center pointer-events-none">
+                                        <div class="relative z-20 w-full h-full flex flex-col items-center justify-center pointer-events-none  carousal-on-div">
                                             <?php if (!$image_src): ?>
                                                 <div class="facing-card-icon pointer-events-auto"><?php echo $emoji; ?></div>
                                             <?php endif; ?>
@@ -293,7 +293,7 @@ include 'includes/header.php';
                                         <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/20 z-10 pointer-events-none"></div>
                                     <?php endif; ?>
                                     
-                                    <div class="relative z-20 w-full h-full flex flex-col items-center justify-center pointer-events-none">
+                                    <div class="relative z-20 w-full h-full flex flex-col items-center justify-center pointer-events-none  carousal-on-div">
                                         <?php if (!$image_src): ?>
                                             <div class="facing-card-icon text-4xl mb-3 pointer-events-auto"><?php echo $emoji; ?></div>
                                         <?php endif; ?>
@@ -559,6 +559,7 @@ include 'includes/header.php';
             from { opacity: 0; transform: scale(1.1); }
             to { opacity: 1; transform: scale(1); }
         }
+        
 
         /* Custom Navigation Styling */
         .swiper-button-prev-custom, .swiper-button-next-custom {
@@ -994,6 +995,25 @@ include 'includes/header.php';
             background: #004225;
             width: 24px;
             border-radius: 6px;
+        }
+        .facing-card:not(.spotlight) .carousal-on-div{
+            display: none !important;
+        }
+        span:has(.shop-text){
+            display: flex !important;
+            align-items: center;
+            gap: 8px;
+        }
+        .shop-text{
+            font-size: 22px;
+            font-weight: 600;
+            color: <?php echo $primary_color; ?>;
+        }
+        
+        @media (max-width: 640px) {
+            .hide-on-mobile{
+                display: none !important;
+            }
         }
     </style>
 
