@@ -9,7 +9,7 @@ $page_title = 'Cookie Policy | ASO Online Market';
         <div class="col-lg-8 mx-auto">
             <!-- Page Header -->
             <div class="text-center mb-5">
-                <h1 class="display-5 fw-bold text-primary mb-3">Cookie Policy</h1>
+                <h1 class="display-5 fw-bold text-[#1A1A1A] mb-3">Cookie Policy</h1>
                 <p class="lead text-muted">Learn about how we use cookies and similar technologies on our website.</p>
                 <div class="alert alert-info border-0">
                     <i class="fas fa-calendar-alt me-2"></i>

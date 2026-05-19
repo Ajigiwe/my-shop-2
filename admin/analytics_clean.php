@@ -63,11 +63,11 @@ try {
 
     // Get order status counts
     $result = $pdo->query("SELECT 
-                            status, 
+                            order_status, 
                             COUNT(*) as count,
                             SUM(total_amount) as amount
                           FROM orders 
-                          GROUP BY status");
+                          GROUP BY order_status");
     
     // Initialize all possible statuses with 0 count
     $statuses = [
@@ -82,7 +82,7 @@ try {
     
     // Update with actual counts from database
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $status = strtolower($row['status']);
+        $status = strtolower($row['order_status']);
         if (array_key_exists($status, $statuses)) {
             $statuses[$status] = (int)$row['count'];
         }
@@ -107,7 +107,7 @@ try {
                             COALESCE(SUM(total_amount), 0) as revenue
                           FROM orders 
                           WHERE order_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-                          AND status != 'cancelled'
+                          AND order_status != 'cancelled'
                           GROUP BY DATE_FORMAT(order_date, '%Y-%m')
                           ORDER BY month");
     
@@ -145,7 +145,7 @@ try {
                             COALESCE(SUM(total_amount), 0) as revenue
                           FROM orders 
                           WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                          AND status != 'cancelled'
+                          AND order_status != 'cancelled'
                           GROUP BY DATE(order_date)
                           ORDER BY date");
     
@@ -165,7 +165,7 @@ try {
                           FROM order_items oi
                           JOIN products p ON oi.product_id = p.product_id
                           JOIN orders o ON oi.order_id = o.order_id
-                          WHERE o.status != 'cancelled'
+                          WHERE o.order_status != 'cancelled'
                           GROUP BY oi.product_id
                           ORDER BY total_quantity DESC
                           LIMIT 5");
@@ -339,7 +339,7 @@ try {
                     <div class="card-body">
                         <div class="row no-gutters align-items-center">
                             <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                <div class="text-xs font-weight-bold text-[#1A1A1A] text-uppercase mb-1">
                                     Total Revenue</div>
                                 <div class="h5 mb-0 font-weight-bold text-gray-800">GH₵<?php echo number_format($stats['total_revenue'], 2); ?></div>
                             </div>
@@ -413,7 +413,7 @@ try {
                 <div class="card shadow mb-4
                 <!-- Card Header - Dropdown -->
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Revenue Overview</h6>
+                    <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Revenue Overview</h6>
                     <div class="dropdown no-arrow">
                         <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
@@ -439,7 +439,7 @@ try {
             <div class="card shadow mb-4">
                 <!-- Card Header - Dropdown -->
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Order Status</h6>
+                    <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Order Status</h6>
                 </div>
                 <!-- Card Body -->
                 <div class="card-body">
@@ -465,7 +465,7 @@ try {
         <div class="col-lg-6 mb-4">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Payment Methods</h6>
+                    <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Payment Methods</h6>
                 </div>
                 <div class="card-body">
                     <div class="chart-pie pt-4 pb-2">
@@ -487,7 +487,7 @@ try {
         <div class="col-lg-6 mb-4">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Daily Orders (Last 30 Days)</h6>
+                    <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Daily Orders (Last 30 Days)</h6>
                 </div>
                 <div class="card-body">
                     <div class="chart-area">
@@ -503,7 +503,7 @@ try {
         <div class="col-12">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Top Products</h6>
+                    <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Top Products</h6>
                 </div>
                 <div class="card-body">
                     <div class="chart-bar">

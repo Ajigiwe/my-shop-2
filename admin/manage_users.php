@@ -79,116 +79,103 @@ try {
 }
 ?>
 
-<?php include '../includes/header.php'; ?>
+<?php
+$page_title = 'User Management';
+include 'includes/header-new.php';
+?>
 
-<div class="container py-4">
-  
+<div class="row g-4">
+    <div class="col-12">
+        <?php if (!$hasActiveColumn): ?>
+            <div class="alert alert-info border-0 rounded-4 mb-4 small fw-bold animate-up">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Enable Status Toggling:</strong> Run this SQL to enable activation/deactivation:
+                <code class="d-block mt-2 p-2 bg-light rounded">ALTER TABLE users ADD COLUMN active TINYINT(1) NOT NULL DEFAULT 1 AFTER role;</code>
+            </div>
+        <?php endif; ?>
 
-    <!-- Back to Dashboard Button -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <a href="dashboard.php" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-            </a>
-        </div>
-        <div>
-            <h2 class="mb-0">Manage Users</h2>
-        </div>
-        <div>
-            <!-- Spacer for centering -->
-        </div>
-    </div>
+        <?php if ($success): ?>
+            <div class="alert alert-success border-0 rounded-4 mb-4 small fw-bold animate-up">
+                <i class="fas fa-check-circle me-2"></i><?php echo $success; ?>
+            </div>
+        <?php endif; ?>
 
-    <?php if ($success): ?>
-        <div class="alert alert-success"><i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($success); ?></div>
-    <?php endif; ?>
-    <?php if (!empty($errors)): ?>
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                <?php foreach ($errors as $e): ?>
-                    <li><?php echo htmlspecialchars($e); ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
+        <?php if ($errors): ?>
+            <div class="alert alert-danger border-0 rounded-4 mb-4 small fw-bold animate-up">
+                <ul class="mb-0">
+                    <?php foreach($errors as $e): ?><li><?php echo $e; ?></li><?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
 
-    <?php if (!$hasActiveColumn): ?>
-        <div class="alert alert-info">
-            <strong>Note:</strong> The <code>users</code> table does not have an <code>active</code> column. To enable Activate/Deactivate actions, run this SQL in phpMyAdmin:
-            <pre class="mb-0">ALTER TABLE users ADD COLUMN active TINYINT(1) NOT NULL DEFAULT 1 AFTER role;</pre>
-        </div>
-    <?php endif; ?>
-
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">All Users</h5>
-            <span class="badge bg-primary"><?php echo count($users); ?></span>
-        </div>
-        <div class="card-body">
+        <div class="admin-card animate-up">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title mb-0">Registered Accounts <span class="badge bg-light text-dark ms-2 rounded-pill"><?php echo count($users); ?></span></h5>
+            </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table align-middle">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
+                            <th>User Info</th>
+                            <th>Contact</th>
                             <th>Role</th>
                             <?php if ($hasActiveColumn): ?><th>Status</th><?php endif; ?>
-                            <th>Created</th>
-                            <th>Actions</th>
+                            <th>Joined</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($users as $u): ?>
-                            <tr>
-                                <td><?php echo $u['user_id']; ?></td>
-                                <td><?php echo htmlspecialchars($u['name']); ?></td>
-                                <td><?php echo htmlspecialchars($u['email']); ?></td>
-                                <td><?php echo htmlspecialchars($u['phone'] ?? ''); ?></td>
-                                <td>
-                                    <form method="POST" action="" class="d-flex align-items-center gap-2">
-                                        <input type="hidden" name="action" value="update_role">
+                        <tr>
+                            <td>
+                                <div class="fw-black text-[13px]"><?php echo htmlspecialchars($u['name']); ?></div>
+                                <div class="small text-muted fw-bold uppercase tracking-widest text-[9px] mt-0.5">ID: #<?php echo $u['user_id']; ?></div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-[13px]"><?php echo htmlspecialchars($u['email']); ?></div>
+                                <div class="text-muted text-[11px] mt-0.5"><?php echo htmlspecialchars($u['phone'] ?? 'No phone'); ?></div>
+                            </td>
+                            <td>
+                                <form method="POST" action="" class="d-flex align-items-center gap-1">
+                                    <input type="hidden" name="action" value="update_role">
+                                    <input type="hidden" name="user_id" value="<?php echo $u['user_id']; ?>">
+                                    <select class="form-select form-select-sm rounded-pill bg-light border-0 fw-bold text-[11px] px-2 py-0.5" name="role" <?php echo ($u['user_id']===(int)$_SESSION['user_id'])?'disabled':''; ?> onchange="this.form.submit()">
+                                        <option value="customer" <?php echo $u['role']==='customer'?'selected':''; ?>>Customer</option>
+                                        <option value="admin" <?php echo $u['role']==='admin'?'selected':''; ?>>Admin</option>
+                                    </select>
+                                </form>
+                            </td>
+                            <?php if ($hasActiveColumn): ?>
+                            <td>
+                                <span class="badge rounded-pill px-2 py-1 bg-<?php echo (int)$u['active'] === 1 ? 'success' : 'secondary'; ?>-subtle text-<?php echo (int)$u['active'] === 1 ? 'success' : 'secondary'; ?> fw-bold text-[10px]">
+                                    <?php echo (int)$u['active'] === 1 ? 'Active' : 'Deactivated'; ?>
+                                </span>
+                            </td>
+                            <?php endif; ?>
+                            <td>
+                                <div class="text-[11px] fw-bold text-muted"><?php echo date('M j, Y', strtotime($u['created_at'])); ?></div>
+                            </td>
+                            <td class="text-end">
+                                <?php if ($hasActiveColumn && $u['user_id'] !== (int)$_SESSION['user_id']): ?>
+                                    <form method="POST" action="" class="d-inline">
                                         <input type="hidden" name="user_id" value="<?php echo $u['user_id']; ?>">
-                                        <select class="form-select form-select-sm w-auto" name="role" <?php echo ($u['user_id']===(int)$_SESSION['user_id'])?'disabled':''; ?>>
-                                            <option value="customer" <?php echo $u['role']==='customer'?'selected':''; ?>>Customer</option>
-                                            <option value="admin" <?php echo $u['role']==='admin'?'selected':''; ?>>Admin</option>
-                                        </select>
-                                        <button class="btn btn-sm btn-outline-primary" type="submit" <?php echo ($u['user_id']===(int)$_SESSION['user_id'])?'disabled':''; ?>>Update</button>
+                                        <?php if ((int)$u['active'] === 1): ?>
+                                            <input type="hidden" name="action" value="deactivate">
+                                            <button class="btn-premium-outline px-2 py-1 text-danger border-danger/20 text-[12px]" type="submit" onclick="return confirmAction(event, 'Deactivate user?');">
+                                                <i class="fas fa-user-slash"></i>
+                                            </button>
+                                        <?php else: ?>
+                                            <input type="hidden" name="action" value="activate">
+                                            <button class="btn-premium-outline px-2 py-1 text-success border-success/20 text-[12px]" type="submit" onclick="return confirmAction(event, 'Activate user?');">
+                                                <i class="fas fa-user-check"></i>
+                                            </button>
+                                        <?php endif; ?>
                                     </form>
-                                </td>
-                                <?php if ($hasActiveColumn): ?>
-                                    <td>
-                                        <?php if ((int)$u['active'] === 1): ?>
-                                            <span class="badge bg-success">Active</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-secondary">Inactive</span>
-                                        <?php endif; ?>
-                                    </td>
+                                <?php else: ?>
+                                    <span class="text-[10px] text-muted fw-bold">System Protected</span>
                                 <?php endif; ?>
-                                <td><?php echo date('M j, Y', strtotime($u['created_at'])); ?></td>
-                                <td>
-                                    <?php if ($hasActiveColumn): ?>
-                                        <?php if ((int)$u['active'] === 1): ?>
-                                            <form method="POST" action="" class="d-inline">
-                                                <input type="hidden" name="action" value="deactivate">
-                                                <input type="hidden" name="user_id" value="<?php echo $u['user_id']; ?>">
-                                                <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Deactivate this user?');" <?php echo ($u['user_id']===(int)$_SESSION['user_id'])?'disabled':''; ?>>
-                                                    <i class="fas fa-user-slash"></i>
-                                                </button>
-                                            </form>
-                                        <?php else: ?>
-                                            <form method="POST" action="" class="d-inline">
-                                                <input type="hidden" name="action" value="activate">
-                                                <input type="hidden" name="user_id" value="<?php echo $u['user_id']; ?>">
-                                                <button class="btn btn-sm btn-outline-success" type="submit" onclick="return confirm('Activate this user?');">
-                                                    <i class="fas fa-user-check"></i>
-                                                </button>
-                                            </form>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
+                            </td>
+                        </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
@@ -196,6 +183,8 @@ try {
         </div>
     </div>
 </div>
+
+<?php include 'includes/footer-new.php'; ?>
 
 
 

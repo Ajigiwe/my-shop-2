@@ -1,33 +1,29 @@
 <?php
-// Include database connection and functions
+/**
+ * Storefront: Reset Password
+ */
 require_once 'includes/db.php';
 require_once 'includes/email_config.php';
 
-// Start session
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Redirect if already logged in
 if (isset($_SESSION['user_id'])) {
     header('Location: index.php');
     exit();
 }
 
-// Set page title
 $page_title = 'Reset Password';
-
 $errors = [];
 $success = '';
 $validToken = false;
 $email = '';
 
-// Check if token and email are provided
 if (isset($_GET['token']) && isset($_GET['email'])) {
     $token = $_GET['token'];
     $email = urldecode($_GET['email']);
     
-    // Validate token
     try {
         $stmt = $pdo->prepare("
             SELECT * FROM password_resets 
@@ -40,7 +36,6 @@ if (isset($_GET['token']) && isset($_GET['email'])) {
         if ($reset) {
             $validToken = true;
             
-            // Process password reset
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $password = $_POST['password'] ?? '';
                 $confirm_password = $_POST['confirm_password'] ?? '';
@@ -55,190 +50,142 @@ if (isset($_GET['token']) && isset($_GET['email'])) {
                 
                 if (empty($errors)) {
                     try {
-                        // Start transaction
                         $pdo->beginTransaction();
-                        
-                        // Update password
                         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
                         $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE email = ?");
                         $stmt->execute([$hashedPassword, $email]);
-                        
-                        // Delete used token
                         $pdo->prepare("DELETE FROM password_resets WHERE email = ?")->execute([$email]);
-                        
-                        // Commit transaction
                         $pdo->commit();
                         
-                        // Send confirmation email
                         $subject = "Password Updated - " . STORE_NAME;
-                        $message = "
-                            <p>Your password has been successfully updated.</p>
-                            <p>If you did not make this change, please contact us immediately at <a href='mailto:" . STORE_EMAIL . "'>" . STORE_EMAIL . "</a></p>
-                        ";
+                        $message = "<p>Your password has been successfully updated.</p>";
                         sendEmail($email, $subject, $message);
                         
-                        $success = 'Your password has been reset successfully. You can now <a href="login.php">login</a> with your new password.';
-                        $validToken = false; // Hide the form
-                        
+                        $success = 'Password reset successfully. You can now login.';
+                        $validToken = false;
                     } catch (PDOException $e) {
                         $pdo->rollBack();
                         error_log("Password reset error: " . $e->getMessage());
-                        $errors[] = 'An error occurred while resetting your password. Please try again.';
+                        $errors[] = 'An error occurred. Please try again.';
                     }
                 }
             }
         } else {
-            $errors[] = 'Invalid or expired reset link. Please request a new one.';
+            $errors[] = 'Invalid or expired reset link.';
         }
     } catch (PDOException $e) {
         error_log("Token validation error: " . $e->getMessage());
         $errors[] = 'An error occurred. Please try again.';
     }
 } else {
-    $errors[] = 'Invalid reset link. Please use the link from your email.';
+    $errors[] = 'Invalid reset link.';
 }
+
+include 'includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($page_title); ?> - <?php echo htmlspecialchars(STORE_NAME); ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="assets/css/style.css" rel="stylesheet">
-</head>
-<body>
-<?php include 'includes/header.php'; ?>
+<main class="min-h-screen flex relative overflow-hidden bg-surface">
+    <!-- Desktop Side Panel / Mobile Background -->
+    <div class="absolute inset-0 lg:relative lg:w-1/2 h-full z-0">
+        <img src="assets/images/login_side_panel.png" alt="Store Aesthetic" class="w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-primary/20 lg:bg-transparent backdrop-blur-[2px] lg:backdrop-blur-none"></div>
+        <!-- Desktop Overlay Text -->
+        <div class="hidden lg:flex absolute inset-0 flex-col justify-end p-xl bg-gradient-to-t from-black/60 via-transparent to-transparent">
+            <h2 class="text-white font-headline-lg mb-sm">Secure Your Account</h2>
+            <p class="text-white/80 font-body-md max-w-sm">Almost there. Set a strong new password to protect your account.</p>
+        </div>
+    </div>
 
-<section class="py-5">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0"><i class="fas fa-key me-2"></i>Reset Your Password</h4>
-                    </div>
-                    <div class="card-body p-4">
-                        <?php if (!empty($errors)): ?>
-                            <div class="alert alert-danger">
-                                <?php foreach ($errors as $error): ?>
-                                    <div><i class="fas fa-exclamation-circle me-2"></i><?php echo htmlspecialchars($error); ?></div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($success): ?>
-                            <div class="alert alert-success">
-                                <i class="fas fa-check-circle me-2"></i><?php echo $success; ?>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($validToken): ?>
-                            <form method="POST" action="" class="needs-validation" novalidate>
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">New Password</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                        <input type="password" class="form-control" id="password" name="password" 
-                                               required minlength="8" autocomplete="new-password">
-                                        <button class="btn btn-outline-secondary toggle-password" type="button">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <div class="invalid-feedback">
-                                            Please enter a password with at least 8 characters.
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-4">
-                                    <label for="confirm_password" class="form-label">Confirm New Password</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                        <input type="password" class="form-control" id="confirm_password" 
-                                               name="confirm_password" required minlength="8" autocomplete="new-password">
-                                        <button class="btn btn-outline-secondary toggle-password" type="button">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <div class="invalid-feedback">
-                                            Please confirm your password.
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <button type="submit" class="btn btn-primary w-100 mb-3">
-                                    <i class="fas fa-save me-2"></i>Update Password
-                                </button>
-                            </form>
-                        <?php endif; ?>
-                        
-                        <div class="text-center">
-                            <a href="login.php" class="text-decoration-none">
-                                <i class="fas fa-arrow-left me-1"></i>Back to Login
-                            </a>
-                            <?php if (!$validToken && empty($success)): ?>
-                                <span class="mx-2">|</span>
-                                <a href="forgot_password.php" class="text-decoration-none">
-                                    <i class="fas fa-key me-1"></i>Request New Reset Link
-                                </a>
-                            <?php endif; ?>
+    <!-- Form Side -->
+    <div class="w-full lg:w-1/2 flex items-start justify-center py-xl px-md pt-[15vh] lg:pt-[15vh] z-10 relative">
+        <div class="w-full max-w-[360px] bg-white/95 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none p-md lg:p-0 rounded-[2rem] lg:rounded-none shadow-2xl lg:shadow-none border border-white/20 lg:border-none">
+            <div class="mb-md">
+                <h1 class="font-headline-md text-headline-md text-on-background mb-xs">Reset Password</h1>
+                <p class="text-on-surface-variant font-body-sm">Create a secure new password.</p>
+            </div>
+
+            <?php if (!empty($errors)): ?>
+                <div class="bg-error/10 border border-error/20 rounded-lg p-sm mb-md">
+                    <ul class="flex flex-col gap-xs list-disc pl-md">
+                        <?php foreach ($errors as $error): ?>
+                            <li class="text-error text-[12px]"><?php echo htmlspecialchars($error); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($success): ?>
+                <div class="bg-primary/10 border border-primary/20 rounded-lg p-sm mb-md flex items-center gap-sm">
+                    <span class="material-symbols-outlined text-[#1A1A1A] text-[20px]">check_circle</span>
+                    <p class="text-[#1A1A1A] text-[12px] font-label-sm"><?php echo $success; ?></p>
+                </div>
+                <a href="login.php" class="w-full bg-primary text-on-primary font-label-md py-sm rounded-lg flex items-center justify-center gap-xs hover:shadow-md transition-all active:scale-[0.98]">
+                    Login Now
+                </a>
+            <?php elseif ($validToken): ?>
+                <form method="POST" class="flex flex-col gap-md">
+                    <div class="flex flex-col gap-xs">
+                        <label for="password" class="font-label-sm text-on-surface">New Password</label>
+                        <div class="relative group">
+                            <input type="password" id="password" name="password" required minlength="8" 
+                                   class="w-full bg-surface-container-low px-md py-sm pr-10 rounded-lg border border-outline-variant outline-none focus:border-primary transition-all font-body-md" 
+                                   placeholder="••••••••" />
+                            <button type="button" class="password-toggle absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-[#1A1A1A] transition-colors" data-target="password">
+                                <span class="material-symbols-outlined text-[20px]">visibility</span>
+                            </button>
                         </div>
                     </div>
+
+                    <div class="flex flex-col gap-xs">
+                        <label for="confirm_password" class="font-label-sm text-on-surface">Confirm New Password</label>
+                        <div class="relative group">
+                            <input type="password" id="confirm_password" name="confirm_password" required 
+                                   class="w-full bg-surface-container-low px-md py-sm pr-10 rounded-lg border border-outline-variant outline-none focus:border-primary transition-all font-body-md" 
+                                   placeholder="••••••••" />
+                            <button type="button" class="password-toggle absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-[#1A1A1A] transition-colors" data-target="confirm_password">
+                                <span class="material-symbols-outlined text-[20px]">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-primary text-on-primary font-label-md py-sm rounded-lg hover:shadow-md transition-all active:scale-[0.98] mt-sm">
+                        Update Password
+                    </button>
+                </form>
+            <?php else: ?>
+                <div class="text-center flex flex-col gap-md">
+                    <p class="text-on-surface-variant font-body-sm">Please use the link sent to your email to reset your password.</p>
+                    <a href="forgot_password.php" class="text-[#1A1A1A] font-label-sm hover:underline">Request new link</a>
                 </div>
+            <?php endif; ?>
+
+            <div class="mt-xl text-center">
+                <a href="login.php" class="inline-flex items-center gap-xs text-[#1A1A1A] font-label-sm hover:underline">
+                    <span class="material-symbols-outlined text-[18px]">arrow_back</span> Back to Login
+                </a>
             </div>
         </div>
     </div>
-</section>
+</main>
 
-<?php include 'includes/footer.php'; ?>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Toggle password visibility
-const toggleButtons = document.querySelectorAll('.toggle-password');
-toggleButtons.forEach(button => {
-    button.addEventListener('click', function() {
-        const input = this.previousElementSibling;
-        const icon = this.querySelector('i');
-        const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-        input.setAttribute('type', type);
-        icon.classList.toggle('fa-eye');
-        icon.classList.toggle('fa-eye-slash');
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.password-toggle').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = this.querySelector('.material-symbols-outlined');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = 'visibility_off';
+            } else {
+                input.type = 'password';
+                icon.textContent = 'visibility';
+            }
+        });
     });
 });
-
-// Form validation
-(function () {
-    'use strict'
-    const forms = document.querySelectorAll('.needs-validation')
-    Array.from(forms).forEach(form => {
-        form.addEventListener('submit', function (event) {
-            if (!form.checkValidity()) {
-                event.preventDefault()
-                event.stopPropagation()
-            }
-            form.classList.add('was-validated')
-        }, false)
-    })
-})()
-
-// Check password match
-const password = document.getElementById('password');
-const confirmPassword = document.getElementById('confirm_password');
-const form = document.querySelector('form');
-
-if (form) {
-    form.addEventListener('submit', function(e) {
-        if (password.value !== confirmPassword.value) {
-            e.preventDefault();
-            confirmPassword.setCustomValidity("Passwords do not match");
-            confirmPassword.reportValidity();
-        } else {
-            confirmPassword.setCustomValidity('');
-        }
-    });
-}
 </script>
-</body>
-</html>
+
+<?php include 'includes/footer.php'; ?>

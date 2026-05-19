@@ -15,7 +15,7 @@ $productImages = new ProductImages($pdo);
 
 $page_title = 'Manage Products';
 $errors = [];
-$success = '';
+$success = $_GET['success'] ?? '';
 
 // Fetch categories for select
 $categories = [];
@@ -68,12 +68,14 @@ function handleUpload($fieldName, $existing = '') {
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'create') {
-                        // Create product payload
+            // Create product payload
             $category_id = (int)($_POST['category_id'] ?? 0);
             $subcategory_id = isset($_POST['subcategory_id']) && $_POST['subcategory_id'] !== '' ? (int)$_POST['subcategory_id'] : null;
             $name = sanitizeInput($_POST['name'] ?? '');
             $description = sanitizeInput($_POST['description'] ?? '');
+            $features = sanitizeInput($_POST['features'] ?? '');
             $price = (float)($_POST['price'] ?? 0);
+            $original_price = isset($_POST['original_price']) && $_POST['original_price'] !== '' ? (float)$_POST['original_price'] : null;
             $stock_quantity = (int)($_POST['stock_quantity'] ?? 0);
             
             // Basic validation
@@ -91,24 +93,20 @@ try {
                 try {
                     $pdo->beginTransaction();
                     
-                    // Insert product with empty image initially
+                    // Insert product
                     if ($subcategory_id) {
-                        $stmt = $pdo->prepare('INSERT INTO products (category_id, subcategory_id, name, description, price, stock_quantity, image) VALUES (?, ?, ?, ?, ?, ?, ?)');
-                        $stmt->execute([$category_id, $subcategory_id, $name, $description, $price, $stock_quantity, '']);
+                        $stmt = $pdo->prepare('INSERT INTO products (category_id, subcategory_id, name, description, features, price, original_price, stock_quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+                        $stmt->execute([$category_id, $subcategory_id, $name, $description, $features, $price, $original_price, $stock_quantity]);
                     } else {
-                        $stmt = $pdo->prepare('INSERT INTO products (category_id, name, description, price, stock_quantity, image) VALUES (?, ?, ?, ?, ?, ?)');
-                        $stmt->execute([$category_id, $name, $description, $price, $stock_quantity, '']);
+                        $stmt = $pdo->prepare('INSERT INTO products (category_id, name, description, features, price, original_price, stock_quantity) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                        $stmt->execute([$category_id, $name, $description, $features, $price, $original_price, $stock_quantity]);
                     }
                     
                     $product_id = $pdo->lastInsertId();
                     
-                    // Handle single image upload
-                    if (!empty($_FILES['image']['name'])) {
-                        $image = handleUpload('image');
-                        if ($image) {
-                            $stmt = $pdo->prepare('UPDATE products SET image = ? WHERE product_id = ?');
-                            $stmt->execute([$image, $product_id]);
-                        }
+                    // Handle multiple image uploads
+                    if (!empty($_FILES['images']['name'][0])) {
+                        $productImages->uploadImages($product_id, $_FILES['images']);
                     }
                     
                     $pdo->commit();
@@ -127,7 +125,9 @@ try {
             $subcategory_id = isset($_POST['subcategory_id']) && $_POST['subcategory_id'] !== '' ? (int)$_POST['subcategory_id'] : null;
             $name = sanitizeInput($_POST['name'] ?? '');
             $description = sanitizeInput($_POST['description'] ?? '');
+            $features = sanitizeInput($_POST['features'] ?? '');
             $price = (float)($_POST['price'] ?? 0);
+            $original_price = isset($_POST['original_price']) && $_POST['original_price'] !== '' ? (float)$_POST['original_price'] : null;
             $stock_quantity = (int)($_POST['stock_quantity'] ?? 0);
 
             if ($product_id <= 0) $errors[] = 'Invalid product';
@@ -141,31 +141,12 @@ try {
                     $pdo->beginTransaction();
                     
                     // Update product details
-                    $stmt = $pdo->prepare('UPDATE products SET category_id = ?, subcategory_id = ?, name = ?, description = ?, price = ?, stock_quantity = ? WHERE product_id = ?');
-                    $stmt->execute([$category_id, $subcategory_id, $name, $description, $price, $stock_quantity, $product_id]);
+                    $stmt = $pdo->prepare('UPDATE products SET category_id = ?, subcategory_id = ?, name = ?, description = ?, features = ?, price = ?, original_price = ?, stock_quantity = ? WHERE product_id = ?');
+                    $stmt->execute([$category_id, $subcategory_id, $name, $description, $features, $price, $original_price, $stock_quantity, $product_id]);
                     
-                    // Handle image update if a new one is uploaded
-                    if (!empty($_FILES['image']['name'])) {
-                        // Get current image to delete it later
-                        $stmt = $pdo->prepare('SELECT image FROM products WHERE product_id = ?');
-                        $stmt->execute([$product_id]);
-                        $currentImage = $stmt->fetchColumn();
-                        
-                        // Upload new image
-                        $image = handleUpload('image');
-                        if ($image) {
-                            // Update product with new image
-                            $stmt = $pdo->prepare('UPDATE products SET image = ? WHERE product_id = ?');
-                            $stmt->execute([$image, $product_id]);
-                            
-                            // Delete old image if it exists
-                            if (!empty($currentImage) && $currentImage !== $image) {
-                                $oldImagePath = realpath(__DIR__ . '/../assets/images/') . DIRECTORY_SEPARATOR . $currentImage;
-                                if (file_exists($oldImagePath)) {
-                                    @unlink($oldImagePath);
-                                }
-                            }
-                        }
+                    // Handle multiple image uploads if new ones are selected
+                    if (!empty($_FILES['images']['name'][0])) {
+                        $productImages->uploadImages($product_id, $_FILES['images']);
                     }
                     
                     $pdo->commit();
@@ -216,11 +197,35 @@ try {
                     error_log('Product deletion error: ' . $e->getMessage());
                 }
             }
+        } elseif ($action === 'delete_image') {
+            $image_id = (int)($_POST['image_id'] ?? 0);
+            $product_id = (int)($_POST['product_id'] ?? 0);
+            if ($image_id > 0 && $product_id > 0) {
+                if ($productImages->deleteImage($image_id, $product_id)) {
+                    $success = 'Image deleted successfully';
+                    header("Location: manage_products.php?action=edit&id=$product_id&success=" . urlencode($success));
+                    exit();
+                } else {
+                    $errors[] = 'Failed to delete image';
+                }
+            }
+        } elseif ($action === 'set_main_image') {
+            $image_id = (int)($_POST['image_id'] ?? 0);
+            $product_id = (int)($_POST['product_id'] ?? 0);
+            if ($image_id > 0 && $product_id > 0) {
+                if ($productImages->setPrimaryById($image_id, $product_id)) {
+                    $success = 'Main image updated successfully';
+                    header("Location: manage_products.php?action=edit&id=$product_id&success=" . urlencode($success));
+                    exit();
+                } else {
+                    $errors[] = 'Failed to update main image';
+                }
+            }
         }
     }
 } catch (PDOException $e) {
     error_log('Products CRUD error: ' . $e->getMessage());
-    $errors[] = 'Database error occurred';
+    $errors[] = 'Database error occurred: ' . $e->getMessage();
 }
 
 // Editing product
@@ -247,57 +252,116 @@ try {
 }
 ?>
 
-<?php include '../includes/header.php'; ?>
+<?php
+$page_title = 'Product Inventory';
+include 'includes/header-new.php';
+?>
 
-<div class="container py-4">
+<div class="row">
+    <div class="col-12">
+        <?php if ($success): ?>
+            <div class="alert alert-success border-0 rounded-4 mb-4 small fw-bold animate-up">
+                <i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($success); ?>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($errors)): ?>
+            <div class="alert alert-danger border-0 rounded-4 mb-4 small fw-bold animate-up">
+                <ul class="mb-0">
+                    <?php foreach ($errors as $e): ?><li><?php echo htmlspecialchars($e); ?></li><?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
 
-    <!-- Back to Dashboard Button -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <a href="dashboard.php" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-            </a>
-        </div>
-        <div>
-            <h2 class="mb-0">Manage Products</h2>
-        </div>
-        <div>
-            <!-- Spacer for centering -->
+        <div class="admin-card animate-up">
+            <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <h5 class="admin-card-title mb-0">Product Inventory <span class="badge bg-light text-dark ms-2 rounded-pill"><?php echo count($products); ?></span></h5>
+                <button type="button" class="btn-premium py-1 px-3 small" data-bs-toggle="modal" data-bs-target="#productModal">
+                    <i class="fas fa-plus me-2"></i>Add Product
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Product Info</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($products as $p): ?>
+                        <tr>
+                            <td style="width: 50px;">
+                                <img src="../assets/images/<?php echo htmlspecialchars($p['image'] ?? 'placeholder.jpg'); ?>" width="36" height="36" class="rounded-2 shadow-sm object-fit-cover" alt="img">
+                            </td>
+                            <td>
+                                <div class="fw-black text-[13px]"><?php echo htmlspecialchars($p['name']); ?></div>
+                                <div class="small text-muted fw-bold uppercase tracking-widest text-[9px] mt-0.5">ID: #<?php echo $p['product_id']; ?></div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border rounded-pill px-2 py-1 small"><?php echo htmlspecialchars($p['category_name']); ?></span>
+                            </td>
+                            <td class="fw-black">
+                                <?php echo formatCurrency($p['price']); ?>
+                                <?php if (!empty($p['original_price'])): ?>
+                                    <div class="text-muted text-decoration-line-through text-[11px] fw-normal"><?php echo formatCurrency($p['original_price']); ?></div>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill px-2 py-1 bg-<?php echo $p['stock_quantity']>10?'success':($p['stock_quantity']>0?'warning':'danger'); ?>-subtle text-<?php echo $p['stock_quantity']>10?'success':($p['stock_quantity']>0?'warning':'danger'); ?> fw-bold small">
+                                    <?php echo (int)$p['stock_quantity']; ?> In Stock
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a class="btn-premium-outline px-2 py-1 text-decoration-none text-[12px]" href="manage_products.php?action=edit&id=<?php echo $p['product_id']; ?>">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="POST" action="" class="d-inline" onsubmit="return confirmAction(event, 'Delete this product?');">
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="product_id" value="<?php echo $p['product_id']; ?>">
+                                        <button class="btn-premium-outline px-2 py-1 text-danger border-danger/20 text-[12px]" type="submit">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+</div>
 
-    <div class="row g-4">
-        <div class="col-lg-5">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><?php echo $edit ? 'Edit Product' : 'Add New Product'; ?></h5>
-                </div>
-                <div class="card-body">
-                    <?php if (!empty($errors)): ?>
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                <?php foreach ($errors as $e): ?>
-                                    <li><?php echo htmlspecialchars($e); ?></li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </div>
+<!-- Product Modal -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 bg-dark text-white p-4">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas <?php echo $edit ? 'fa-edit' : 'fa-box-open'; ?> me-2"></i>
+                    <?php echo $edit ? 'Edit Product Details' : 'Add New Inventory Item'; ?>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form method="POST" action="" enctype="multipart/form-data">
+                    <?php if ($edit): ?>
+                        <input type="hidden" name="action" value="update">
+                        <input type="hidden" name="product_id" value="<?php echo $edit['product_id']; ?>">
+                    <?php else: ?>
+                        <input type="hidden" name="action" value="create">
                     <?php endif; ?>
-                    <?php if ($success): ?>
-                        <div class="alert alert-success"><i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($success); ?></div>
-                    <?php endif; ?>
 
-                    <form method="POST" action="" enctype="multipart/form-data">
-                        <?php if ($edit): ?>
-                            <input type="hidden" name="action" value="update">
-                            <input type="hidden" name="product_id" value="<?php echo $edit['product_id']; ?>">
-                            <input type="hidden" name="existing_image" value="<?php echo htmlspecialchars($edit['image'] ?? ''); ?>">
-                        <?php else: ?>
-                            <input type="hidden" name="action" value="create">
-                        <?php endif; ?>
-
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select class="form-select" name="category_id" required>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Category</label>
+                            <select class="form-select rounded-3 fw-bold" name="category_id" required>
                                 <option value="">Select Category</option>
                                 <?php foreach ($categories as $c): ?>
                                     <option value="<?php echo $c['category_id']; ?>" <?php echo ($edit && $edit['category_id']==$c['category_id'])?'selected':''; ?>>
@@ -306,174 +370,126 @@ try {
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Product Name</label>
-                            <input type="text" class="form-control" name="name" value="<?php echo htmlspecialchars($edit['name'] ?? ''); ?>" required>
+                        <div class="col-md-6 mb-3">
+                            <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Product Name</label>
+                            <input type="text" class="form-control rounded-3" name="name" value="<?php echo htmlspecialchars($edit['name'] ?? ''); ?>" required placeholder="Enter product title">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea class="form-control" name="description" rows="4"><?php echo htmlspecialchars($edit['description'] ?? ''); ?></textarea>
-                        </div>
-                        <div class="row g-2">
-                            <div class="col-6 mb-3">
-                                <label class="form-label">Price</label>
-                                <input type="number" step="0.01" min="0" class="form-control" name="price" value="<?php echo htmlspecialchars($edit['price'] ?? ''); ?>" required>
-                            </div>
-                            <div class="col-6 mb-3">
-                                <label class="form-label">Stock Quantity</label>
-                                <input type="number" min="0" class="form-control" name="stock_quantity" value="<?php echo htmlspecialchars($edit['stock_quantity'] ?? ''); ?>" required>
-                            </div>
-                        </div>
-                        <!-- Single Image Upload -->
-                        <div class="mb-3">
-                            <label for="image" class="form-label">Product Image</label>
-                            <input type="file" class="form-control" id="image" name="image" accept="image/*" <?php echo !$edit ? 'required' : ''; ?>>
-                            <div class="form-text">Upload a high-quality product image (JPG, PNG, GIF, WebP).</div>
-                            
-                            <?php if ($edit && !empty($edit['image'])): ?>
-                                <div class="mt-3">
-                                    <h6>Current Image</h6>
-                                    <div class="row">
-                                        <div class="col-3">
-                                            <img src="/assets/images/<?php echo htmlspecialchars($edit['image']); ?>" 
-                                                 class="img-thumbnail" style="height: 100px; width: 100%; object-fit: cover;">
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <button class="btn btn-primary w-100" type="submit"><i class="fas fa-save me-2"></i><?php echo $edit ? 'Update' : 'Create'; ?> Product</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-7">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">All Products</h5>
-                    <span class="badge bg-primary"><?php echo count($products); ?></span>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Image</th>
-                                    <th>Name</th>
-                                    <th>Category</th>
-                                    <th>Price</th>
-                                    <th>Stock</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($products as $p): ?>
-                                    <tr>
-                                        <td><?php echo $p['product_id']; ?></td>
-                                        <td>
-                                            <img src="../assets/images/<?php echo htmlspecialchars($p['image'] ?? 'placeholder.jpg'); ?>" width="50" height="50" class="rounded" alt="img">
-                                        </td>
-                                        <td><?php echo htmlspecialchars($p['name']); ?></td>
-                                        <td><span class="badge bg-info"><?php echo htmlspecialchars($p['category_name']); ?></span></td>
-                                        <td><?php echo formatCurrency($p['price']); ?></td>
-                                        <td>
-                                            <span class="badge bg-<?php echo $p['stock_quantity']>10?'success':($p['stock_quantity']>0?'warning':'danger'); ?>">
-                                                <?php echo (int)$p['stock_quantity']; ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <a class="btn btn-sm btn-outline-primary" href="manage_products.php?action=edit&id=<?php echo $p['product_id']; ?>"><i class="fas fa-edit"></i></a>
-                                            <form method="POST" action="" class="d-inline" onsubmit="return confirm('Delete this product?');">
-                                                <input type="hidden" name="action" value="delete">
-                                                <input type="hidden" name="product_id" value="<?php echo $p['product_id']; ?>">
-                                                <button class="btn btn-sm btn-outline-danger" type="submit"><i class="fas fa-trash"></i></button>
-                                            </form>
-                                            <a class="btn btn-sm btn-outline-secondary" href="../product.php?id=<?php echo $p['product_id']; ?>" target="_blank"><i class="fas fa-eye"></i></a>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
                     </div>
-                </div>
+
+                    <div class="mb-3">
+                        <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Description</label>
+                        <textarea class="form-control rounded-3" name="description" rows="3" placeholder="Detailed product description..."><?php echo htmlspecialchars($edit['description'] ?? ''); ?></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Key Features (One per line)</label>
+                        <textarea class="form-control rounded-3" name="features" rows="4" placeholder="List key features line by line..."><?php echo htmlspecialchars($edit['features'] ?? ''); ?></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Sale Price (GH₵)</label>
+                            <input type="number" step="0.01" min="0" class="form-control rounded-3 fw-black text-primary" name="price" value="<?php echo htmlspecialchars($edit['price'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Old Price (Optional)</label>
+                            <input type="number" step="0.01" min="0" class="form-control rounded-3" name="original_price" value="<?php echo htmlspecialchars($edit['original_price'] ?? ''); ?>" placeholder="Price before discount">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Stock Quantity</label>
+                            <input type="number" min="0" class="form-control rounded-3" name="stock_quantity" value="<?php echo htmlspecialchars($edit['stock_quantity'] ?? ''); ?>" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Product Visuals (Select Multiple)</label>
+                        <input type="file" class="form-control rounded-3" name="images[]" accept="image/*" multiple <?php echo !$edit ? 'required' : ''; ?>>
+                        <?php if ($edit): 
+                            $currentImages = $productImages->getProductImages($edit['product_id']);
+                            if (!empty($currentImages)): ?>
+                            <div class="mt-3">
+                                <label class="stat-label small mb-2 uppercase tracking-wider fw-bold d-block text-muted">Current Gallery</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <?php foreach ($currentImages as $img): ?>
+                                        <div class="position-relative group">
+                                            <img src="../assets/images/<?php echo htmlspecialchars($img['image_path']); ?>" 
+                                                 class="rounded-3 shadow-sm <?php echo $img['is_primary'] ? 'border-primary border-2' : ''; ?>" 
+                                                 style="width: 80px; height: 80px; object-fit: cover;">
+                                            <?php if ($img['is_primary']): ?>
+                                                <span class="badge bg-primary position-absolute top-0 start-0 m-1 rounded-pill" style="font-size: 8px;">Main</span>
+                                            <?php endif; ?>
+                                            
+                                            <!-- Delete Image Button -->
+                                            <button type="button" 
+                                                    onclick="deleteProductImage(<?php echo $img['image_id']; ?>, <?php echo $edit['product_id']; ?>)"
+                                                    class="btn btn-danger btn-sm rounded-circle p-0 d-flex align-items-center justify-center shadow-sm position-absolute top-0 end-0 m-1" 
+                                                    style="width: 22px; height: 22px; font-size: 12px; z-index: 20;"
+                                                    title="Delete Image">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+
+                                            <?php if (!$img['is_primary']): ?>
+                                                <!-- Set as Main Button -->
+                                                <button type="button" 
+                                                        onclick="setPrimaryImage(<?php echo $img['image_id']; ?>, <?php echo $edit['product_id']; ?>)"
+                                                        class="btn btn-primary btn-sm rounded-pill p-0 px-2 shadow-sm position-absolute bottom-0 start-0 m-1 opacity-0 group-hover:opacity-100 transition-opacity" 
+                                                        style="font-size: 8px; z-index: 20;">
+                                                    Set Main
+                                                </button>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; endif; ?>
+                    </div>
+
+                    <div class="mt-4">
+                        <button class="btn-premium w-100 py-3 rounded-3 shadow-sm" type="submit">
+                            <i class="fas fa-save me-2"></i><?php echo $edit ? 'Save Product' : 'Deploy to Catalog'; ?>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-</div>
+<!-- Hidden form for image deletion -->
+<form id="deleteImageForm" method="POST" action="">
+    <input type="hidden" name="action" value="delete_image">
+    <input type="hidden" name="image_id" id="delete_image_id">
+    <input type="hidden" name="product_id" id="delete_product_id">
+</form>
+
+<!-- Hidden form for setting main image -->
+<form id="setMainImageForm" method="POST" action="">
+    <input type="hidden" name="action" value="set_main_image">
+    <input type="hidden" name="image_id" id="main_image_id">
+    <input type="hidden" name="product_id" id="main_product_id">
+</form>
 
 <script>
-// Handle setting primary image
+function deleteProductImage(imageId, productId) {
+    if (confirm('Delete this image?')) {
+        document.getElementById('delete_image_id').value = imageId;
+        document.getElementById('delete_product_id').value = productId;
+        document.getElementById('deleteImageForm').submit();
+    }
+}
+
+function setPrimaryImage(imageId, productId) {
+    document.getElementById('main_image_id').value = imageId;
+    document.getElementById('main_product_id').value = productId;
+    document.getElementById('setMainImageForm').submit();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Set primary image
-    document.querySelectorAll('.set-primary').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const imageId = this.dataset.imageId;
-            const productId = this.dataset.productId;
-            
-            fetch('ajax/set_primary_image.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `image_id=${imageId}&product_id=${productId}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Failed to set primary image: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while setting primary image');
-            });
-        });
-    });
-    
-    // Delete image
-    document.querySelectorAll('.delete-image').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (!confirm('Are you sure you want to delete this image?')) {
-                return;
-            }
-            
-            const imageId = this.dataset.imageId;
-            const productId = this.dataset.productId;
-            const imageContainer = this.closest('.col-3');
-            
-            fetch('ajax/delete_image.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `image_id=${imageId}&product_id=${productId}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    imageContainer.remove();
-                    // If no images left, show message
-                    if (document.querySelectorAll('#product-images-container .col-3').length <= 1) {
-                        location.reload();
-                    }
-                } else {
-                    alert('Failed to delete image: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while deleting the image');
-            });
-        });
-    });
+    <?php if ($edit || !empty($errors)): ?>
+    var myModal = new bootstrap.Modal(document.getElementById('productModal'));
+    myModal.show();
+    <?php endif; ?>
 });
 </script>
 
-</body>
-</html>
+<?php include 'includes/footer-new.php'; ?>

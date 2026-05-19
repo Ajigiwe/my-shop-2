@@ -175,7 +175,7 @@ try {
                 $response['success'] = true;
                 $response['message'] = 'Payment initialized successfully';
                 $response['order_id'] = $db_order_id;
-                $response['redirect'] = 'checkout_paystack_fixed.php?order_id=' . $db_order_id;
+                $response['redirect'] = 'checkout_paystack.php?order_id=' . $db_order_id;
                 
             } catch (Exception $db_error) {
                 // If database fails, fall back to session storage
@@ -203,7 +203,7 @@ try {
                 $response['success'] = true;
                 $response['message'] = 'Payment initialized successfully';
                 $response['order_id'] = $order_id;
-                $response['redirect'] = 'checkout_paystack_fixed.php?order_id=' . $order_id;
+                $response['redirect'] = 'checkout_paystack.php?order_id=' . $order_id;
             }
             
         } else {

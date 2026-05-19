@@ -205,7 +205,7 @@ $store = [
                 </div>
                 <div class="mt-3">
                     <strong>Payment Method:</strong> <?php echo ucfirst(str_replace('_', ' ', $order['payment_method'])); ?><br>
-                    <strong>Status:</strong> <?php echo ucfirst($order['status']); ?>
+                    <strong>Status:</strong> <?php echo ucfirst($order['order_status']); ?>
                 </div>
             </div>
         </div>

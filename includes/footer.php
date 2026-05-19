@@ -1,285 +1,241 @@
-<!-- Footer -->
-<footer id="main-footer">
-    <?php
-    // Compute base path for assets (works from root, /admin, /user, /legal, etc.)
-    $base = '';
-    $current_path = $_SERVER['PHP_SELF'] ?? '';
-    if (preg_match('/\/(admin|user|legal)\//', $current_path)) {
-        $base = '../';
-    }
-    ?>
-    <div class="container py-1">
-        <div class="row g-2">
-            <!-- Company info -->
-            <div class="col-lg-4 col-md-6">
-                <div class="d-flex align-items-center mb-0">
-                    <i class="fas fa-store me-1" style="font-size: 0.9rem;"></i>
-                    <h5 class="mb-0" style="font-size: 0.9rem;">ASO Online Market</h5>
+<?php
+/**
+ * Footer
+ * - Standard footer for all pages
+ */
+$base = '';
+$current_path = $_SERVER['PHP_SELF'] ?? '';
+if (preg_match('/\/(admin|user|legal)\//', $current_path)) {
+    $base = '../';
+}
+?>
+
+<footer class="w-full mt-auto bg-[#F9F9F9] border-t border-[#EEEEEE] pt-8 pb-4 text-[#666666] font-sans">
+    <div class="max-w-[1200px] mx-auto px-6">
+        
+        <!-- Top Footer Column Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-4">
+            
+            <!-- Left Info Column -->
+            <div class="space-y-2">
+                <div class="mb-2">
+                    <img src="<?php echo $base; ?>assets/images/logo-v3.png" alt="<?php echo htmlspecialchars($site_name); ?>" class="h-16 w-auto object-contain" />
                 </div>
-                <p class="mb-1" style="font-size: 0.75rem; line-height: 1.2; opacity: 0.8;">Your trusted shopping destination</p>
-                <div class="social-links d-flex gap-1">
-                    <a href="#" title="Facebook" class="d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.1); font-size: 0.8rem;">
-                        <i class="fab fa-facebook-f"></i>
-                    </a>
-                    <a href="#" title="Twitter" class="d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.1); font-size: 0.8rem;">
-                        <i class="fab fa-twitter"></i>
-                    </a>
-                    <a href="#" title="Instagram" class="d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.1); font-size: 0.8rem;">
-                        <i class="fab fa-instagram"></i>
-                    </a>
+                <p class="text-[12px] text-[#666666] leading-relaxed max-w-[240px]">
+                    123 Business District,<br>Accra, Ghana
+                </p>
+                <div class="space-y-0.5 text-[12px] text-[#666666]">
+                    <p>Email: <a href="mailto:info@asoonlinemarket.com" class="hover:text-[#1A1A1A] transition-colors">info@asoonlinemarket.com</a></p>
+                    <p>Phone: <a href="tel:+233201234567" class="hover:text-[#1A1A1A] transition-colors">+233 20 123 4567</a></p>
                 </div>
             </div>
 
-            <!-- Main Navigation -->
-            <div class="col-lg-4 col-md-6">
-                <h6 class="mb-1" style="font-size: 0.85rem;">Navigation</h6>
-                <ul class="list-unstyled">
-                    <li class="mb-1">
-                        <a href="<?php echo $base; ?>index.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.85rem;">
-                            <i class="fas fa-home me-1" style="width: 14px; text-align: center; font-size: 0.8rem;"></i>Home
-                        </a>
-                    </li>
-                    <li class="mb-1">
-                        <a href="<?php echo $base; ?>shop.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.85rem;">
-                            <i class="fas fa-shopping-bag me-1" style="width: 14px; text-align: center; font-size: 0.8rem;"></i>Shop
-                        </a>
-                    </li>
-                    <li class="mb-1">
-                        <a href="<?php echo $base; ?>about.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.85rem;">
-                            <i class="fas fa-info-circle me-1" style="width: 14px; text-align: center; font-size: 0.8rem;"></i>About Us
-                        </a>
-                    </li>
-                    <li class="mb-1">
-                        <a href="<?php echo $base; ?>contact.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.85rem;">
-                            <i class="fas fa-phone me-1" style="width: 14px; text-align: center; font-size: 0.8rem;"></i>Contact
-                        </a>
-                    </li>
+            <!-- Company Column -->
+            <div>
+                <h4 class="text-[11px] font-black uppercase tracking-widest text-[#1A1A1A] mb-3 border-b border-[#EEEEEE] pb-1 max-w-[80px]">Company</h4>
+                <ul class="space-y-1 text-[12px]">
+                    <li><a href="<?php echo $base; ?>about.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">About Us</a></li>
+                    <li><a href="<?php echo $base; ?>shop.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Shop</a></li>
+                    <li><a href="<?php echo $base; ?>contact.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Contact Us</a></li>
+                    <li><a href="<?php echo $base; ?>user/orders.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Track Your Order</a></li>
+                    <li><a href="<?php echo $base; ?>login.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Login / Register</a></li>
                 </ul>
             </div>
 
-            <!-- Legal & Support -->
-            <div class="col-lg-4 col-md-6">
-                <h6 class="mb-1" style="font-size: 0.85rem;">Legal & Support</h6>
-                <ul class="list-unstyled">
-                    <li class="mb-1">
-                        <a href="<?php echo $base; ?>legal/terms-conditions.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.8rem;">
-                            <i class="fas fa-file-contract me-1" style="width: 14px; text-align: center; font-size: 0.75rem;"></i>Terms & Conditions
-                        </a>
-                    </li>
-                    <li class="mb-1">
-                        <a href="<?php echo $base; ?>legal/privacy-policy.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.8rem;">
-                            <i class="fas fa-shield-alt me-1" style="width: 14px; text-align: center; font-size: 0.75rem;"></i>Privacy Policy
-                        </a>
-                    </li>
-                    <li class="mb-1">
-                        <a href="<?php echo $base; ?>legal/refund-returns.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.8rem;">
-                            <i class="fas fa-undo me-1" style="width: 14px; text-align: center; font-size: 0.75rem;"></i>Refund & Returns
-                        </a>
-                    </li>
-                    <li class="mb-1">
-                        <a href="<?php echo $base; ?>legal/shipping-policy.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.8rem;">
-                            <i class="fas fa-truck me-1" style="width: 14px; text-align: center; font-size: 0.75rem;"></i>Shipping Policy
-                        </a>
-                    </li>
-                    <li class="mb-1">
-                        <a href="<?php echo $base; ?>contact.php" class="text-decoration-none d-flex align-items-center py-1 px-2 rounded" style="font-size: 0.8rem;">
-                            <i class="fas fa-headset me-1" style="width: 14px; text-align: center; font-size: 0.75rem;"></i>Contact Support
-                        </a>
-                    </li>
+            <!-- Support Column -->
+            <div>
+                <h4 class="text-[11px] font-black uppercase tracking-widest text-[#1A1A1A] mb-3 border-b border-[#EEEEEE] pb-1 max-w-[80px]">Support</h4>
+                <ul class="space-y-1 text-[12px]">
+                    <li><a href="<?php echo $base; ?>legal/terms-conditions.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Terms & Conditions</a></li>
+                    <li><a href="<?php echo $base; ?>legal/privacy-policy.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Privacy Policy</a></li>
+                    <li><a href="<?php echo $base; ?>legal/shipping-policy.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Shipping Policy</a></li>
                 </ul>
             </div>
-        </div>
-    </div>
 
-    <!-- Copyright -->
-    <div class="footer-bottom py-1" style="font-size: 0.7rem; border-top: 1px solid rgba(255,255,255,0.1);">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <p class="mb-0" style="opacity: 0.7;">&copy; <?php echo date('Y'); ?> ASO Online Market. All rights reserved.</p>
-                </div>
-                <div class="col-md-4 text-md-end">
-                    <a href="<?php echo $base; ?>legal/privacy-policy.php" class="text-decoration-none me-2" style="font-size: 0.7rem; opacity: 0.7;">Privacy</a>
-                    <a href="<?php echo $base; ?>legal/terms-conditions.php" class="text-decoration-none" style="font-size: 0.7rem; opacity: 0.7;">Terms</a>
-                </div>
+            <!-- Direct Support Column -->
+            <div class="space-y-2">
+                <h4 class="text-[11px] font-black uppercase tracking-widest text-[#1A1A1A] mb-3 border-b border-[#EEEEEE] pb-1 max-w-[120px]">Direct Support</h4>
+                <p class="text-[12px] leading-relaxed max-w-[240px]">
+                    Leading the way in fresh groceries and cutting-edge electronics delivered to your door.
+                </p>
+                <a href="mailto:info@asoonlinemarket.com" class="flex items-center justify-center gap-2 px-3.5 py-2 bg-transparent border border-[#DDDDDD] hover:border-[#1A1A1A] rounded-full text-[#1A1A1A] text-[11px] font-black tracking-widest uppercase transition-all duration-300 group max-w-[185px]">
+                    <span class="material-symbols-outlined text-[15px] text-gray-500 group-hover:text-[#1A1A1A] transition-colors">mail</span>
+                    EMAIL OUR TEAM
+                </a>
+                <p class="text-[10px] text-[#888888]">
+                    We typically respond within 24 hours.
+                </p>
+            </div>
+
+        </div>
+
+        <!-- Middle Row: Socials -->
+        <div class="flex flex-col md:flex-row items-center justify-between gap-3 border-t border-[#EEEEEE] pt-4 mb-4">
+            
+            <!-- Social Icons (Align left) -->
+            <div class="flex items-center gap-2.5">
+                <?php if (!empty($settings['social_facebook'])): ?>
+                    <a href="<?php echo htmlspecialchars($settings['social_facebook']); ?>" target="_blank" class="w-8 h-8 rounded-full bg-[#EEEEEE] hover:bg-[#1A1A1A] flex items-center justify-center text-[#1A1A1A] hover:text-white transition-colors duration-300 group" title="Facebook">
+                        <svg class="w-4 h-4 fill-current text-[#1A1A1A] group-hover:text-white transition-colors duration-300" viewBox="0 0 24 24">
+                            <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.8c4.56-.93 8-4.96 8-9.8z"/>
+                        </svg>
+                    </a>
+                <?php endif; ?>
+                <?php if (!empty($settings['social_whatsapp'])): ?>
+                    <?php 
+                        $wa_val = trim($settings['social_whatsapp']);
+                        $wa_link = htmlspecialchars($wa_val);
+                        // If it is a phone number, automatically format it as a clean wa.me link
+                        if (preg_match('/^[0-9+ ]+$/', $wa_val)) {
+                            $clean_num = preg_replace('/[^0-9]/', '', $wa_val);
+                            $wa_link = "https://wa.me/" . $clean_num;
+                        }
+                    ?>
+                    <a href="<?php echo $wa_link; ?>" target="_blank" class="w-8 h-8 rounded-full bg-[#EEEEEE] hover:bg-[#1A1A1A] flex items-center justify-center text-[#1A1A1A] hover:text-white transition-colors duration-300 group" title="WhatsApp">
+                        <svg class="w-4 h-4 fill-current text-[#1A1A1A] group-hover:text-white transition-colors duration-300" viewBox="0 0 24 24">
+                            <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.333 4.982L2 22l5.233-1.371a9.936 9.936 0 004.779 1.218h.004c5.505 0 9.988-4.478 9.989-9.984a9.975 9.975 0 00-2.925-7.064A9.932 9.932 0 0012.012 2zm5.727 14.072c-.244.688-1.201 1.249-1.657 1.297-.431.045-.994.074-1.61-.122a7.195 7.195 0 01-3.136-1.913 7.804 7.804 0 01-2.153-3.11c-.422-.724-.689-1.562-.689-2.353 0-1.659.866-2.485 1.192-2.813.244-.246.61-.31.874-.31h.244c.264 0 .528.016.752.544l.793 1.936c.081.2.146.416.033.624-.097.176-.227.352-.39.512l-.504.496c-.163.16-.341.336-.146.672a5.056 5.056 0 001.9 2.08 4.093 4.093 0 002.374.88c.325.016.512-.144.691-.336.179-.192.748-.864.96-1.168.195-.272.455-.24.715-.144l2.228 1.04c.26.128.52.256.585.368.065.112.065.656-.179 1.344z"/>
+                        </svg>
+                    </a>
+                <?php endif; ?>
+            </div>
+
+            <!-- Empty right side since logos are removed -->
+            <div></div>
+
+        </div>
+
+        <!-- Bottom Copyright Row -->
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 border-t border-[#EEEEEE] pt-4 text-[11px] text-[#888888]">
+            <p>
+                <?php echo !empty($settings['footer_notice']) ? htmlspecialchars($settings['footer_notice']) : '© ' . date('Y') . ' ' . htmlspecialchars($site_name) . '. All rights reserved.'; ?>
+            </p>
+            <div class="flex items-center gap-6">
+                <a href="<?php echo $base; ?>legal/privacy-policy.php" class="hover:text-[#1A1A1A] transition-colors">Privacy</a>
+                <a href="<?php echo $base; ?>legal/terms-conditions.php" class="hover:text-[#1A1A1A] transition-colors">Terms</a>
+                <a href="<?php echo $base; ?>legal/cookie-policy.php" class="hover:text-[#1A1A1A] transition-colors">Cookies</a>
             </div>
         </div>
+
     </div>
 </footer>
 
-<!-- Floating Cart Widget -->
-<a href="<?php echo $base; ?>cart.php"
-   class="cart-float cart-pulse"
-   title="View Cart"
-   aria-label="View Shopping Cart"
-   style="z-index: 9999 !important; display: block !important;">
-    <i class="fas fa-shopping-cart"></i>
-    <span class="cart-count">0</span>
-</a>
+<?php if (isset($settings['promo_popup_enabled']) && $settings['promo_popup_enabled'] == '1'): ?>
+    <!-- Promo Popup Modal -->
+    <div id="promoPopupOverlay" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div id="promoPopupModal" class="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-[800px] w-full flex flex-col md:flex-row transform scale-95 transition-transform duration-300 relative">
+            
+            <!-- Close 'X' Button -->
+            <button onclick="closePromoPopup()" class="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center bg-white/50 hover:bg-white rounded-full text-black hover:text-red-500 transition-colors shadow-sm">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
 
-<!-- Floating WhatsApp Button -->
-<a href="https://wa.me/233123456789?text=Hello! I need help with my order on ASO Online Market."
-   target="_blank"
-   class="whatsapp-float whatsapp-pulse"
-   title="Chat with us on WhatsApp"
-   aria-label="Contact us on WhatsApp"
-   style="z-index: 9999 !important; display: block !important;">
-</a>
+            <?php if (!empty($settings['promo_popup_image'])): ?>
+            <!-- Image Section -->
+            <div class="md:w-1/2 bg-[#F9F9F9] relative flex items-center justify-center min-h-[200px] md:min-h-[400px]">
+                <img src="<?php echo $base; ?>assets/images/<?php echo htmlspecialchars($settings['promo_popup_image']); ?>" alt="Promo" class="absolute inset-0 w-full h-full object-cover">
+            </div>
+            <?php endif; ?>
 
-<style>
-/* Floating Cart Button */
-.cart-float {
-    position: fixed;
-    width: 45px;
-    height: 45px;
-    top: 80px;
-    right: 30px;
-    background: linear-gradient(135deg, #2d5016 0%, #4a7c59 100%);
-    color: #fff;
-    border-radius: 12px;
-    text-align: center;
-    font-size: 18px;
-    box-shadow: 0 8px 25px rgba(45, 80, 22, 0.4);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-decoration: none;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-}
+            <!-- Content Section -->
+            <div class="<?php echo !empty($settings['promo_popup_image']) ? 'md:w-1/2' : 'w-full'; ?> p-8 md:p-12 flex flex-col justify-center text-center md:text-left">
+                <div class="text-[10px] font-black text-[#888888] uppercase tracking-widest mb-2">Special Offer</div>
+                <h2 class="text-[28px] font-black text-[#1A1A1A] tracking-tighter leading-tight mb-4">
+                    <?php echo htmlspecialchars($settings['promo_popup_title'] ?? 'Special Promotion'); ?>
+                </h2>
+                <p class="text-[14px] text-[#666666] mb-8 leading-relaxed">
+                    <?php echo nl2br(htmlspecialchars($settings['promo_popup_content'] ?? 'Don\'t miss out on our latest deals and offers.')); ?>
+                </p>
+                
+                <div class="flex flex-col gap-3">
+                    <a href="<?php echo $base . ltrim(htmlspecialchars($settings['promo_popup_btn_link'] ?? 'shop.php'), '/'); ?>" class="bg-primary text-white text-center py-3.5 rounded-lg font-black text-[12px] uppercase tracking-widest hover:scale-105 transition-transform">
+                        <?php echo htmlspecialchars($settings['promo_popup_btn_text'] ?? 'Shop Now'); ?>
+                    </a>
+                    <button onclick="dismissPromoPopup()" class="text-[11px] font-black text-[#888888] uppercase tracking-widest hover:text-[#1A1A1A] py-2 transition-colors">
+                        Don't Show Again
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-.cart-float:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 12px 35px rgba(45, 80, 22, 0.6);
-    background: linear-gradient(135deg, #4a7c59 0%, #2d5016 100%);
-    border-color: rgba(255, 255, 255, 0.3);
-}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const frequency = '<?php echo htmlspecialchars($settings['promo_popup_frequency'] ?? 'session'); ?>';
+        
+        // 1. Check if permanently dismissed
+        if (localStorage.getItem('promo_dismissed') === 'true') {
+            return; // Never show
+        }
 
-.cart-float:active {
-    transform: scale(0.95);
-}
+        // 2. Check frequency
+        let shouldShow = false;
+        
+        if (frequency === 'always') {
+            shouldShow = true;
+        } else if (frequency === 'session') {
+            if (!sessionStorage.getItem('promo_shown_this_session')) {
+                shouldShow = true;
+            }
+        } else if (frequency === 'daily') {
+            const lastShown = localStorage.getItem('promo_last_shown_time');
+            const now = new Date().getTime();
+            // 24 hours = 86400000 ms
+            if (!lastShown || (now - parseInt(lastShown)) > 86400000) {
+                shouldShow = true;
+            }
+        }
 
-.cart-count {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-    color: white;
-    border-radius: 10px;
-    min-width: 18px;
-    height: 18px;
-    font-size: 10px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 3px 12px rgba(39, 174, 96, 0.4);
-    padding: 0 4px;
-    backdrop-filter: blur(5px);
-}
+        if (shouldShow) {
+            // Slight delay so it doesn't jarringly appear instantly
+            setTimeout(() => {
+                const overlay = document.getElementById('promoPopupOverlay');
+                const modal = document.getElementById('promoPopupModal');
+                
+                if(overlay && modal) {
+                    overlay.classList.remove('hidden');
+                    // Trigger reflow
+                    void overlay.offsetWidth;
+                    
+                    overlay.classList.remove('opacity-0');
+                    modal.classList.remove('scale-95');
+                    modal.classList.add('scale-100');
 
-/* Cart pulse animation */
-.cart-pulse {
-    animation: cart-pulse 2s infinite;
-}
+                    // Record that we showed it
+                    if (frequency === 'session') {
+                        sessionStorage.setItem('promo_shown_this_session', 'true');
+                    } else if (frequency === 'daily') {
+                        localStorage.setItem('promo_last_shown_time', new Date().getTime().toString());
+                    }
+                }
+            }, 1000);
+        }
+    });
 
-@keyframes cart-pulse {
-    0% {
-        box-shadow: 0 8px 25px rgba(45, 80, 22, 0.4), 0 0 0 0 rgba(45, 80, 22, 0.7);
-    }
-    70% {
-        box-shadow: 0 8px 25px rgba(45, 80, 22, 0.4), 0 0 0 12px rgba(45, 80, 22, 0);
-    }
-    100% {
-        box-shadow: 0 8px 25px rgba(45, 80, 22, 0.4), 0 0 0 0 rgba(45, 80, 22, 0);
-    }
-}
-
-/* Adjust WhatsApp button position */
-.whatsapp-float {
-    bottom: 30px !important;
-    left: 30px !important;
-    right: auto !important;
-}
-
-
-/* Footer specific styles - ensure single instance */
-footer:not(#main-footer) {
-    display: none !important;
-}
-
-footer#main-footer {
-    display: block !important;
-}
-
-/* Additional safety measures */
-body > footer:not(:last-of-type) {
-    display: none !important;
-}
-
-footer {
-    background: inherit; /* Inherit the gradient from CSS */
-    color: inherit; /* Inherit white text color from CSS */
-}
-
-footer h5 {
-    color: inherit; /* Inherit white color from CSS */
-}
-
-footer .social-links a:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    transition: background-color 0.2s ease;
-}
-
-footer .container {
-    max-width: 100%;
-    width: 100%;
-}
-
-footer .row {
-    margin: 0;
-}
-
-footer [class*="col-"] {
-    padding-left: 15px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    footer .container {
-        padding: 0.75rem 0 0.25rem;
-        padding-right: 1rem;
+    function closePromoPopup() {
+        const overlay = document.getElementById('promoPopupOverlay');
+        const modal = document.getElementById('promoPopupModal');
+        
+        if(overlay && modal) {
+            overlay.classList.add('opacity-0');
+            modal.classList.remove('scale-100');
+            modal.classList.add('scale-95');
+            
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 300);
+        }
     }
 
-    footer [class*="col-"] {
-        margin-top: 2rem;
+    function dismissPromoPopup() {
+        localStorage.setItem('promo_dismissed', 'true');
+        closePromoPopup();
     }
-
-    footer h5 {
-        font-size: 0.8rem;
-    }
-
-    footer p {
-        font-size: 0.7rem;
-    }
-}
-</style>
-<!-- Custom JS - Only load on pages that need it -->
-<?php
-// Don't load script.js on certain pages to avoid conflicts
-$current_page = basename($_SERVER['PHP_SELF'] ?? '');
-$pages_without_script_js = ['form_test.php'];
-
-if (!in_array($current_page, $pages_without_script_js)):
-?>
-<!-- Bootstrap JS (loaded at end for better performance) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Custom JS -->
-<script src="<?php echo $base; ?>assets/js/script.js"></script>
-<!-- Floating Cart JS -->
-<script src="<?php echo $base; ?>assets/js/floating-cart.js"></script>
+    </script>
 <?php endif; ?>
+
+<!-- No more Bootstrap JS needed for the new UI, using Alpine or Vanilla JS for interactivity if needed -->
+<!-- But we keep the base script.js if it has critical logic like cart handling -->
+<script src="<?php echo $base; ?>assets/js/script.js"></script>
+
+</body>
+</html>

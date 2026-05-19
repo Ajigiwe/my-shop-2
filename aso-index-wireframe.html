@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASO Online - Mobile Index Wireframe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a5f3f;
+            --primary-light: #2d8f5f;
+            --accent-red: #ff4757;
+            --neutral-50: #f8f9fa;
+            --neutral-100: #e9ecef;
+            --neutral-300: #ccc;
+            --neutral-600: #495057;
+            --neutral-900: #1a1a1a;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            color: var(--neutral-900);
+            line-height: 1.5;
+        }
+
+        /* ==================== HEADER ==================== */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: white;
+            border-bottom: 1px solid var(--neutral-100);
+            padding: var(--spacing-md) var(--spacing-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--spacing-md);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: var(--spacing-xs);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--primary);
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .header-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: var(--spacing-xs);
+            position: relative;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: var(--accent-red);
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        /* ==================== SEARCH BAR ==================== */
+        .search-section {
+            padding: var(--spacing-md) var(--spacing-md);
+            background: var(--neutral-50);
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--neutral-300);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            background: white;
+        }
+
+        .search-bar::placeholder {
+            color: #999;
+        }
+
+        /* ==================== HERO BANNER ==================== */
+        .hero {
+            height: 240px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            padding: var(--spacing-lg) var(--spacing-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(20px, -20px); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: var(--spacing-sm);
+            font-weight: 600;
+        }
+
+        .hero h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+            line-height: 1.3;
+        }
+
+        .hero p {
+            font-size: 14px;
+            opacity: 0.95;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .hero-btn {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 0.2s;
+        }
+
+        .hero-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* ==================== TRUST SIGNALS ==================== */
+        .trust-signals {
+            padding: var(--spacing-lg) var(--spacing-md);
+            background: white;
+            border-bottom: 1px solid var(--neutral-100);
+        }
+
+        .trust-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .trust-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: var(--spacing-xs);
+        }
+
+        .trust-icon {
+            font-size: 24px;
+        }
+
+        .trust-text {
+            font-size: 12px;
+            color: var(--neutral-600);
+            font-weight: 500;
+        }
+
+        /* ==================== SECTION HEADERS ==================== */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-lg) var(--spacing-md) var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        .section-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--neutral-900);
+        }
+
+        .view-all {
+            font-size: 13px;
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ==================== PRODUCT CARDS ==================== */
+        .products-section {
+            padding: 0 var(--spacing-md) var(--spacing-lg);
+        }
+
+        .product-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: var(--spacing-md);
+            border: 1px solid var(--neutral-100);
+            transition: box-shadow 0.3s;
+        }
+
+        .product-card:active {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+
+        .product-image-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            background: var(--neutral-50);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+        }
+
+        .product-badge {
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            background: var(--accent-red);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .wishlist-btn {
+            position: absolute;
+            top: var(--spacing-md);
+            left: var(--spacing-md);
+            width: 36px;
+            height: 36px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .wishlist-btn:active {
+            transform: scale(0.9);
+        }
+
+        .product-info {
+            padding: var(--spacing-md);
+        }
+
+        .product-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--neutral-900);
+            margin-bottom: var(--spacing-xs);
+            line-height: 1.4;
+            min-height: 40px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            margin-bottom: var(--spacing-sm);
+            font-size: 12px;
+        }
+
+        .stars {
+            color: #ffc107;
+        }
+
+        .rating-count {
+            color: var(--neutral-600);
+            font-size: 11px;
+        }
+
+        .product-pricing {
+            display: flex;
+            align-items: baseline;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .original-price {
+            font-size: 12px;
+            color: var(--neutral-600);
+            text-decoration: line-through;
+        }
+
+        .discount-badge {
+            background: var(--neutral-50);
+            color: var(--primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .current-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--neutral-900);
+        }
+
+        .product-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .add-to-cart-btn {
+            width: 44px;
+            height: 44px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            transition: background 0.2s;
+        }
+
+        .add-to-cart-btn:active {
+            background: var(--primary-light);
+        }
+
+        .in-stock {
+            font-size: 12px;
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        /* ==================== CATEGORY GRID ==================== */
+        .categories-section {
+            padding: var(--spacing-lg) var(--spacing-md);
+            background: var(--neutral-50);
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .category-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            text-align: center;
+            border: 1px solid var(--neutral-100);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .category-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .category-icon {
+            font-size: 32px;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .category-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--neutral-900);
+        }
+
+        /* ==================== FLASH SALE SECTION ==================== */
+        .flash-sale {
+            padding: var(--spacing-lg) var(--spacing-md);
+            background: white;
+            border-bottom: 1px solid var(--neutral-100);
+        }
+
+        .flash-sale-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .flash-badge {
+            background: var(--accent-red);
+            color: white;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .timer {
+            font-size: 12px;
+            color: var(--accent-red);
+            font-weight: 600;
+        }
+
+        .flash-carousel {
+            display: overflow-x-auto;
+            gap: var(--spacing-md);
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding-bottom: var(--spacing-sm);
+        }
+
+        .flash-card {
+            flex: 0 0 calc(100% - var(--spacing-md));
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            display: flex;
+            gap: var(--spacing-md);
+            border: 1px solid #ffdddd;
+        }
+
+        .flash-image {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: var(--radius-sm);
+            flex-shrink: 0;
+        }
+
+        .flash-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .flash-info h4 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--neutral-900);
+            margin-bottom: 2px;
+        }
+
+        .flash-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent-red);
+        }
+
+        /* ==================== TESTIMONIALS ==================== */
+        .testimonials {
+            padding: var(--spacing-lg) var(--spacing-md);
+            background: var(--neutral-50);
+        }
+
+        .testimonial-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            border: 1px solid var(--neutral-100);
+        }
+
+        .testimonial-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .testimonial-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .testimonial-meta {
+            flex: 1;
+        }
+
+        .testimonial-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--neutral-900);
+        }
+
+        .testimonial-rating {
+            font-size: 12px;
+            color: #ffc107;
+        }
+
+        .testimonial-text {
+            font-size: 13px;
+            color: var(--neutral-600);
+            line-height: 1.5;
+        }
+
+        /* ==================== WHY US SECTION ==================== */
+        .why-us {
+            padding: var(--spacing-lg) var(--spacing-md);
+            background: white;
+            border-bottom: 1px solid var(--neutral-100);
+        }
+
+        .why-us-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .why-us-item {
+            text-align: center;
+        }
+
+        .why-us-icon {
+            font-size: 32px;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .why-us-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--neutral-900);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .why-us-desc {
+            font-size: 11px;
+            color: var(--neutral-600);
+        }
+
+        /* ==================== NEWSLETTER ==================== */
+        .newsletter {
+            padding: var(--spacing-lg) var(--spacing-md);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            text-align: center;
+            margin: var(--spacing-lg) var(--spacing-md);
+            border-radius: var(--radius-lg);
+        }
+
+        .newsletter h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .newsletter p {
+            font-size: 13px;
+            opacity: 0.95;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .newsletter-form {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .newsletter-form input {
+            flex: 1;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+        }
+
+        .newsletter-form button {
+            background: var(--accent-red);
+            color: white;
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        /* ==================== FOOTER ==================== */
+        footer {
+            padding: var(--spacing-lg) var(--spacing-md);
+            background: #1a1a1a;
+            color: #ccc;
+            border-top: 1px solid #333;
+        }
+
+        .footer-section {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .footer-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .footer-link {
+            font-size: 12px;
+            color: #999;
+            text-decoration: none;
+            display: block;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .payment-methods {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin: var(--spacing-md) 0;
+            flex-wrap: wrap;
+        }
+
+        .payment-icon {
+            width: 32px;
+            height: 20px;
+            background: #333;
+            border-radius: 3px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #333;
+            padding-top: var(--spacing-md);
+            font-size: 11px;
+            text-align: center;
+            color: #666;
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (min-width: 640px) {
+            .category-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .why-us-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-left">
+            <button class="menu-btn">☰</button>
+            <div class="logo">
+                <div class="logo-icon">A</div>
+                <span>ASO</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="header-btn">🔍</button>
+            <button class="header-btn">
+                🛒
+                <span class="cart-badge">0</span>
+            </button>
+            <button class="header-btn">👤</button>
+        </div>
+    </header>
+
+    <!-- SEARCH -->
+    <div class="search-section">
+        <input type="text" class="search-bar" placeholder="Search products...">
+    </div>
+
+    <!-- HERO BANNER -->
+    <section class="hero">
+        <div class="hero-content">
+            <span class="hero-badge">SUMMER COLLECTION</span>
+            <h1>Discover Amazing Deals</h1>
+            <p>Premium products at unbeatable prices</p>
+            <button class="hero-btn">Shop Now</button>
+        </div>
+    </section>
+
+    <!-- TRUST SIGNALS -->
+    <section class="trust-signals">
+        <div class="trust-grid">
+            <div class="trust-item">
+                <div class="trust-icon">💳</div>
+                <div class="trust-text">Secure Payment</div>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">🚚</div>
+                <div class="trust-text">Fast Delivery</div>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">✓</div>
+                <div class="trust-text">100% Authentic</div>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">↩️</div>
+                <div class="trust-text">Easy Returns</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURED PRODUCTS -->
+    <section class="products-section">
+        <div class="section-header">
+            <h2>Featured Products</h2>
+            <a href="#" class="view-all">View All →</a>
+        </div>
+
+        <div class="product-card">
+            <div class="product-image-container">
+                <div class="product-image"></div>
+                <span class="product-badge">SALE</span>
+                <button class="wishlist-btn">🤍</button>
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">Samsung Galaxy S25 Ultra</h3>
+                <div class="product-rating">
+                    <span class="stars">★★★★★</span>
+                    <span class="rating-count">(1)</span>
+                </div>
+                <div class="product-pricing">
+                    <span class="original-price">GH₵689.99</span>
+                    <span class="discount-badge">-13%</span>
+                </div>
+                <div class="product-footer">
+                    <span class="in-stock">In Stock</span>
+                    <button class="add-to-cart-btn">🛒</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="product-card">
+            <div class="product-image-container">
+                <div class="product-image"></div>
+                <span class="product-badge">SALE</span>
+                <button class="wishlist-btn">🤍</button>
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">Google Pixel 9</h3>
+                <div class="product-rating">
+                    <span class="stars">★★★★☆</span>
+                    <span class="rating-count">(0)</span>
+                </div>
+                <div class="product-pricing">
+                    <span class="original-price">GH₵10,000.06</span>
+                    <span class="discount-badge">-10%</span>
+                </div>
+                <div class="product-footer">
+                    <span class="in-stock">In Stock</span>
+                    <button class="add-to-cart-btn">🛒</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="product-card">
+            <div class="product-image-container">
+                <div class="product-image"></div>
+                <button class="wishlist-btn">🤍</button>
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">Premium Cotton T-Shirt</h3>
+                <div class="product-rating">
+                    <span class="stars">★★★★☆</span>
+                    <span class="rating-count">(0)</span>
+                </div>
+                <div class="product-pricing">
+                    <span class="current-price">GH₵19.99</span>
+                </div>
+                <div class="product-footer">
+                    <span class="in-stock">In Stock</span>
+                    <button class="add-to-cart-btn">🛒</button>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- CATEGORY GRID -->
+    <section class="categories-section">
+        <h2 style="font-size: 20px; margin-bottom: var(--spacing-lg); font-weight: 700;">Shop by Category</h2>
+        <div class="category-grid">
+            <div class="category-card">
+                <div class="category-icon">📱</div>
+                <div class="category-name">Electronics</div>
+            </div>
+            <div class="category-card">
+                <div class="category-icon">👕</div>
+                <div class="category-name">Fashion</div>
+            </div>
+            <div class="category-card">
+                <div class="category-icon">🏠</div>
+                <div class="category-name">Home</div>
+            </div>
+            <div class="category-card">
+                <div class="category-icon">🎮</div>
+                <div class="category-name">Gaming</div>
+            </div>
+            <div class="category-card">
+                <div class="category-icon">⌚</div>
+                <div class="category-name">Accessories</div>
+            </div>
+            <div class="category-card">
+                <div class="category-icon">💄</div>
+                <div class="category-name">Beauty</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FLASH SALE -->
+    <section class="flash-sale">
+        <div class="flash-sale-header">
+            <div>
+                <span class="flash-badge">⚡ FLASH SALE</span>
+                <div class="timer">Ends in 02:45:30</div>
+            </div>
+        </div>
+        <div class="flash-carousel">
+            <div class="flash-card">
+                <div class="flash-image"></div>
+                <div class="flash-info">
+                    <h4>Gaming Mouse</h4>
+                    <div style="font-size: 11px; color: #999; margin-bottom: 4px;">Was GH₵89.99</div>
+                    <div class="flash-price">GH₵49.99</div>
+                </div>
+            </div>
+            <div class="flash-card">
+                <div class="flash-image"></div>
+                <div class="flash-info">
+                    <h4>USB-C Cable</h4>
+                    <div style="font-size: 11px; color: #999; margin-bottom: 4px;">Was GH₵25.99</div>
+                    <div class="flash-price">GH₵12.99</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- WHY US SECTION -->
+    <section class="why-us">
+        <h2 style="font-size: 18px; margin-bottom: var(--spacing-lg); font-weight: 700;">Why Shop With Us</h2>
+        <div class="why-us-grid">
+            <div class="why-us-item">
+                <div class="why-us-icon">🚚</div>
+                <div class="why-us-title">Fast Delivery</div>
+                <div class="why-us-desc">1-3 days in Accra</div>
+            </div>
+            <div class="why-us-item">
+                <div class="why-us-icon">💳</div>
+                <div class="why-us-title">Easy Payment</div>
+                <div class="why-us-desc">MTN, Vodafone, Card</div>
+            </div>
+            <div class="why-us-item">
+                <div class="why-us-icon">↩️</div>
+                <div class="why-us-title">Free Returns</div>
+                <div class="why-us-desc">30-day guarantee</div>
+            </div>
+            <div class="why-us-item">
+                <div class="why-us-icon">🛡️</div>
+                <div class="why-us-title">Secure & Safe</div>
+                <div class="why-us-desc">100% protected</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="testimonials">
+        <h2 style="font-size: 18px; margin-bottom: var(--spacing-lg); font-weight: 700;">What Customers Say</h2>
+        
+        <div class="testimonial-card">
+            <div class="testimonial-header">
+                <div class="testimonial-avatar">A</div>
+                <div class="testimonial-meta">
+                    <div class="testimonial-name">Ama Nsiah</div>
+                    <div class="testimonial-rating">★★★★★</div>
+                </div>
+            </div>
+            <p class="testimonial-text">"Great quality products and super fast delivery. Highly recommend ASO Online!"</p>
+        </div>
+
+        <div class="testimonial-card">
+            <div class="testimonial-header">
+                <div class="testimonial-avatar">K</div>
+                <div class="testimonial-meta">
+                    <div class="testimonial-name">Kwesi Boateng</div>
+                    <div class="testimonial-rating">★★★★★</div>
+                </div>
+            </div>
+            <p class="testimonial-text">"Best online shopping experience in Ghana. Customer service is top-notch!"</p>
+        </div>
+
+        <div class="testimonial-card">
+            <div class="testimonial-header">
+                <div class="testimonial-avatar">E</div>
+                <div class="testimonial-meta">
+                    <div class="testimonial-name">Efua Mensah</div>
+                    <div class="testimonial-rating">★★★★☆</div>
+                </div>
+            </div>
+            <p class="testimonial-text">"Love the variety of products and affordable prices. Will order again!"</p>
+        </div>
+    </section>
+
+    <!-- NEWSLETTER -->
+    <section class="newsletter">
+        <h3>Get 10% Off Your First Order</h3>
+        <p>Subscribe to our newsletter for exclusive deals and updates</p>
+        <form class="newsletter-form">
+            <input type="email" placeholder="Enter your email" required>
+            <button type="submit">Subscribe</button>
+        </form>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-section">
+            <h3 class="footer-title">About ASO Online</h3>
+            <a href="#" class="footer-link">About Us</a>
+            <a href="#" class="footer-link">Contact Us</a>
+            <a href="#" class="footer-link">Blog</a>
+            <a href="#" class="footer-link">Careers</a>
+        </div>
+
+        <div class="footer-section">
+            <h3 class="footer-title">Shopping</h3>
+            <a href="#" class="footer-link">Electronics</a>
+            <a href="#" class="footer-link">Fashion</a>
+            <a href="#" class="footer-link">Home & Living</a>
+            <a href="#" class="footer-link">Gaming</a>
+        </div>
+
+        <div class="footer-section">
+            <h3 class="footer-title">Customer Care</h3>
+            <a href="#" class="footer-link">Shipping Info</a>
+            <a href="#" class="footer-link">Returns</a>
+            <a href="#" class="footer-link">FAQ</a>
+            <a href="#" class="footer-link">Track Order</a>
+        </div>
+
+        <div class="footer-section">
+            <h3 class="footer-title">Payment Methods</h3>
+            <div class="payment-methods">
+                <div class="payment-icon">MTN</div>
+                <div class="payment-icon">VFD</div>
+                <div class="payment-icon">AirtelTigo</div>
+                <div class="payment-icon">VISA</div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2024 ASO Online. All rights reserved.</p>
+            <p style="margin-top: 8px; font-size: 10px;">Privacy Policy • Terms & Conditions</p>
+        </div>
+    </footer>
+
+    <script>
+        // Simple interactivity
+        document.querySelectorAll('.wishlist-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                this.textContent = this.textContent === '🤍' ? '❤️' : '🤍';
+            });
+        });
+
+        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const cartBadge = document.querySelector('.cart-badge');
+                cartBadge.textContent = parseInt(cartBadge.textContent) + 1;
+            });
+        });
+
+        document.querySelector('.newsletter-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Thanks for subscribing! Check your email for a 10% discount code.');
+            this.reset();
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+RewriteEngine On
+
+# Do not apply to existing directories or files
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+
+# Check if the requested URI with .php appended exists
+RewriteCond %{REQUEST_FILENAME}.php -f
+# Internally rewrite to the .php file
+RewriteRule ^(.*)$ $1.php [L]
+
+# Prevent directory listing
+Options -Indexes

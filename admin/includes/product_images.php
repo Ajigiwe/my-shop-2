@@ -97,8 +97,9 @@ class ProductImages {
      * Set image as primary
      */
     public function setPrimaryImage($productId, $imagePath) {
+        $inTransaction = $this->pdo->inTransaction();
         try {
-            $this->pdo->beginTransaction();
+            if (!$inTransaction) $this->pdo->beginTransaction();
             
             // Reset all primary flags for this product
             $stmt = $this->pdo->prepare(
@@ -117,28 +118,42 @@ class ProductImages {
             $stmt = $this->pdo->prepare(
                 "UPDATE products 
                  SET has_multiple_images = TRUE, 
-                     main_image_id = (SELECT image_id FROM product_images WHERE product_id = ? AND image_path = ?),
+                     main_image_id = (SELECT image_id FROM product_images WHERE product_id = ? AND image_path = ? LIMIT 1),
                      image = ?
                  WHERE product_id = ?"
             );
             $stmt->execute([$productId, $imagePath, $imagePath, $productId]);
             
-            $this->pdo->commit();
+            if (!$inTransaction) $this->pdo->commit();
             return true;
             
         } catch (Exception $e) {
-            $this->pdo->rollBack();
+            if (!$inTransaction && $this->pdo->inTransaction()) $this->pdo->rollBack();
             error_log("Error setting primary image: " . $e->getMessage());
             return false;
         }
     }
 
     /**
+     * Set primary image by ID
+     */
+    public function setPrimaryById($imageId, $productId) {
+        $stmt = $this->pdo->prepare("SELECT image_path FROM product_images WHERE image_id = ? AND product_id = ?");
+        $stmt->execute([$imageId, $productId]);
+        $path = $stmt->fetchColumn();
+        if ($path) {
+            return $this->setPrimaryImage($productId, $path);
+        }
+        return false;
+    }
+
+    /**
      * Delete an image
      */
     public function deleteImage($imageId, $productId) {
+        $inTransaction = $this->pdo->inTransaction();
         try {
-            $this->pdo->beginTransaction();
+            if (!$inTransaction) $this->pdo->beginTransaction();
             
             // Get image info before deleting
             $stmt = $this->pdo->prepare(
@@ -148,6 +163,7 @@ class ProductImages {
             $image = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$image) {
+                if (!$inTransaction) $this->pdo->rollBack();
                 throw new Exception("Image not found");
             }
             
@@ -168,12 +184,11 @@ class ProductImages {
                 @unlink($filePath);
             }
             
-            $this->pdo->commit();
+            if (!$inTransaction) $this->pdo->commit();
             return true;
-            
         } catch (Exception $e) {
-            $this->pdo->rollBack();
-            error_log("Error deleting image: " . $e->getMessage());
+            if (!$inTransaction && $this->pdo->inTransaction()) $this->pdo->rollBack();
+            error_log('Product image deletion error: ' . $e->getMessage());
             return false;
         }
     }

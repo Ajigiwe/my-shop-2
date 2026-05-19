@@ -9,7 +9,7 @@ $page_title = 'Refund & Returns Policy | ASO Online Market';
         <div class="col-lg-8 mx-auto">
             <!-- Page Header -->
             <div class="text-center mb-5">
-                <h1 class="display-5 fw-bold text-primary mb-3">Refund & Returns Policy</h1>
+                <h1 class="display-5 fw-bold text-[#1A1A1A] mb-3">Refund & Returns Policy</h1>
                 <p class="lead text-muted">Learn about our return process, eligibility requirements, and refund procedures.</p>
                 <div class="alert alert-info border-0">
                     <i class="fas fa-calendar-alt me-2"></i>
@@ -106,7 +106,7 @@ $page_title = 'Refund & Returns Policy | ASO Online Market';
                             <div class="row">
                                 <div class="col-md-4 text-center mb-3">
                                     <div class="bg-light p-3 rounded h-100">
-                                        <div class="text-primary mb-2">
+                                        <div class="text-[#1A1A1A] mb-2">
                                             <i class="fas fa-phone fa-2x"></i>
                                         </div>
                                         <h6 class="fw-bold">1. Contact Us</h6>
@@ -115,7 +115,7 @@ $page_title = 'Refund & Returns Policy | ASO Online Market';
                                 </div>
                                 <div class="col-md-4 text-center mb-3">
                                     <div class="bg-light p-3 rounded h-100">
-                                        <div class="text-primary mb-2">
+                                        <div class="text-[#1A1A1A] mb-2">
                                             <i class="fas fa-shipping-fast fa-2x"></i>
                                         </div>
                                         <h6 class="fw-bold">2. Get Return Label</h6>
@@ -124,7 +124,7 @@ $page_title = 'Refund & Returns Policy | ASO Online Market';
                                 </div>
                                 <div class="col-md-4 text-center mb-3">
                                     <div class="bg-light p-3 rounded h-100">
-                                        <div class="text-primary mb-2">
+                                        <div class="text-[#1A1A1A] mb-2">
                                             <i class="fas fa-check-circle fa-2x"></i>
                                         </div>
                                         <h6 class="fw-bold">3. Receive Refund</h6>

@@ -112,20 +112,21 @@ This document serves as the Developer Guide for ASO Online Market. It explains p
 
 ### 4. Access the Website
 1. Start XAMPP
-2. Open browser and go to: `http://localhost/My Shop/`
-3. Register a new account or login with admin credentials:
+2. Open browser and go to: `http://localhost/my-shop-2-main/`
+3. **Run Diagnostics**: Visit `http://localhost/my-shop-2-main/diagnostics.php` to verify your setup.
+4. Register a new account or login with admin credentials:
    - Email: admin@shop.com
    - Password: admin123
 
 4. Admin URLs:
-   - Admin Dashboard: `http://localhost/My Shop/admin/dashboard.php`
-   - Manage Products: `http://localhost/My Shop/admin/manage_products.php`
-   - Manage Categories: `http://localhost/My Shop/admin/manage_categories.php`
-   - Manage Subcategories: `http://localhost/My Shop/admin/manage_subcategories.php`
-   - Manage Orders: `http://localhost/My Shop/admin/manage_orders.php`
-   - Manage Users: `http://localhost/My Shop/admin/manage_users.php`
-   - Export Orders CSV: `http://localhost/My Shop/admin/export_orders.php`
-   - Printable Invoice: `http://localhost/My Shop/admin/invoice.php?order_id=123`
+   - Admin Dashboard: `http://localhost/my-shop-2-main/admin/dashboard.php`
+   - Manage Products: `http://localhost/my-shop-2-main/admin/manage_products.php`
+   - Manage Categories: `http://localhost/my-shop-2-main/admin/manage_categories.php`
+   - Manage Subcategories: `http://localhost/my-shop-2-main/admin/manage_subcategories.php`
+   - Manage Orders: `http://localhost/my-shop-2-main/admin/manage_orders.php`
+   - Manage Users: `http://localhost/my-shop-2-main/admin/manage_users.php`
+   - Export Orders CSV: `http://localhost/my-shop-2-main/admin/export_orders.php`
+   - Printable Invoice: `http://localhost/my-shop-2-main/admin/invoice.php?order_id=123`
 
 ## File Structure
 

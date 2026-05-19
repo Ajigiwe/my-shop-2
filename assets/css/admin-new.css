@@ -1,0 +1,278 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+    --primary: #1A1A1A;
+    --secondary: #888888;
+    --bg-light: #F9F9F9;
+    --border-color: #EEEEEE;
+    --accent: #F9F9F9;
+    --font-main: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: var(--font-main);
+    color: var(--primary);
+    overflow-x: hidden;
+}
+
+/* Sidebar Styling */
+.admin-sidebar {
+    width: 260px;
+    height: 100vh;
+    background: #FFFFFF;
+    position: fixed;
+    left: 0;
+    top: 0;
+    border-right: 1px solid var(--border-color);
+    z-index: 1000;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+
+.admin-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.admin-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 0.75rem;
+    color: var(--secondary);
+    text-decoration: none !important;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.admin-nav-link:hover {
+    background: var(--bg-light);
+    color: var(--primary);
+}
+
+.admin-nav-link.active {
+    background: var(--primary);
+    color: #FFFFFF;
+}
+
+.admin-nav-link i {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Main Content Area */
+.admin-main {
+    margin-left: 260px;
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.admin-title {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    text-transform: uppercase;
+}
+
+.admin-user-pill {
+    background: #FFFFFF;
+    padding: 6px 12px;
+    border-radius: 100px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-user-pill:hover {
+    border-color: var(--primary);
+}
+
+/* Dashboard Cards */
+.stat-card {
+    background: #FFFFFF;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+    border-color: var(--primary);
+}
+
+.stat-label {
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--secondary);
+    margin-bottom: 6px;
+}
+
+.stat-value {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+}
+
+.stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 0.75rem;
+    background: var(--bg-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-bottom: 1rem;
+}
+
+/* Tables and Other Components */
+.admin-card {
+    background: #FFFFFF;
+    border-radius: 1rem;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.admin-card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-card-title {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background: var(--bg-light);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.75rem 1.5rem;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--secondary);
+}
+
+.table tbody td {
+    padding: 1rem 1.5rem;
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Buttons */
+.btn-premium {
+    background: var(--primary);
+    color: #FFFFFF;
+    border-radius: 100px;
+    padding: 10px 24px;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.btn-premium:hover {
+    transform: scale(1.05);
+    background: #000000;
+    color: #FFFFFF;
+}
+
+.btn-premium-outline {
+    background: transparent;
+    border: 2px solid var(--border-color);
+    color: var(--primary);
+    border-radius: 100px;
+    padding: 8px 24px;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.btn-premium-outline:hover {
+    background: var(--bg-light);
+    border-color: var(--primary);
+}
+
+/* Animations */
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-up {
+    animation: slideUpFade 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Status Badges & Selects */
+.status-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 0.8em;
+    padding-right: 2rem !important;
+    cursor: pointer;
+    border: none !important;
+    font-size: 10px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-select option {
+    background: #FFFFFF;
+    color: var(--primary);
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 14px;
+    padding: 10px;
+}
+
+.status-pending { background-color: #FFFBEB !important; color: #D97706 !important; }
+.status-processing { background-color: #EFF6FF !important; color: #2563EB !important; }
+.status-confirmed { background-color: #EEF2FF !important; color: #4F46E5 !important; }
+.status-shipped { background-color: #F5F3FF !important; color: #7C3AED !important; }
+.status-delivered { background-color: #ECFDF5 !important; color: #059669 !important; }
+.status-cancelled { background-color: #FEF2F2 !important; color: #DC2626 !important; }

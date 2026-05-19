@@ -1,1 +1,9 @@
 /vendor/
+.env
+.env.backup
+composer.phar
+deploy.zip
+logs/
+*.log
+scratch/
+scratch_*.php

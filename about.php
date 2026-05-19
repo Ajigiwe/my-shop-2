@@ -1,5 +1,5 @@
 <?php
-// Start session first
+// Start session
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -7,184 +7,126 @@ if (session_status() == PHP_SESSION_NONE) {
 // Set page title
 $page_title = 'About Us';
 
-// Check if user is logged in (for navbar display)
-$user_logged_in = isset($_SESSION['user_id']);
-$user_name = $_SESSION['user_name'] ?? '';
-$user_role = $_SESSION['user_role'] ?? '';
+include 'includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($page_title); ?> - ASO Online Market</title>
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Other CSS and JS includes -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
-<?php include 'includes/navbar.php'; ?>
-
-<!-- About Section -->
-<section class="py-5">
-    <div class="container">
-        <div class="row">
-            <div class="col-12 text-center mb-5">
-                <h1 class="display-4 fw-bold mb-3">About ASO Online Market</h1>
-                <p class="lead text-muted">Your trusted partner in quality online shopping</p>
-            </div>
+<main class="bg-[#F9F9F9] min-h-screen">
+    <!-- Hero Section -->
+    <section class="relative py-24 overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <div class="absolute inset-0 bg-[#F9F9F9]"></div>
+            <div class="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-[#EEEEEE] rounded-full blur-[100px] opacity-50"></div>
+            <div class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-[#EEEEEE] rounded-full blur-[100px] opacity-50"></div>
         </div>
+        
+        <div class="relative z-10 max-w-[1200px] mx-auto px-6 text-center">
+            <span class="inline-block bg-white border border-[#EEEEEE] text-[#1A1A1A] text-[12px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest mb-6 shadow-sm">
+                Our Story
+            </span>
+            <h1 class="text-[48px] md:text-[64px] font-black text-[#1A1A1A] leading-tight mb-6 tracking-tighter">
+                ASO Online <span class="text-[#888888]">Market.</span>
+            </h1>
+            <p class="max-w-2xl mx-auto text-[18px] md:text-[20px] text-[#666666] font-medium leading-relaxed">
+                Your trusted partner in quality online shopping. We're on a mission to democratize access to premium products with speed and reliability.
+            </p>
+        </div>
+    </section>
 
-        <div class="row">
-            <div class="col-lg-6">
-                <h3>Our Story</h3>
-                <p class="mb-4">
-                    ASO Online Market was founded with a simple mission: to provide customers with high-quality products
-                    at competitive prices while delivering exceptional customer service. Since our inception, we've grown
-                    from a small startup to become one of the leading e-commerce platforms in the region.
-                </p>
-                <p class="mb-4">
-                    We believe that online shopping should be convenient, reliable, and enjoyable. That's why we've built
-                    our platform with cutting-edge technology and a customer-first approach that puts your needs at the center
-                    of everything we do.
-                </p>
+    <!-- Content Sections -->
+    <section class="max-w-[1200px] mx-auto px-6 pb-24 space-y-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Our Story -->
+            <div class="bg-white rounded-[2rem] p-10 md:p-12 border border-[#EEEEEE] shadow-sm">
+                <h2 class="text-[28px] font-black text-[#1A1A1A] mb-6 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-[32px]">history_edu</span> Our Story
+                </h2>
+                <div class="space-y-6 text-[16px] text-[#666666] leading-relaxed">
+                    <p>
+                        ASO Online Market was founded with a simple mission: to provide customers with high-quality products
+                        at competitive prices while delivering exceptional customer service. Since our inception, we've grown
+                        from a small startup to become one of the leading e-commerce platforms in the region.
+                    </p>
+                    <p>
+                        We believe that online shopping should be convenient, reliable, and enjoyable. That's why we've built
+                        our platform with cutting-edge technology and a customer-first approach that puts your needs at the center
+                        of everything we do.
+                    </p>
+                </div>
             </div>
 
-            <div class="col-lg-6">
-                <h3>Our Mission</h3>
-                <p class="mb-4">
+            <!-- Our Mission -->
+            <div class="bg-white rounded-[2rem] p-10 md:p-12 border border-[#EEEEEE] shadow-sm">
+                <h2 class="text-[28px] font-black text-[#1A1A1A] mb-6 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-[32px]">rocket_launch</span> Our Mission
+                </h2>
+                <p class="text-[16px] text-[#666666] leading-relaxed mb-8">
                     To democratize access to quality products by providing a seamless online shopping experience that
-                    combines convenience, reliability, and value. We're committed to:
+                    combines convenience, reliability, and value.
                 </p>
-                <ul class="list-unstyled">
-                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Offering high-quality products at fair prices</li>
-                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Providing exceptional customer service</li>
-                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Maintaining secure and reliable transactions</li>
-                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Supporting local businesses and communities</li>
-                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Continuously improving our platform and services</li>
-                </ul>
+                <div class="grid grid-cols-1 gap-4">
+                    <?php 
+                    $commitments = [
+                        ['check_circle', 'Fair pricing for high-quality goods'],
+                        ['check_circle', 'Exceptional customer support'],
+                        ['check_circle', 'Secure and reliable transactions'],
+                        ['check_circle', 'Supporting local communities'],
+                    ];
+                    foreach ($commitments as $item): ?>
+                        <div class="flex items-center gap-3 p-4 bg-[#F9F9F9] rounded-2xl border border-[#EEEEEE]">
+                            <span class="material-symbols-outlined text-[#1A1A1A]"><?php echo $item[0]; ?></span>
+                            <span class="text-[14px] font-bold text-[#1A1A1A]"><?php echo $item[1]; ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
 
         <!-- Values Section -->
-        <div class="row mt-5">
-            <div class="col-12 text-center mb-4">
-                <h2>Our Values</h2>
+        <div class="bg-white rounded-[2rem] p-10 md:p-16 border border-[#EEEEEE] shadow-sm">
+            <div class="text-center mb-16">
+                <h2 class="text-[32px] font-black text-[#1A1A1A] mb-4">Our Core Values</h2>
+                <p class="text-[#888888] font-medium">The principles that guide every decision we make.</p>
             </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-4 text-center mb-4">
-                <div class="mb-3">
-                    <i class="fas fa-heart fa-3x text-primary"></i>
-                </div>
-                <h4>Customer First</h4>
-                <p>We prioritize our customers' needs and satisfaction above all else. Every decision we make is guided by what's best for our customers.</p>
-            </div>
-
-            <div class="col-md-4 text-center mb-4">
-                <div class="mb-3">
-                    <i class="fas fa-shield-alt fa-3x text-primary"></i>
-                </div>
-                <h4>Trust & Security</h4>
-                <p>We maintain the highest standards of security and privacy protection. Your trust is our most valuable asset.</p>
-            </div>
-
-            <div class="col-md-4 text-center mb-4">
-                <div class="mb-3">
-                    <i class="fas fa-star fa-3x text-primary"></i>
-                </div>
-                <h4>Quality Excellence</h4>
-                <p>We partner with trusted suppliers and manufacturers to ensure that every product meets our strict quality standards.</p>
-            </div>
-        </div>
-
-        <!-- Welcome Message for Logged-in Users -->
-        <?php if ($user_logged_in): ?>
-        <div class="row mt-5">
-            <div class="col-12">
-                <div class="alert alert-info text-center">
-                    <i class="fas fa-user-check me-2"></i>
-                    Welcome back, <?php echo htmlspecialchars($user_name); ?>!
-                    Thank you for choosing ASO Online Market for your shopping needs.
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <!-- Contact CTA -->
-        <div class="row mt-5">
-            <div class="col-12 text-center">
-                <div class="card bg-light">
-                    <div class="card-body py-4">
-                        <h3>Get in Touch</h3>
-                        <p class="mb-4">Have questions? We're here to help!</p>
-                        <div class="d-flex gap-3 justify-content-center flex-wrap">
-                            <a href="contact.php" class="btn btn-primary">
-                                <i class="fas fa-envelope me-2"></i>Contact Us
-                            </a>
-                            <a href="shop.php" class="btn btn-outline-primary">
-                                <i class="fas fa-shopping-bag me-2"></i>Start Shopping
-                            </a>
-                        </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                <div class="text-center group">
+                    <div class="w-20 h-20 mx-auto bg-[#F9F9F9] rounded-3xl flex items-center justify-center text-[#1A1A1A] mb-6 group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                        <span class="material-symbols-outlined text-[40px]">favorite</span>
                     </div>
+                    <h4 class="text-[20px] font-black text-[#1A1A1A] mb-4">Customer First</h4>
+                    <p class="text-[14px] text-[#666666] leading-relaxed">We prioritize our customers' needs and satisfaction above all else. Every decision is guided by what's best for you.</p>
+                </div>
+
+                <div class="text-center group">
+                    <div class="w-20 h-20 mx-auto bg-[#F9F9F9] rounded-3xl flex items-center justify-center text-[#1A1A1A] mb-6 group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                        <span class="material-symbols-outlined text-[40px]">shield</span>
+                    </div>
+                    <h4 class="text-[20px] font-black text-[#1A1A1A] mb-4">Trust & Security</h4>
+                    <p class="text-[14px] text-[#666666] leading-relaxed">We maintain the highest standards of security and privacy protection. Your trust is our most valuable asset.</p>
+                </div>
+
+                <div class="text-center group">
+                    <div class="w-20 h-20 mx-auto bg-[#F9F9F9] rounded-3xl flex items-center justify-center text-[#1A1A1A] mb-6 group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                        <span class="material-symbols-outlined text-[40px]">award_star</span>
+                    </div>
+                    <h4 class="text-[20px] font-black text-[#1A1A1A] mb-4">Quality Excellence</h4>
+                    <p class="text-[14px] text-[#666666] leading-relaxed">We partner with trusted suppliers and manufacturers to ensure every product meets our strict standards.</p>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+
+        <!-- CTA Section -->
+        <div class="bg-primary rounded-[2rem] p-12 md:p-16 text-center relative overflow-hidden">
+            <div class="absolute top-[-50%] left-[-10%] w-[300px] h-[300px] bg-white/5 rounded-full blur-[80px]"></div>
+            <div class="relative z-10">
+                <h2 class="text-[32px] md:text-[48px] font-black text-white mb-6 tracking-tighter">Ready to experience the future?</h2>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="shop.php" class="bg-white text-[#1A1A1A] font-bold px-10 py-4 rounded-full hover:scale-105 transition-transform">Start Shopping</a>
+                    <a href="contact.php" class="bg-transparent border-2 border-white/20 text-white font-bold px-10 py-4 rounded-full hover:bg-white/10 transition-colors">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
 
 <?php include 'includes/footer.php'; ?>
-
-<!-- Bootstrap JS (loaded at end for better performance) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="assets/js/script.js"></script>
-
-<script>
-// Initialize Bootstrap dropdowns explicitly
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all dropdowns
-    var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
-    var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
-        return new bootstrap.Dropdown(dropdownToggleEl);
-    });
-
-    // Also ensure navbar collapse works
-    var navbarCollapse = document.getElementById('navbarNav');
-    if (navbarCollapse) {
-        var bsCollapse = new bootstrap.Collapse(navbarCollapse, {
-            toggle: false
-        });
-    }
-
-    // Animate value icons on scroll
-    const observerOptions = {
-        threshold: 0.5,
-        rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
-        });
-    }, observerOptions);
-
-    // Animate value cards
-    document.querySelectorAll('.col-md-4.text-center').forEach(card => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(30px)';
-        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        observer.observe(card);
-    });
-});
-</script>
-</body>
-</html>

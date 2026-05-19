@@ -1,69 +1,49 @@
 <?php
 /**
  * Storefront: Shopping Cart
- * - Requires login; loads cart items from DB for the current user
- * - Supports quantity updates and item removal
- * - Computes subtotal/total and provides checkout CTA
  */
-// Include database connection
 require_once 'includes/db.php';
 
-// Start session
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['redirect_after_login'] = 'cart.php';
     header('Location: login.php');
     exit();
 }
 
-// Set page title
-$page_title = 'Shopping Cart';
-
 // Handle cart updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_cart'])) {
         $product_id = (int)$_POST['product_id'];
         $quantity = (int)$_POST['quantity'];
-
         if ($quantity > 0) {
-            try {
-                $stmt = $pdo->prepare("UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?");
-                $stmt->execute([$quantity, $_SESSION['user_id'], $product_id]);
-            } catch(PDOException $e) {
-                error_log("Error updating cart: " . $e->getMessage());
-            }
+            $stmt = $pdo->prepare("UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?");
+            $stmt->execute([$quantity, $_SESSION['user_id'], $product_id]);
         }
     } elseif (isset($_POST['remove_item'])) {
         $product_id = (int)$_POST['product_id'];
-
-        try {
-            $stmt = $pdo->prepare("DELETE FROM cart WHERE user_id = ? AND product_id = ?");
-            $stmt->execute([$_SESSION['user_id'], $product_id]);
-        } catch(PDOException $e) {
-            error_log("Error removing from cart: " . $e->getMessage());
-        }
+        $stmt = $pdo->prepare("DELETE FROM cart WHERE user_id = ? AND product_id = ?");
+        $stmt->execute([$_SESSION['user_id'], $product_id]);
     } elseif (isset($_POST['clear_all'])) {
-        try {
-            $stmt = $pdo->prepare("DELETE FROM cart WHERE user_id = ?");
-            $stmt->execute([$_SESSION['user_id']]);
-        } catch(PDOException $e) {
-            error_log("Error clearing cart: " . $e->getMessage());
-        }
+        $stmt = $pdo->prepare("DELETE FROM cart WHERE user_id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
     }
-
-    // Redirect to refresh the page and show updated cart
+    
+    // If it's an AJAX request, return success instead of redirecting
+    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+        echo json_encode(['success' => true]);
+        exit();
+    }
+    
     header('Location: cart.php');
     exit();
 }
 
-// Get cart items first so they're available for the badge
 $cart_items = [];
 $total = 0;
-
 try {
     $stmt = $pdo->prepare("SELECT c.*, p.name, p.price, p.image, p.stock_quantity, cat.category_name
                           FROM cart c
@@ -72,379 +52,210 @@ try {
                           WHERE c.user_id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $cart_items = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
-    // Compute total
     foreach ($cart_items as $item) {
         $total += $item['price'] * $item['quantity'];
     }
 } catch(PDOException $e) {
     error_log("Error fetching cart: " . $e->getMessage());
-    $cart_items = [];
 }
+
+$page_title = 'Shopping Cart';
+include 'includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $page_title; ?> - ASO Online Market</title>
+<main class="bg-[#F9F9F9] min-h-screen py-md">
+    <div class="max-w-[1200px] mx-auto px-md">
+        <h1 class="font-headline-lg text-[36px] font-black text-[#1A1A1A] mb-lg">Shopping Cart</h1>
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/style.css">
-    
-    <style>
-        .cart-container {
-            background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
-            min-height: 100vh;
-        }
-        
-        .cart-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .cart-item-card {
-            background: white;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-        
-        .cart-item-card:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-        
-        .product-image {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: var(--radius);
-        }
-        
-        .quantity-controls {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .quantity-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 1px solid var(--gray-300);
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-        
-        .quantity-btn:hover {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-        
-        .quantity-display {
-            min-width: 40px;
-            text-align: center;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-        
-        .price-display {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--success-color);
-        }
-        
-        .summary-card {
-            background: white;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--gray-200);
-        }
-        
-        .empty-cart {
-            text-align: center;
-            padding: 4rem 2rem;
-        }
-        
-        .empty-cart-icon {
-            font-size: 4rem;
-            color: var(--gray-400);
-            margin-bottom: 1.5rem;
-        }
-        
-        .btn-custom {
-            border-radius: var(--radius);
-            font-weight: 600;
-            padding: 0.75rem 1.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary-custom {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            border: none;
-            color: white;
-        }
-        
-        .btn-primary-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .remove-btn {
-            color: var(--danger-color);
-            background: none;
-            border: none;
-            padding: 0.5rem;
-            border-radius: var(--radius);
-            transition: all 0.2s ease;
-        }
-        
-        .remove-btn:hover {
-            background: var(--danger-color);
-            color: white;
-        }
-        
-        .stock-warning {
-            background: var(--warning-color);
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .category-badge {
-            background: var(--gray-100);
-            color: var(--gray-600);
-            padding: 0.25rem 0.75rem;
-            border-radius: var(--radius);
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-    </style>
-</head>
-<body class="cart-container">
-
-<?php include 'includes/navbar.php'; ?>
-
-<div class="container py-5">
-    <!-- Cart Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="cart-header p-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="mb-2">
-                            <i class="fas fa-shopping-cart me-3"></i>Your Shopping Cart
-                        </h1>
-                        <p class="mb-0 opacity-75">Review your items and proceed to checkout</p>
-                    </div>
-                    <div class="text-end">
-                        <div class="badge bg-white text-dark fs-6 px-3 py-2">
-                            <i class="fas fa-box me-2"></i><?php echo count($cart_items); ?> items
-                        </div>
-                    </div>
-                </div>
+        <?php if (empty($cart_items)): ?>
+            <div class="bg-white rounded-[2rem] p-xl text-center border border-[#EEEEEE] shadow-sm">
+                <p class="text-[#666666] font-body-lg mb-lg">Your shopping cart is empty</p>
+                <a href="shop.php" class="inline-block bg-primary text-white font-bold px-xl py-4 rounded-full hover:scale-105 transition-transform">Browse Shop</a>
             </div>
-        </div>
-    </div>
-
-    <?php if (empty($cart_items)): ?>
-        <!-- Empty Cart State -->
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body">
-                        <div class="empty-cart">
-                            <div class="empty-cart-icon">
-                                <i class="fas fa-shopping-cart"></i>
-                            </div>
-                            <h3 class="text-muted mb-3">Your cart is empty</h3>
-                            <p class="text-muted mb-4">Looks like you haven't added any items to your cart yet.</p>
-                            <a href="shop.php" class="btn btn-primary-custom btn-custom">
-                                <i class="fas fa-shopping-bag me-2"></i>Start Shopping
-                            </a>
+        <?php else: ?>
+            <div class="flex flex-col lg:flex-row gap-xl items-start">
+                <!-- Products List -->
+                <div class="flex-1 w-full">
+                    <div class="bg-white rounded-[2rem] border border-[#EEEEEE] overflow-hidden shadow-sm">
+                        <!-- Table Header (Desktop Only) -->
+                        <div class="hidden md:grid grid-cols-[1fr,150px,120px,80px] px-8 py-6 border-b border-[#F5F5F5]">
+                            <span class="text-[14px] font-bold text-[#1A1A1A]">Product Code</span>
+                            <span class="text-[14px] font-bold text-[#1A1A1A] text-center">Quantity</span>
+                            <span class="text-[14px] font-bold text-[#1A1A1A] text-center">Total</span>
+                            <span class="text-[14px] font-bold text-[#1A1A1A] text-right">Action</span>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    <?php else: ?>
-        <div class="row">
-            <!-- Cart Items -->
-            <div class="col-lg-8">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="mb-0">Cart Items</h4>
-                    <form method="POST" action="" class="d-inline">
-                        <input type="hidden" name="clear_all" value="1">
-                        <button type="submit" class="btn btn-outline-danger btn-sm" 
-                                onclick="return confirm('Are you sure you want to clear all items from your cart?')">
-                            <i class="fas fa-trash me-2"></i>Clear All
-                        </button>
-                    </form>
-                </div>
 
-                <div class="row g-4">
-                    <?php foreach ($cart_items as $item): ?>
-                        <div class="col-12">
-                            <div class="cart-item-card">
-                                <div class="card-body p-4">
-                                    <div class="row align-items-center">
-                                        <!-- Product Image -->
-                                        <div class="col-md-2">
-                                            <div class="position-relative">
-                                                <img src="assets/images/<?php echo htmlspecialchars($item['image'] ?? 'placeholder.jpg'); ?>"
-                                                     class="product-image" 
-                                                     alt="<?php echo htmlspecialchars($item['name']); ?>">
-                                                <?php if ($item['quantity'] > $item['stock_quantity']): ?>
-                                                    <div class="position-absolute top-0 end-0 m-2">
-                                                        <span class="stock-warning">
-                                                            <i class="fas fa-exclamation-triangle me-1"></i>Limited Stock
-                                                        </span>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
+                        <!-- Items -->
+                        <div class="divide-y divide-[#F5F5F5]">
+                            <?php foreach ($cart_items as $item): ?>
+                                <div class="flex flex-col md:grid md:grid-cols-[1fr,150px,120px,80px] items-center px-6 py-6 md:px-8 md:py-8 hover:bg-[#FAFAFA] transition-colors gap-6 md:gap-0">
+                                    <!-- Product Info -->
+                                    <div class="flex items-center gap-4 md:gap-6 w-full md:w-auto">
+                                        <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden bg-[#F5F5F5] border border-[#EEEEEE] p-2 flex-shrink-0">
+                                            <img class="w-full h-full object-contain" src="assets/images/<?php echo htmlspecialchars($item['image'] ?? 'placeholder.jpg'); ?>" onerror="this.src='assets/images/placeholder.jpg'" alt="" />
                                         </div>
-
-                                        <!-- Product Info -->
-                                        <div class="col-md-4">
-                                            <h5 class="mb-2">
-                                                <a href="product.php?id=<?php echo $item['product_id']; ?>" 
-                                                   class="text-decoration-none text-dark fw-bold">
-                                                    <?php echo htmlspecialchars($item['name']); ?>
-                                                </a>
-                                            </h5>
-                                            <div class="mb-2">
-                                                <span class="category-badge">
-                                                    <i class="fas fa-tag me-1"></i><?php echo htmlspecialchars($item['category_name']); ?>
-                                                </span>
-                                            </div>
-                                            <div class="price-display">
-                                                <?php echo formatCurrency($item['price']); ?>
-                                            </div>
-                                            <?php if ($item['quantity'] > $item['stock_quantity']): ?>
-                                                <div class="mt-2">
-                                                    <span class="stock-warning">
-                                                        <i class="fas fa-exclamation-triangle me-1"></i>
-                                                        Only <?php echo $item['stock_quantity']; ?> left in stock
-                                                    </span>
-                                                </div>
-                                            <?php endif; ?>
+                                        <div class="min-w-0">
+                                            <h3 class="font-bold text-[16px] md:text-[18px] text-[#1A1A1A] truncate"><?php echo htmlspecialchars($item['name']); ?></h3>
+                                            <p class="text-[12px] md:text-[13px] text-[#888888] mt-1">Category: <span class="text-[#1A1A1A] font-medium"><?php echo htmlspecialchars($item['category_name']); ?></span></p>
                                         </div>
+                                    </div>
 
-                                        <!-- Quantity Controls -->
-                                        <div class="col-md-3">
-                                            <div class="quantity-controls justify-content-center">
-                                                <form method="POST" action="" class="d-inline">
-                                                    <input type="hidden" name="product_id" value="<?php echo $item['product_id']; ?>">
-                                                    <input type="hidden" name="quantity" value="<?php echo max(1, $item['quantity'] - 1); ?>">
-                                                    <input type="hidden" name="update_cart" value="1">
-                                                    <button type="submit" class="quantity-btn" 
-                                                            <?php echo $item['quantity'] <= 1 ? 'disabled' : ''; ?>>
-                                                        <i class="fas fa-minus"></i>
-                                                    </button>
-                                                </form>
-
-                                                <span class="quantity-display"><?php echo $item['quantity']; ?></span>
-
-                                                <form method="POST" action="" class="d-inline">
-                                                    <input type="hidden" name="product_id" value="<?php echo $item['product_id']; ?>">
-                                                    <input type="hidden" name="quantity" value="<?php echo $item['quantity'] + 1; ?>">
-                                                    <input type="hidden" name="update_cart" value="1">
-                                                    <button type="submit" class="quantity-btn">
-                                                        <i class="fas fa-plus"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-
-                                        <!-- Price & Actions -->
-                                        <div class="col-md-3 text-end">
-                                            <div class="price-display mb-3">
-                                                <?php echo formatCurrency($item['price'] * $item['quantity']); ?>
-                                            </div>
-                                            <form method="POST" action="" class="d-inline">
+                                    <!-- Quantity (Mobile: Label + Controls) -->
+                                    <div class="flex flex-col md:flex-row items-center gap-2 md:gap-0 md:justify-center w-full md:w-auto">
+                                        <span class="md:hidden text-[11px] font-bold text-[#888888] uppercase tracking-widest">Quantity</span>
+                                        <div class="flex items-center bg-white rounded-full border border-[#DDDDDD] p-1 px-2 gap-3 shadow-sm">
+                                            <form method="POST" class="inline">
                                                 <input type="hidden" name="product_id" value="<?php echo $item['product_id']; ?>">
-                                                <input type="hidden" name="remove_item" value="1">
-                                                <button type="submit" class="remove-btn" 
-                                                        onclick="return confirm('Remove this item from cart?')">
-                                                    <i class="fas fa-trash me-1"></i>Remove
+                                                <input type="hidden" name="quantity" value="<?php echo $item['quantity'] + 1; ?>">
+                                                <input type="hidden" name="update_cart" value="1">
+                                                <button type="submit" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#F5F5F5] text-[#1A1A1A] transition-colors">
+                                                    <span class="material-symbols-outlined text-[18px]">add</span>
+                                                </button>
+                                            </form>
+                                            <span class="w-6 text-center font-bold text-[16px] text-[#1A1A1A]"><?php echo $item['quantity']; ?></span>
+                                            <form method="POST" class="inline">
+                                                <input type="hidden" name="product_id" value="<?php echo $item['product_id']; ?>">
+                                                <input type="hidden" name="quantity" value="<?php echo max(1, $item['quantity'] - 1); ?>">
+                                                <input type="hidden" name="update_cart" value="1">
+                                                <button type="submit" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#F5F5F5] text-[#1A1A1A] transition-colors" <?php echo $item['quantity'] <= 1 ? 'disabled' : ''; ?>>
+                                                    <span class="material-symbols-outlined text-[18px]">remove</span>
                                                 </button>
                                             </form>
                                         </div>
                                     </div>
+
+                                    <!-- Price (Mobile: Label + Total) -->
+                                    <div class="flex flex-col md:flex-row items-center gap-1 md:gap-0 md:justify-center w-full md:w-auto">
+                                        <span class="md:hidden text-[11px] font-bold text-[#888888] uppercase tracking-widest">Total</span>
+                                        <span class="font-bold text-[18px] text-[#1A1A1A]"><?php echo formatCurrency($item['price'] * $item['quantity']); ?></span>
+                                    </div>
+
+                                    <!-- Remove -->
+                                    <div class="flex justify-center md:justify-end w-full md:w-auto pt-4 md:pt-0 border-t md:border-none border-[#F5F5F5]">
+                                        <form method="POST" class="inline">
+                                            <input type="hidden" name="product_id" value="<?php echo $item['product_id']; ?>">
+                                            <input type="hidden" name="remove_item" value="1">
+                                            <button type="submit" class="flex items-center gap-2 md:block md:w-10 md:h-10 rounded-full md:flex items-center justify-center text-[#888888] hover:text-[#FF4444] hover:bg-[#FFF5F5] transition-all px-4 md:px-0 py-2 md:py-0">
+                                                <span class="material-symbols-outlined text-[20px]">delete</span>
+                                                <span class="md:hidden text-[14px] font-bold">Remove Item</span>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <a href="shop.php" class="inline-block bg-primary text-white font-bold px-10 py-4 rounded-full shadow-lg hover:bg-primary transition-all hover:-translate-y-0.5 active:translate-y-0">
+                            Update Cart
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="w-full lg:w-[380px] lg:sticky lg:top-24">
+                    <div class="bg-white rounded-[2.5rem] p-8 border border-[#EEEEEE] shadow-sm">
+                        <h2 class="text-[20px] font-bold text-[#1A1A1A] mb-8">Order Summery</h2>
+                        
+                        <div class="relative mb-8">
+                            <input type="text" placeholder="Discount voucher" class="w-full bg-white border border-[#DDDDDD] rounded-full py-4 px-6 outline-none focus:border-primary transition-colors text-[14px]">
+                            <button class="absolute right-2 top-2 bottom-2 bg-white border border-[#DDDDDD] rounded-full px-6 font-bold text-[14px] hover:bg-[#F5F5F5] transition-colors">Apply</button>
+                        </div>
+
+                        <div class="space-y-4 mb-8">
+                            <div class="flex justify-between text-[15px] text-[#666666]">
+                                <span>Sub Total</span>
+                                <span class="font-bold text-[#1A1A1A]"><?php echo formatCurrency($total); ?></span>
+                            </div>
+                            <div class="flex justify-between text-[15px] text-[#666666]">
+                                <span>Discount (0%)</span>
+                                <span class="font-bold text-[#FF4444]">-<?php echo formatCurrency(0); ?></span>
+                            </div>
+                            <div class="flex justify-between text-[15px] text-[#666666]">
+                                <span>Delivery fee</span>
+                                <span class="font-bold text-[#1A1A1A]"><?php echo formatCurrency(0); ?></span>
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
 
-            <!-- Order Summary -->
-            <div class="col-lg-4">
-                <div class="summary-card p-4">
-                    <h5 class="mb-4">
-                        <i class="fas fa-receipt me-2"></i>Order Summary
-                    </h5>
-                    
-                    <div class="d-flex justify-content-between mb-3">
-                        <span>Subtotal (<?php echo count($cart_items); ?> items):</span>
-                        <span class="fw-bold"><?php echo formatCurrency($total); ?></span>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between mb-3">
-                        <span>Shipping:</span>
-                        <span class="text-success">Free</span>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="d-flex justify-content-between mb-4">
-                        <span class="fs-5 fw-bold">Total:</span>
-                        <span class="fs-5 fw-bold text-success"><?php echo formatCurrency($total); ?></span>
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        <a href="checkout.php" class="btn btn-primary-custom btn-custom">
-                            <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
+                        <div class="flex justify-between items-center pt-6 border-t border-[#F5F5F5] mb-8">
+                            <span class="text-[18px] font-bold text-[#1A1A1A]">Total</span>
+                            <span class="text-[24px] font-black text-[#1A1A1A] tracking-tighter"><?php echo formatCurrency($total); ?></span>
+                        </div>
+
+                        <div class="flex items-center gap-3 p-4 bg-[#F9F9F9] rounded-2xl mb-8">
+                            <span class="material-symbols-outlined text-[20px] text-[#44BB44]">verified_user</span>
+                            <p class="text-[11px] text-[#666666] leading-tight">90 Day Limited Warranty against manufacturer's defects <a href="#" class="text-[#1A1A1A] font-bold underline">Details</a></p>
+                        </div>
+
+                        <a href="checkout.php" class="w-full bg-primary text-white font-bold text-[16px] py-5 rounded-full flex items-center justify-center gap-2 hover:bg-primary shadow-xl hover:shadow-primary/10 transition-all active:scale-[0.98]">
+                            Checkout Now
                         </a>
-                        <a href="shop.php" class="btn btn-outline-primary btn-custom">
-                            <i class="fas fa-arrow-left me-2"></i>Continue Shopping
-                        </a>
-                    </div>
-                    
-                    <div class="mt-4 p-3 bg-light rounded">
-                        <h6 class="mb-2">
-                            <i class="fas fa-shield-alt me-2 text-success"></i>Secure Checkout
-                        </h6>
-                        <p class="small text-muted mb-0">
-                            Your payment information is encrypted and secure. We never store your payment details.
-                        </p>
                     </div>
                 </div>
             </div>
-        </div>
-    <?php endif; ?>
-</div>
+        <?php endif; ?>
+    </div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+function attachCartListeners() {
+    // Intercept all forms in the cart to submit via AJAX
+    const forms = document.querySelectorAll('main form');
+    
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalContent = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">sync</span>';
+            submitBtn.disabled = true;
+            
+            const formData = new FormData(form);
+            
+            fetch('cart.php', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Fetch the updated cart page silently and swap the content
+                    fetch('cart.php')
+                    .then(res => res.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newMain = doc.querySelector('main');
+                        document.querySelector('main').innerHTML = newMain.innerHTML;
+                        
+                        // Re-attach listeners to the new DOM elements
+                        attachCartListeners();
+                    });
+                } else {
+                    alert('Error updating cart');
+                    submitBtn.innerHTML = originalContent;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.location.reload();
+            });
+        });
+    });
+}
+
+// Initial attachment
+attachCartListeners();
+});
+</script>
 
 <?php include 'includes/footer.php'; ?>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-</body>
-</html>

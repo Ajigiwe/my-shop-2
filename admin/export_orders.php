@@ -34,7 +34,7 @@ try {
             $row['order_date'],
             $row['customer_name'],
             $row['customer_email'],
-            $row['status'],
+            $row['order_status'],
             $row['payment_method'],
             $row['total_amount'],
             // Normalize whitespace for multi-line addresses

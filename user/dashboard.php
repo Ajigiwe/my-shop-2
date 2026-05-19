@@ -1,11 +1,11 @@
 <?php
-// Include database connection
+/**
+ * User Dashboard
+ * - Rebuilt to be significantly less bulky and more information-dense.
+ * - Minimalist, clean, and professional.
+ */
 require_once '../includes/db.php';
-
-// Start session
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
+session_start();
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
@@ -13,233 +13,170 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Set page title
-$page_title = 'My Dashboard';
+$user_id = $_SESSION['user_id'];
+$page_title = 'Dashboard';
 
 // Get user info
 try {
     $stmt = $pdo->prepare("SELECT * FROM users WHERE user_id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
+    $stmt->execute([$user_id]);
     $user = $stmt->fetch();
+    
+    // Get stats
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total, SUM(total_amount) as spent FROM orders WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    $stats = $stmt->fetch();
+    
+    // Get recent orders
+    $stmt = $pdo->prepare("
+        SELECT o.*, 
+               (SELECT COUNT(*) FROM order_items WHERE order_id = o.order_id) as item_count 
+        FROM orders o 
+        WHERE o.user_id = ? 
+        ORDER BY o.order_date DESC 
+        LIMIT 5
+    ");
+    $stmt->execute([$user_id]);
+    $recent_orders = $stmt->fetchAll();
+    
 } catch(PDOException $e) {
-    error_log("Error fetching user: " . $e->getMessage());
-    header('Location: ../index.php');
-    exit();
+    error_log("Error: " . $e->getMessage());
 }
 
-// Get recent orders
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $page_title; ?> - ASO Online Market</title>
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap JS (required for dropdowns and other components) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/style.css">
-</head>
-<body>
-<?php include '../includes/navbar.php'; ?>
-
-<?php
-// Get recent orders
-$recent_orders = [];
-try {
-    $stmt = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY order_date DESC LIMIT 5");
-    $stmt->execute([$_SESSION['user_id']]);
-    $recent_orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch(PDOException $e) {
-    error_log("Error fetching orders: " . $e->getMessage());
-}
-
-$cart_count = 0;
-try {
-    $stmt = $pdo->prepare("SELECT SUM(quantity) as total FROM cart WHERE user_id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $result = $stmt->fetch();
-    $cart_count = $result['total'] ?? 0;
-} catch(PDOException $e) {
-    error_log("Error fetching cart count: " . $e->getMessage());
-}
+include '../includes/header.php';
 ?>
 
-<div class="container py-4">
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-lg-3">
-            <div class="card mb-4">
-                <div class="card-body text-center">
-                    <i class="fas fa-user fa-3x text-primary mb-3"></i>
-                    <h5><?php echo htmlspecialchars($user['name']); ?></h5>
-                    <p class="text-muted"><?php echo htmlspecialchars($user['email']); ?></p>
-                    <span class="badge bg-<?php echo $user['role'] === 'admin' ? 'danger' : 'primary'; ?>">
-                        <?php echo ucfirst($user['role']); ?>
-                    </span>
+<div class="flex-1 bg-[#F9F9F9] min-h-screen">
+    <div class="max-w-[1200px] mx-auto px-6 py-8">
+        
+        <!-- Compact Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-white border border-[#EEEEEE] p-6 rounded-xl shadow-sm">
+            <div class="flex items-center gap-5">
+                <div class="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-white text-[20px] font-black">
+                    <?php echo substr($user['name'], 0, 1); ?>
+                </div>
+                <div>
+                    <h1 class="text-[20px] font-black text-[#1A1A1A] tracking-tight">Welcome, <?php echo explode(' ', htmlspecialchars($user['name']))[0]; ?></h1>
+                    <p class="text-[12px] text-[#666666] font-medium">Overview of your account activity and orders.</p>
                 </div>
             </div>
-            
-            <div class="list-group mb-4">
-                <a href="profile.php" class="list-group-item list-group-item-action">
-                    <i class="fas fa-user-edit me-2"></i>Profile Settings
-                </a>
-                <a href="orders.php" class="list-group-item list-group-item-action">
-                    <i class="fas fa-shopping-bag me-2"></i>My Orders
-                    <?php if (!empty($recent_orders)): ?>
-                        <span class="badge bg-primary ms-2"><?php echo count($recent_orders); ?></span>
-                    <?php endif; ?>
-                </a>
-                <a href="../cart.php" class="list-group-item list-group-item-action">
-                    <i class="fas fa-shopping-cart me-2"></i>Shopping Cart
-                    <?php if ($cart_count > 0): ?>
-                        <span class="badge bg-success ms-2"><?php echo $cart_count; ?></span>
-                    <?php endif; ?>
-                </a>
-                <?php if ($user['role'] === 'admin'): ?>
-                    <a href="../admin/dashboard.php" class="list-group-item list-group-item-action">
-                        <i class="fas fa-tachometer-alt me-2"></i>Admin Panel
-                    </a>
-                <?php endif; ?>
-                <a href="../logout.php" class="list-group-item list-group-item-action text-danger">
-                    <i class="fas fa-sign-out-alt me-2"></i>Logout
-                </a>
+            <div class="flex items-center gap-6">
+                <div class="text-right">
+                    <div class="text-[9px] font-black text-[#888888] uppercase tracking-widest mb-0.5">Total Spent</div>
+                    <div class="text-[16px] font-black text-[#1A1A1A]">GH₵<?php echo number_format($stats['spent'] ?? 0, 2); ?></div>
+                </div>
+                <div class="w-[1px] h-8 bg-[#EEEEEE]"></div>
+                <div class="text-right">
+                    <div class="text-[9px] font-black text-[#888888] uppercase tracking-widest mb-0.5">Orders</div>
+                    <div class="text-[16px] font-black text-[#1A1A1A]"><?php echo $stats['total'] ?? 0; ?></div>
+                </div>
             </div>
         </div>
-        
-        <!-- Main Content -->
-        <div class="col-lg-9">
-            <!-- Welcome Message -->
-            <div class="alert alert-success">
-                <h5><i class="fas fa-welcome-wagon me-2"></i>Welcome back, <?php echo htmlspecialchars($user['name']); ?>!</h5>
-                <p class="mb-0">Manage your account, view your orders, and more from your dashboard.</p>
-            </div>
-            
-            <!-- Quick Stats -->
-            <div class="row mb-4">
-                <div class="col-md-4 mb-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <i class="fas fa-shopping-bag fa-2x text-primary mb-2"></i>
-                            <h5><?php echo count($recent_orders); ?></h5>
-                            <p class="text-muted mb-0">Total Orders</p>
-                        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left: Main Activity -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <!-- Recent Activity Table-style -->
+                <div class="bg-white border border-[#EEEEEE] rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-5 py-4 border-b border-[#EEEEEE] flex items-center justify-between bg-[#FBFBFB]">
+                        <h3 class="text-[14px] font-black text-[#1A1A1A] uppercase tracking-widest">Recent Orders</h3>
+                        <a href="orders.php" class="text-[11px] font-black text-[#1A1A1A] hover:underline flex items-center gap-1">
+                            View All <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                        </a>
                     </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <i class="fas fa-shopping-cart fa-2x text-success mb-2"></i>
-                            <h5><?php echo $cart_count; ?></h5>
-                            <p class="text-muted mb-0">Items in Cart</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <i class="fas fa-user-check fa-2x text-info mb-2"></i>
-                            <h5>Member</h5>
-                            <p class="text-muted mb-0">Since <?php echo date('M Y', strtotime($user['created_at'])); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Recent Orders -->
-            <?php if (!empty($recent_orders)): ?>
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Recent Orders</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <tbody class="divide-y divide-[#EEEEEE]">
+                                <?php if (empty($recent_orders)): ?>
                                     <tr>
-                                        <th>Order #</th>
-                                        <th>Date</th>
-                                        <th>Status</th>
-                                        <th>Total</th>
-                                        <th>Actions</th>
+                                        <td class="p-8 text-center text-[#888888] text-[12px] font-medium">No recent orders found.</td>
                                     </tr>
-                                </thead>
-                                <tbody>
+                                <?php else: ?>
                                     <?php foreach ($recent_orders as $order): ?>
-                                        <tr>
-                                            <td>#<?php echo str_pad($order['order_id'], 6, '0', STR_PAD_LEFT); ?></td>
-                                            <td><?php echo date('M j, Y', strtotime($order['order_date'])); ?></td>
-                                            <td>
-                                                <span class="badge bg-<?php 
-                                                    echo match($order['status']) {
-                                                        'pending' => 'warning',
-                                                        'processing' => 'info',
-                                                        'shipped' => 'primary',
-                                                        'delivered' => 'success',
-                                                        'cancelled' => 'danger',
-                                                        default => 'secondary'
-                                                    };
-                                                ?>">
-                                                    <?php echo ucfirst($order['status']); ?>
+                                        <tr class="hover:bg-[#F9F9F9] transition-colors group">
+                                            <td class="px-5 py-4">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-8 h-8 rounded-lg bg-[#F5F5F5] border border-[#EEEEEE] flex items-center justify-center text-[#1A1A1A]">
+                                                        <span class="material-symbols-outlined text-[16px]">shopping_bag</span>
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-[13px] font-black text-[#1A1A1A]">#<?php echo str_pad($order['order_id'], 6, '0', STR_PAD_LEFT); ?></div>
+                                                        <div class="text-[11px] text-[#888888]"><?php echo date('M j, Y', strtotime($order['order_date'])); ?></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-5 py-4">
+                                                <div class="text-[11px] font-bold text-[#888888]"><?php echo $order['item_count']; ?> Items</div>
+                                                <div class="text-[13px] font-black text-[#1A1A1A]">GH₵<?php echo number_format($order['total_amount'], 2); ?></div>
+                                            </td>
+                                            <td class="px-5 py-4 text-right">
+                                                <span class="inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-[#EEEEEE] bg-white text-[#1A1A1A] mb-1">
+                                                    <?php echo $order['order_status']; ?>
                                                 </span>
                                             </td>
-                                            <td>$<?php echo number_format($order['total_amount'], 2); ?></td>
-                                            <td>
-                                                <a href="order_details.php?id=<?php echo $order['order_id']; ?>" 
-                                                   class="btn btn-sm btn-outline-primary">View</a>
+                                            <td class="px-5 py-4 text-right">
+                                                <a href="order_details.php?id=<?php echo $order['order_id']; ?>" class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#EEEEEE] text-[#1A1A1A] hover:bg-primary hover:text-white transition-all">
+                                                    <span class="material-symbols-outlined text-[16px]">visibility</span>
+                                                </a>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
-                                </tbody>
-                            </table>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+
+            </div>
+
+            <!-- Right: Account Sidebar -->
+            <div class="lg:col-span-4 space-y-6">
+                
+                <!-- Account Profile -->
+                <div class="bg-white border border-[#EEEEEE] rounded-xl p-6 shadow-sm">
+                    <h3 class="text-[11px] font-black text-[#888888] uppercase tracking-widest mb-5">Account Details</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[12px] font-medium text-[#666666]">Name</span>
+                            <span class="text-[13px] font-black text-[#1A1A1A]"><?php echo htmlspecialchars($user['name']); ?></span>
                         </div>
-                        <div class="text-center mt-3">
-                            <a href="orders.php" class="btn btn-primary">View All Orders</a>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[12px] font-medium text-[#666666]">Email</span>
+                            <span class="text-[13px] font-black text-[#1A1A1A] truncate max-w-[150px]"><?php echo htmlspecialchars($user['email']); ?></span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[12px] font-medium text-[#666666]">Phone</span>
+                            <span class="text-[13px] font-black text-[#1A1A1A]"><?php echo htmlspecialchars($user['phone'] ?? 'Not set'); ?></span>
+                        </div>
+                        <div class="pt-2">
+                            <a href="profile.php" class="flex items-center justify-center w-full h-10 rounded-lg bg-[#F5F5F5] border border-[#EEEEEE] text-[#1A1A1A] font-black text-[11px] hover:bg-primary hover:text-white transition-all">
+                                Edit Settings
+                            </a>
                         </div>
                     </div>
                 </div>
-            <?php else: ?>
-                <div class="card">
-                    <div class="card-body text-center py-5">
-                        <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
-                        <h5>No Orders Yet</h5>
-                        <p class="text-muted">You haven't placed any orders yet. Start shopping to see your orders here!</p>
-                        <a href="../shop.php" class="btn btn-primary">Start Shopping</a>
-                    </div>
-                </div>
-            <?php endif; ?>
-            
-            <!-- Account Information -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Account Information</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Name:</strong> <?php echo htmlspecialchars($user['name']); ?></p>
-                            <p><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></p>
-                            <p><strong>Phone:</strong> <?php echo htmlspecialchars($user['phone'] ?? 'Not provided'); ?></p>
+
+                <!-- Support Card -->
+                <div class="bg-white border border-[#EEEEEE] rounded-xl p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-[#F9F9F9] border border-[#EEEEEE] flex items-center justify-center text-[#1A1A1A]">
+                            <span class="material-symbols-outlined text-[16px]">support_agent</span>
                         </div>
-                        <div class="col-md-6">
-                            <p><strong>Member Since:</strong> <?php echo date('F j, Y', strtotime($user['created_at'])); ?></p>
-                            <p><strong>Account Type:</strong> <?php echo ucfirst($user['role']); ?></p>
-                            <p><strong>Last Updated:</strong> <?php echo date('F j, Y', strtotime($user['updated_at'])); ?></p>
-                        </div>
+                        <h3 class="text-[14px] font-black text-[#1A1A1A] tracking-tight">Need Support?</h3>
                     </div>
-                    <div class="mt-3">
-                        <a href="profile.php" class="btn btn-outline-primary">Edit Profile</a>
-                    </div>
+                    <p class="text-[12px] text-[#666666] mb-5 leading-relaxed">Our team is available to assist you with any questions regarding your orders.</p>
+                    <a href="mailto:support@aso-market.com" class="text-[11px] font-black text-[#1A1A1A] underline flex items-center gap-1 hover:text-[#888888] transition-colors">
+                        Go to Support Center <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                    </a>
                 </div>
+
             </div>
         </div>
     </div>
 </div>
 
 <?php include '../includes/footer.php'; ?>
-</body>
-</html>

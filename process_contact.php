@@ -25,6 +25,36 @@ $response = [
 
 // Check if form is submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Check if it's a newsletter subscription request
+    if (isset($_POST['action']) && $_POST['action'] === 'newsletter_subscribe') {
+        $email = isset($_POST['email']) ? filter_var(sanitizeInput($_POST['email']), FILTER_SANITIZE_EMAIL) : '';
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
+            exit;
+        }
+        
+        try {
+            // Check if already subscribed
+            $check_stmt = $pdo->prepare("SELECT id FROM newsletter_subscribers WHERE email = ?");
+            $check_stmt->execute([$email]);
+            if ($check_stmt->fetch()) {
+                echo json_encode(['success' => true, 'message' => 'You are already subscribed! Thank you.']);
+                exit;
+            }
+            
+            // Insert subscriber
+            $ins_stmt = $pdo->prepare("INSERT INTO newsletter_subscribers (email, is_active) VALUES (?, 1)");
+            $ins_stmt->execute([$email]);
+            
+            echo json_encode(['success' => true, 'message' => 'Thank you for subscribing! Check your email for deals.']);
+            exit;
+        } catch (PDOException $e) {
+            error_log('Newsletter subscription DB error: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'An error occurred. Please try again later.']);
+            exit;
+        }
+    }
+
     try {
         // Get and sanitize form data
         $name = isset($_POST['name']) ? sanitizeInput($_POST['name']) : '';

@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASO Online - Hero Design Showcase</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+        }
+
+        :root {
+            --primary: #1a5f3f;
+            --primary-light: #2d8f5f;
+            --accent-red: #ff4757;
+            --neutral-50: #f8f9fa;
+            --neutral-100: #e9ecef;
+            --neutral-600: #495057;
+            --neutral-900: #1a1a1a;
+        }
+
+        /* ========== HERO SELECTOR ========== */
+        .hero-selector {
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            background: white;
+            border-bottom: 2px solid var(--neutral-100);
+            padding: 16px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+        }
+
+        .hero-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--neutral-100);
+            background: white;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+
+        .hero-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* ========== HERO 1: CAROUSEL ========== */
+        .hero-carousel {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            overflow: hidden;
+            background: var(--neutral-50);
+        }
+
+        .carousel-slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            padding: 40px 20px;
+        }
+
+        .carousel-slide.active {
+            opacity: 1;
+        }
+
+        .slide-1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .slide-2 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .slide-3 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .carousel-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .carousel-slide h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+
+        .carousel-slide p {
+            font-size: 14px;
+            opacity: 0.95;
+            margin-bottom: 24px;
+            max-width: 280px;
+        }
+
+        .carousel-cta {
+            background: white;
+            color: var(--neutral-900);
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .carousel-cta:active {
+            transform: scale(0.96);
+        }
+
+        .carousel-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 10;
+        }
+
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid white;
+        }
+
+        .carousel-dot.active {
+            background: white;
+            width: 28px;
+            border-radius: 6px;
+        }
+
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            transform: translateY(-50%);
+            display: flex;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .carousel-arrow {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            pointer-events: all;
+        }
+
+        .carousel-arrow:active {
+            background: rgba(255,255,255,0.6);
+        }
+
+        /* ========== HERO 2: SPLIT SCREEN ========== */
+        .hero-split {
+            display: grid;
+            grid-template-columns: 1fr;
+            min-height: 400px;
+            background: white;
+        }
+
+        @media (min-width: 768px) {
+            .hero-split {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .split-image {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            order: 2;
+        }
+
+        @media (min-width: 768px) {
+            .split-image {
+                min-height: 400px;
+                order: 2;
+            }
+        }
+
+        .split-image-content {
+            font-size: 120px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .split-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px 24px;
+            order: 1;
+        }
+
+        @media (min-width: 768px) {
+            .split-content {
+                padding: 60px 40px;
+            }
+        }
+
+        .split-content h2 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--neutral-900);
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .split-content p {
+            font-size: 16px;
+            color: var(--neutral-600);
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+
+        .split-features {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .feature-item {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .feature-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .split-cta {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            width: fit-content;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(26, 95, 63, 0.2);
+        }
+
+        .split-cta:active {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(26, 95, 63, 0.3);
+        }
+
+        /* ========== HERO 3: ANIMATED GRADIENT ========== */
+        .hero-gradient {
+            position: relative;
+            min-height: 420px;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient-shift 15s ease infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            overflow: hidden;
+        }
+
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .gradient-floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            top: 0;
+            left: 0;
+        }
+
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            border-radius: 50%;
+        }
+
+        .shape-1 {
+            width: 200px;
+            height: 200px;
+            background: white;
+            top: -50px;
+            right: -50px;
+            animation: float-shape 20s infinite ease-in-out;
+        }
+
+        .shape-2 {
+            width: 150px;
+            height: 150px;
+            background: white;
+            bottom: 10%;
+            left: -50px;
+            animation: float-shape 25s infinite ease-in-out reverse;
+        }
+
+        .shape-3 {
+            width: 120px;
+            height: 120px;
+            background: white;
+            top: 50%;
+            right: 10%;
+            animation: float-shape 30s infinite ease-in-out;
+        }
+
+        @keyframes float-shape {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(20px, -30px); }
+            66% { transform: translate(-20px, 30px); }
+        }
+
+        .gradient-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .gradient-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .gradient-content h2 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+
+        .gradient-content p {
+            font-size: 15px;
+            opacity: 0.95;
+            margin-bottom: 28px;
+            max-width: 300px;
+            line-height: 1.6;
+        }
+
+        .gradient-icons {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        .gradient-icon-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .gradient-icon-box {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .gradient-icon-label {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .gradient-cta {
+            background: white;
+            color: #ee7752;
+            border: none;
+            padding: 13px 32px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        .gradient-cta:active {
+            transform: scale(0.95);
+        }
+
+        /* ========== CONTAINER ========== */
+        .hero-container {
+            display: none;
+        }
+
+        .hero-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ========== DESCRIPTION ========== */
+        .hero-description {
+            padding: 24px;
+            background: var(--neutral-50);
+            border-top: 1px solid var(--neutral-100);
+            font-size: 13px;
+            color: var(--neutral-600);
+            line-height: 1.6;
+        }
+
+        .hero-description h3 {
+            color: var(--neutral-900);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .feature-list {
+            margin: 12px 0 0 16px;
+            list-style: none;
+        }
+
+        .feature-list li {
+            margin-bottom: 6px;
+        }
+
+        .feature-list li:before {
+            content: "✓ ";
+            color: var(--primary);
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        /* ========== MOBILE OPTIMIZATIONS ========== */
+        @media (max-width: 480px) {
+            .hero-carousel {
+                height: 350px;
+            }
+
+            .carousel-slide h2 {
+                font-size: 24px;
+            }
+
+            .gradient-content h2 {
+                font-size: 28px;
+            }
+
+            .split-content h2 {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HERO SELECTOR -->
+    <div class="hero-selector">
+        <button class="hero-btn active" data-hero="carousel">Carousel</button>
+        <button class="hero-btn" data-hero="split">Split Screen</button>
+        <button class="hero-btn" data-hero="gradient">Gradient</button>
+    </div>
+
+    <!-- HERO 1: CAROUSEL -->
+    <div id="carousel" class="hero-container active">
+        <div class="hero-carousel">
+            <div class="carousel-slide active slide-1">
+                <div class="carousel-icon">📱</div>
+                <h2>Latest Smartphones</h2>
+                <p>Get the newest tech with exclusive discounts</p>
+                <button class="carousel-cta">Shop Electronics</button>
+            </div>
+
+            <div class="carousel-slide slide-2">
+                <div class="carousel-icon">👕</div>
+                <h2>Trending Fashion</h2>
+                <p>Fresh styles for every season</p>
+                <button class="carousel-cta">Shop Fashion</button>
+            </div>
+
+            <div class="carousel-slide slide-3">
+                <div class="carousel-icon">⌚</div>
+                <h2>Premium Accessories</h2>
+                <p>Complete your look with style</p>
+                <button class="carousel-cta">Shop Accessories</button>
+            </div>
+
+            <div class="carousel-nav">
+                <button class="carousel-arrow" onclick="changeSlide(-1)">❮</button>
+                <button class="carousel-arrow" onclick="changeSlide(1)">❯</button>
+            </div>
+
+            <div class="carousel-controls">
+                <span class="carousel-dot active" onclick="goToSlide(0)"></span>
+                <span class="carousel-dot" onclick="goToSlide(1)"></span>
+                <span class="carousel-dot" onclick="goToSlide(2)"></span>
+            </div>
+        </div>
+
+        <div class="hero-description">
+            <h3>Carousel Hero Benefits</h3>
+            <ul class="feature-list">
+                <li>Showcase multiple categories in one section</li>
+                <li>Auto-rotates to keep content fresh</li>
+                <li>Touch/swipe friendly on mobile</li>
+                <li>High engagement & click-through rates</li>
+                <li>Great for seasonal promotions</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- HERO 2: SPLIT SCREEN -->
+    <div id="split" class="hero-container">
+        <div class="hero-split">
+            <div class="split-content">
+                <h2>Premium Quality Guaranteed</h2>
+                <p>Shop with confidence knowing every product is 100% authentic and backed by our warranty.</p>
+                
+                <div class="split-features">
+                    <div class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span>Authentic products only</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">⚡</span>
+                        <span>Fast delivery (1-3 days)</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">💳</span>
+                        <span>Secure payments</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">↩️</span>
+                        <span>Easy 30-day returns</span>
+                    </div>
+                </div>
+
+                <button class="split-cta">Start Shopping</button>
+            </div>
+
+            <div class="split-image">
+                <div class="split-image-content">✨</div>
+            </div>
+        </div>
+
+        <div class="hero-description">
+            <h3>Split Screen Hero Benefits</h3>
+            <ul class="feature-list">
+                <li>Perfect for feature-heavy messaging</li>
+                <li>Balances text & imagery beautifully</li>
+                <li>Mobile: stacks vertically (clean)</li>
+                <li>Desktop: side-by-side layout</li>
+                <li>Ideal for building trust & credibility</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- HERO 3: GRADIENT -->
+    <div id="gradient" class="hero-container">
+        <div class="hero-gradient">
+            <div class="gradient-floating-shapes">
+                <div class="shape shape-1"></div>
+                <div class="shape shape-2"></div>
+                <div class="shape shape-3"></div>
+            </div>
+
+            <div class="gradient-content">
+                <span class="gradient-badge">🎉 LIMITED TIME OFFER</span>
+                <h2>Summer Sale is Here</h2>
+                <p>Up to 50% off on thousands of products. Don't miss out!</p>
+
+                <div class="gradient-icons">
+                    <div class="gradient-icon-item">
+                        <div class="gradient-icon-box">💳</div>
+                        <span class="gradient-icon-label">Secure Pay</span>
+                    </div>
+                    <div class="gradient-icon-item">
+                        <div class="gradient-icon-box">🚚</div>
+                        <span class="gradient-icon-label">Fast Ship</span>
+                    </div>
+                    <div class="gradient-icon-item">
+                        <div class="gradient-icon-box">↩️</div>
+                        <span class="gradient-icon-label">Easy Return</span>
+                    </div>
+                </div>
+
+                <button class="gradient-cta">Shop Now</button>
+            </div>
+        </div>
+
+        <div class="hero-description">
+            <h3>Animated Gradient Hero Benefits</h3>
+            <ul class="feature-list">
+                <li>Eye-catching, energetic feel</li>
+                <li>Perfect for promotions & sales</li>
+                <li>Animated background holds attention</li>
+                <li>Modern, premium aesthetic</li>
+                <li>Smooth animations on all devices</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+
+        // Hero Tab Switching
+        document.querySelectorAll('.hero-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.hero-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.hero-container').forEach(c => c.classList.remove('active'));
+                
+                this.classList.add('active');
+                const heroId = this.getAttribute('data-hero');
+                document.getElementById(heroId).classList.add('active');
+            });
+        });
+
+        // Carousel Functions
+        function changeSlide(direction) {
+            const slides = document.querySelectorAll('.carousel-slide');
+            const dots = document.querySelectorAll('.carousel-dot');
+            
+            slides[currentSlide].classList.remove('active');
+            dots[currentSlide].classList.remove('active');
+            
+            currentSlide += direction;
+            if (currentSlide >= slides.length) currentSlide = 0;
+            if (currentSlide < 0) currentSlide = slides.length - 1;
+            
+            slides[currentSlide].classList.add('active');
+            dots[currentSlide].classList.add('active');
+        }
+
+        function goToSlide(n) {
+            const slides = document.querySelectorAll('.carousel-slide');
+            const dots = document.querySelectorAll('.carousel-dot');
+            
+            slides[currentSlide].classList.remove('active');
+            dots[currentSlide].classList.remove('active');
+            
+            currentSlide = n;
+            slides[currentSlide].classList.add('active');
+            dots[currentSlide].classList.add('active');
+        }
+
+        // Auto-rotate carousel every 5 seconds
+        setInterval(() => {
+            if (document.getElementById('carousel').classList.contains('active')) {
+                changeSlide(1);
+            }
+        }, 5000);
+    </script>
+
+</body>
+</html>

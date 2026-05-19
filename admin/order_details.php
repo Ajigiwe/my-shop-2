@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'shipping' => 0, // Add shipping cost if applicable
                             'total' => $order_for_email['total_amount'],
                             'order_date' => $order_for_email['order_date'],
-                            'status' => $order_for_email['status'] ?? 'processing',
+                            'status' => $order_for_email['order_status'] ?? 'processing',
                             'payment_method' => $order_for_email['payment_method'] ?? 'not_specified'
                         ];
                         
@@ -186,359 +186,153 @@ try {
 }
 ?>
 
-<?php include '../includes/header.php'; ?>
+<?php
+$page_title = 'Order #' . str_pad($order_id, 6, '0', STR_PAD_LEFT);
+include 'includes/header-new.php';
+?>
 
-<div class="container py-4">
-    <?php if ($order): ?>
-        <!-- Success/Error Messages -->
-        <?php if ($success): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($success); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<div class="row g-4">
+    <!-- Main Order Info -->
+    <div class="col-lg-8">
+        <!-- Order Items -->
+        <div class="admin-card animate-up mb-4">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title mb-0">Order Items <span class="badge bg-light text-dark ms-2 rounded-pill"><?php echo count($order_items); ?></span></h5>
             </div>
-        <?php endif; ?>
-
-        <?php if (!empty($errors)): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <?php foreach ($errors as $error): ?>
-                    <?php echo $error; ?><br>
-                <?php endforeach; ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
-
-        <div class="row">
-            <div class="col-12">
-                <!-- Order Header -->
-                <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <div class="row align-items-center">
-                            <div class="col-md-6">
-                                <h4 class="mb-0">
-                                    <i class="fas fa-receipt me-2"></i>
-                                    Order #<?php echo str_pad($order_id, 6, '0', STR_PAD_LEFT); ?>
-                                </h4>
-                            </div>
-                            <div class="col-md-6 text-md-end">
-                                <div class="d-flex gap-2 justify-content-md-end flex-wrap">
-                                    <a href="manage_orders.php" class="btn btn-outline-light btn-sm">
-                                        <i class="fas fa-arrow-left me-1"></i>Back to Orders
-                                    </a>
-                                    <a href="invoice.php?order_id=<?php echo $order_id; ?>" class="btn btn-light btn-sm" target="_blank">
-                                        <i class="fas fa-file-invoice me-1"></i>View Invoice
-                                    </a>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th class="text-center">Qty</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($order_items as $item): ?>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="../assets/images/<?php echo htmlspecialchars($item['image'] ?? 'placeholder.jpg'); ?>" class="rounded-3 shadow-sm me-3" style="width: 48px; height: 48px; object-fit: cover;">
+                                    <div>
+                                        <div class="fw-black text-[14px]"><?php echo htmlspecialchars($item['name']); ?></div>
+                                        <div class="small text-muted fw-bold uppercase tracking-widest text-[9px]">ID: #<?php echo $item['product_id']; ?></div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            </td>
+                            <td><?php echo formatCurrency($item['price']); ?></td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark rounded-pill px-3"><?php echo $item['quantity']; ?></span>
+                            </td>
+                            <td class="text-end fw-black"><?php echo formatCurrency($item['price'] * $item['quantity']); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot class="bg-light">
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold py-3">Grand Total</td>
+                            <td class="text-end fw-black text-[#1A1A1A] py-3 fs-5"><?php echo formatCurrency($order['total_amount']); ?></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Addresses -->
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="admin-card animate-up" style="animation-delay: 0.1s;">
+                    <div class="admin-card-header">
+                        <h5 class="admin-card-title mb-0">Shipping Logistics</h5>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p class="mb-1"><strong>Customer:</strong></p>
-                                <p class="text-muted">
-                                    <a href="mailto:<?php echo htmlspecialchars($order['customer_email']); ?>">
-                                        <?php echo htmlspecialchars($order['customer_name']); ?>
-                                    </a>
-                                    <?php if ($order['customer_phone']): ?>
-                                        <br><small><?php echo htmlspecialchars($order['customer_phone']); ?></small>
-                                    <?php endif; ?>
-                                </p>
-                            </div>
-                            <div class="col-md-3">
-                                <p class="mb-1"><strong>Order Date:</strong></p>
-                                <p class="text-muted"><?php echo date('M j, Y g:i A', strtotime($order['order_date'])); ?></p>
-                            </div>
-                            <div class="col-md-3">
-                                <p class="mb-1"><strong>Payment:</strong></p>
-                                <p class="text-muted"><?php
-                                    $payment_methods = [
-                                        'cash_on_delivery' => 'Cash on Delivery',
-                                        'paypal' => 'PayPal',
-                                        'paystack' => 'Paystack'
-                                    ];
-                                    echo htmlspecialchars($payment_methods[$order['payment_method']] ?? $order['payment_method']);
-                                ?></p>
-                            </div>
-                        </div>
+                    <div class="card-body p-4">
+                        <div class="stat-label">Delivery Address</div>
+                        <p class="small fw-bold text-muted mb-0"><?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?></p>
                     </div>
                 </div>
-
-                <div class="row">
-                    <!-- Order Items -->
-                    <div class="col-lg-8">
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">Order Items</h5>
-                                <span class="badge bg-primary fs-6"><?php echo count($order_items); ?> items</span>
-                            </div>
-                            <div class="card-body">
-                                <?php if (empty($order_items)): ?>
-                                    <p class="text-muted text-center py-4">No items found in this order.</p>
-                                <?php else: ?>
-                                    <div class="table-responsive">
-                                        <table class="table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Product</th>
-                                                    <th>Price</th>
-                                                    <th>Quantity</th>
-                                                    <th>Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($order_items as $item): ?>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="d-flex align-items-center">
-                                                                <img src="../assets/images/<?php echo htmlspecialchars($item['image'] ?? 'placeholder.jpg'); ?>"
-                                                                     alt="<?php echo htmlspecialchars($item['name']); ?>"
-                                                                     class="me-3 rounded" style="width: 50px; height: 50px; object-fit: cover;">
-                                                                <div>
-                                                                    <h6 class="mb-0"><?php echo htmlspecialchars($item['name']); ?></h6>
-                                                                    <small class="text-muted">Item #<?php echo $item['order_item_id']; ?></small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td><?php 
-                                                            // Debug: Output the price value
-                                                            echo function_exists('formatCurrency') 
-                                                                ? formatCurrency($item['price']) 
-                                                                : '₦' . number_format($item['price'], 2); 
-                                                        ?></td>
-                                                        <td>
-                                                            <span class="badge bg-light text-dark"><?php echo $item['quantity']; ?></span>
-                                                        </td>
-                                                        <td><strong><?php 
-                                                            $itemTotal = $item['price'] * $item['quantity'];
-                                                            echo function_exists('formatCurrency') 
-                                                                ? formatCurrency($itemTotal)
-                                                                : '₦' . number_format($itemTotal, 2);
-                                                        ?></strong></td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                            <tfoot class="table-light">
-                                                <tr>
-                                                    <th colspan="3" class="text-end">Order Total:</th>
-                                                    <th><?php 
-                                                        echo function_exists('formatCurrency') 
-                                                            ? formatCurrency($order['total_amount'])
-                                                            : '₦' . number_format($order['total_amount'], 2);
-                                                    ?></th>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
+            </div>
+            <div class="col-md-6">
+                <div class="admin-card animate-up" style="animation-delay: 0.2s;">
+                    <div class="admin-card-header">
+                        <h5 class="admin-card-title mb-0">Billing Details</h5>
                     </div>
-
-                    <!-- Order Management -->
-                    <div class="col-lg-4">
-                        <!-- Status Update -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Update Order Status</h5>
-                            </div>
-                            <div class="card-body">
-                                <form method="POST">
-                                    <input type="hidden" name="action" value="update_status">
-                                    <div class="mb-3">
-                                        <label for="status" class="form-label">Status</label>
-                                        <select class="form-select" name="status" id="status" required>
-                                            <option value="">Select Status</option>
-                                            <?php foreach ($valid_statuses as $status): ?>
-                                                <option value="<?php echo $status; ?>" <?php echo (($order['order_status'] ?? 'pending') === $status) ? 'selected' : ''; ?>>
-                                                    <?php echo ucfirst($status); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="fas fa-save me-2"></i>Update Status
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-
-                        <!-- Customer Information -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Customer Information</h5>
-                            </div>
-                            <div class="card-body">
-                                <p class="mb-2"><strong>Name:</strong> <?php echo htmlspecialchars($order['customer_name']); ?></p>
-                                <p class="mb-2"><strong>Email:</strong>
-                                    <a href="mailto:<?php echo htmlspecialchars($order['customer_email']); ?>">
-                                        <?php echo htmlspecialchars($order['customer_email']); ?>
-                                    </a>
-                                </p>
-                                <?php if ($order['customer_phone']): ?>
-                                    <p class="mb-2"><strong>Phone:</strong>
-                                        <a href="tel:<?php echo htmlspecialchars($order['customer_phone']); ?>">
-                                            <?php echo htmlspecialchars($order['customer_phone']); ?>
-                                        </a>
-                                    </p>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <!-- Addresses -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Shipping Address</h5>
-                            </div>
-                            <div class="card-body">
-                                <address class="mb-0">
-                                    <?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?>
-                                </address>
-                            </div>
-                        </div>
-
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Billing Address</h5>
-                            </div>
-                            <div class="card-body">
-                                <address class="mb-0">
-                                    <?php echo nl2br(htmlspecialchars($order['billing_address'])); ?>
-                                </address>
-                            </div>
-                        </div>
-
-                        <!-- Quick Actions -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Quick Actions</h5>
-                            </div>
-                            <div class="card-body">
-                                <form method="post" class="mb-2" onsubmit="return confirm('Send invoice email to customer?')">
-                                    <input type="hidden" name="action" value="send_invoice">
-                                    <input type="hidden" name="order_id" value="<?php echo $order_id; ?>">
-                                    <button type="submit" class="btn btn-outline-success w-100">
-                                        <i class="fas fa-paper-plane me-2"></i>Send Invoice Email
-                                    </button>
-                                </form>
-                                <a href="#" class="btn btn-outline-secondary w-100" onclick="window.history.back(); return false;">
-                                    <i class="fas fa-arrow-left me-2"></i>Back to Orders
-                                </a>
-                            </div>
-                        </div>
+                    <div class="card-body p-4">
+                        <div class="stat-label">Billing Address</div>
+                        <p class="small fw-bold text-muted mb-0"><?php echo nl2br(htmlspecialchars($order['billing_address'])); ?></p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Order Status History (if you want to add this later) -->
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Order Timeline</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <?php
-                            $status_timeline = [
-                                'pending' => 'Order Placed',
-                                'processing' => 'Processing Started',
-                                'shipped' => 'Order Shipped',
-                                'delivered' => 'Order Delivered',
-                                'cancelled' => 'Order Cancelled'
-                            ];
-
-                            $current_status = $order['order_status'] ?? 'pending';
-                            $status_keys = array_keys($valid_statuses);
-                            $current_index = array_search($current_status, $status_keys);
-                            ?>
-
+    <!-- Management Sidebar -->
+    <div class="col-lg-4">
+        <!-- Status Update -->
+        <div class="admin-card animate-up mb-4">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title mb-0">Workflow Control</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <input type="hidden" name="action" value="update_status">
+                    <div class="mb-3">
+                        <label class="stat-label">Current Status</label>
+                        <select class="form-select status-select rounded-3 fw-black py-2.5 status-<?php echo $order['order_status']; ?>" name="status">
                             <?php foreach ($valid_statuses as $status): ?>
-                                <div class="col-md-4 mb-3">
-                                    <div class="status-badge text-center p-3 <?php echo ($status === $current_status) ? 'active' : ''; ?>">
-                                        <i class="fas fa-<?php
-                                            echo match($status) {
-                                                'pending' => 'clock',
-                                                'processing' => 'cog',
-                                                'shipped' => 'truck',
-                                                'delivered' => 'check-circle',
-                                                'cancelled' => 'times-circle'
-                                            };
-                                        ?> fa-2x mb-2"></i>
-                                        <h6><?php echo $status_timeline[$status]; ?></h6>
-                                        <small class="text-muted">
-                                            <?php echo ($status === $current_status) ? 'Current Status' : 'Not reached'; ?>
-                                        </small>
-                                    </div>
-                                </div>
+                                <option value="<?php echo $status; ?>" <?php echo (($order['order_status'] ?? 'pending') === $status) ? 'selected' : ''; ?>>
+                                    <?php echo ucfirst($status); ?>
+                                </option>
                             <?php endforeach; ?>
-                        </div>
+                        </select>
                     </div>
-                </div>
+                    <button type="submit" class="btn-premium w-100 py-3">Update Progress</button>
+                </form>
             </div>
         </div>
-    <?php else: ?>
-        <div class="alert alert-danger">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            Order not found.
+
+        <!-- Customer Summary -->
+        <div class="admin-card animate-up mb-4" style="animation-delay: 0.1s;">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title mb-0">Customer Profile</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <div class="stat-label">Full Name</div>
+                    <div class="fw-black"><?php echo htmlspecialchars($order['customer_name']); ?></div>
+                </div>
+                <div class="mb-3">
+                    <div class="stat-label">Email Address</div>
+                    <div class="fw-bold small text-[#1A1A1A]"><?php echo htmlspecialchars($order['customer_email']); ?></div>
+                </div>
+                <?php if ($order['customer_phone']): ?>
+                <div>
+                    <div class="stat-label">Phone Number</div>
+                    <div class="fw-bold small"><?php echo htmlspecialchars($order['customer_phone']); ?></div>
+                </div>
+                <?php endif; ?>
+            </div>
         </div>
-        <div class="text-center mt-4">
-            <a href="manage_orders.php" class="btn btn-primary">Back to Manage Orders</a>
+
+        <!-- Quick Actions -->
+        <div class="admin-card animate-up" style="animation-delay: 0.2s;">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" class="mb-2">
+                    <input type="hidden" name="action" value="send_invoice">
+                    <input type="hidden" name="order_id" value="<?php echo $order_id; ?>">
+                    <button type="submit" class="btn-premium-outline w-100 py-2 mb-2">
+                        <i class="fas fa-paper-plane me-2"></i>Email Invoice
+                    </button>
+                </form>
+                <a href="invoice.php?order_id=<?php echo $order_id; ?>" target="_blank" class="btn-premium-outline w-100 py-2 text-decoration-none text-center d-block">
+                    <i class="fas fa-print me-2"></i>Print Invoice
+                </a>
+            </div>
         </div>
-    <?php endif; ?>
+    </div>
 </div>
 
-<style>
-.status-badge {
-    border: 2px solid #e9ecef;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-}
-
-.status-badge.active {
-    border-color: var(--primary-color);
-    background-color: rgba(99, 102, 241, 0.1);
-}
-
-address {
-    font-style: normal;
-    line-height: 1.6;
-}
-
-.table th {
-    border-top: none;
-    font-weight: 600;
-    color: var(--gray-700);
-}
-
-.badge {
-    font-size: 0.875rem;
-}
-</style>
-
-<script>
-function sendInvoiceEmail(orderId) {
-    if (confirm('Are you sure you want to send the invoice email to the customer?')) {
-        // Create a form to submit the request
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.style.display = 'none';
-
-        const actionInput = document.createElement('input');
-        actionInput.type = 'hidden';
-        actionInput.name = 'action';
-        actionInput.value = 'send_invoice';
-
-        const orderIdInput = document.createElement('input');
-        orderIdInput.type = 'hidden';
-        orderIdInput.name = 'order_id';
-        orderIdInput.value = orderId;
-
-        form.appendChild(actionInput);
-        form.appendChild(orderIdInput);
-        document.body.appendChild(form);
-
-        form.submit();
-    }
-}
-</script>
-
-
-
+<?php include 'includes/footer-new.php'; ?>

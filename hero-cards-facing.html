@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero Cards - Facing Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        :root {
+            --primary: #1a5f3f;
+            --primary-light: #2d8f5f;
+            --accent-red: #ff4757;
+        }
+
+        /* ========== SECTION HEADER ========== */
+        .section-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .section-header p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* ========== ANIMATION SELECTOR ========== */
+        .animation-types {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .type-btn {
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .type-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* ========== HERO CAROUSEL CONTAINER ========== */
+        .hero-carousel-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero-carousel {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            perspective: 1000px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .hero-carousel {
+                height: 350px;
+            }
+        }
+
+        /* ========== CAROUSEL TYPE 1: CIRCULAR ROTATE ========== */
+        .carousel-circular {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-container-circular {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hero-card {
+            position: absolute;
+            width: 280px;
+            height: 340px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transform-origin: center;
+        }
+
+        @media (max-width: 768px) {
+            .hero-card {
+                width: 240px;
+                height: 300px;
+                padding: 20px;
+            }
+        }
+
+        /* Center spotlight card */
+        .hero-card.spotlight {
+            z-index: 10;
+            transform: scale(1) translateX(0) rotateY(0deg);
+            opacity: 1;
+        }
+
+        /* Left card */
+        .hero-card.left {
+            z-index: 5;
+            transform: scale(0.75) translateX(-180px) rotateY(30deg);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Right card */
+        .hero-card.right {
+            z-index: 5;
+            transform: scale(0.75) translateX(180px) rotateY(-30deg);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Hidden cards */
+        .hero-card.hidden {
+            z-index: 1;
+            transform: scale(0.5) rotateY(90deg);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .card-gradient-1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-gradient-2 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .card-gradient-3 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .card-gradient-4 {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .hero-card-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .hero-card h3 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .hero-card p {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .hero-card-cta {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .hero-card-cta:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        /* ========== CAROUSEL TYPE 2: SIDE BY SIDE FLIP ========== */
+        .carousel-sidebyside {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .card-left {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            perspective: 1000px;
+        }
+
+        .card-right {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            perspective: 1000px;
+        }
+
+        .sidebyside-card {
+            width: 260px;
+            height: 320px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .card-left, .card-right {
+                flex: 0.5;
+            }
+
+            .sidebyside-card {
+                width: 180px;
+                height: 240px;
+                padding: 20px;
+            }
+        }
+
+        .sidebyside-card.inactive {
+            transform: rotateY(90deg) scale(0.8);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sidebyside-card.active-left {
+            transform: rotateY(0deg) scale(1);
+            opacity: 1;
+        }
+
+        .sidebyside-card.active-right {
+            transform: rotateY(0deg) scale(1);
+            opacity: 1;
+        }
+
+        /* ========== CAROUSEL TYPE 3: STACKED CARDS ========== */
+        .carousel-stacked {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stacked-cards {
+            position: relative;
+            width: 300px;
+            height: 100%;
+            perspective: 1200px;
+        }
+
+        .stacked-card {
+            position: absolute;
+            width: 300px;
+            height: 340px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+            left: 50%;
+            top: 50%;
+            transform-origin: center;
+        }
+
+        @media (max-width: 768px) {
+            .stacked-card {
+                width: 240px;
+                height: 300px;
+                padding: 20px;
+            }
+
+            .stacked-cards {
+                width: 240px;
+            }
+        }
+
+        .stacked-card:nth-child(1) {
+            z-index: 30;
+            transform: translate(-50%, -50%) translateY(0) scale(1) rotateX(0deg);
+            opacity: 1;
+        }
+
+        .stacked-card:nth-child(2) {
+            z-index: 20;
+            transform: translate(-50%, -50%) translateY(20px) scale(0.95) rotateX(10deg);
+            opacity: 0.7;
+        }
+
+        .stacked-card:nth-child(3) {
+            z-index: 10;
+            transform: translate(-50%, -50%) translateY(40px) scale(0.9) rotateX(20deg);
+            opacity: 0.5;
+        }
+
+        .stacked-card:nth-child(4) {
+            z-index: 5;
+            transform: translate(-50%, -50%) translateY(60px) scale(0.85) rotateX(30deg);
+            opacity: 0.3;
+        }
+
+        /* ========== CAROUSEL TYPE 4: ORBIT ========== */
+        .carousel-orbit {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .orbit-center {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(26, 95, 63, 0.1);
+            border: 2px dashed rgba(26, 95, 63, 0.2);
+            z-index: 1;
+        }
+
+        .orbit-card {
+            position: absolute;
+            width: 240px;
+            height: 300px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+            z-index: 5;
+        }
+
+        @media (max-width: 768px) {
+            .orbit-card {
+                width: 200px;
+                height: 250px;
+                padding: 20px;
+            }
+        }
+
+        /* Position cards around orbit */
+        .orbit-card:nth-child(1) {
+            transform: translate(0, -160px) scale(1);
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .orbit-card:nth-child(2) {
+            transform: translate(140px, 80px) scale(0.8);
+            opacity: 0.6;
+            z-index: 5;
+        }
+
+        .orbit-card:nth-child(3) {
+            transform: translate(-140px, 80px) scale(0.8);
+            opacity: 0.6;
+            z-index: 5;
+        }
+
+        .orbit-card:nth-child(4) {
+            transform: translate(0, 160px) scale(0.6);
+            opacity: 0.4;
+            z-index: 3;
+        }
+
+        /* ========== CONTROLS ========== */
+        .carousel-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 40px;
+        }
+
+        .control-btn {
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-weight: 700;
+        }
+
+        .control-btn:active {
+            background: var(--primary);
+            color: white;
+            transform: scale(0.9);
+        }
+
+        .control-dots {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(26, 95, 63, 0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .dot.active {
+            background: var(--primary);
+            width: 28px;
+            border-radius: 6px;
+        }
+
+        /* ========== INFO BOX ========== */
+        .carousel-info {
+            margin-top: 40px;
+            padding: 24px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .carousel-info h3 {
+            font-size: 16px;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .carousel-info p {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="section-header">
+        <h1>Hero Cards in Motion</h1>
+        <p>Interactive carousel with 4 different card animation styles</p>
+    </div>
+
+    <!-- ANIMATION TYPE SELECTOR -->
+    <div class="animation-types">
+        <button class="type-btn active" data-type="circular">Circular Rotate</button>
+        <button class="type-btn" data-type="sidebyside">Side by Side Flip</button>
+        <button class="type-btn" data-type="stacked">Stacked Slide</button>
+        <button class="type-btn" data-type="orbit">Orbit Motion</button>
+    </div>
+
+    <!-- HERO CAROUSEL WRAPPER -->
+    <div class="hero-carousel-wrapper">
+
+        <!-- TYPE 1: CIRCULAR ROTATE -->
+        <div id="circular" class="hero-carousel active-type">
+            <div class="carousel-circular">
+                <div class="card-container-circular">
+                    <div class="hero-card spotlight card-gradient-1">
+                        <div class="hero-card-icon">📱</div>
+                        <h3>Latest Smartphones</h3>
+                        <p>Discover cutting-edge mobile technology at unbeatable prices</p>
+                        <button class="hero-card-cta">Shop Electronics</button>
+                    </div>
+                    <div class="hero-card left card-gradient-2">
+                        <div class="hero-card-icon">👕</div>
+                        <h3>Trending Fashion</h3>
+                        <p>Fresh styles for every season</p>
+                        <button class="hero-card-cta">Shop Fashion</button>
+                    </div>
+                    <div class="hero-card right card-gradient-3">
+                        <div class="hero-card-icon">⌚</div>
+                        <h3>Premium Accessories</h3>
+                        <p>Complete your look with style</p>
+                        <button class="hero-card-cta">Shop Accessories</button>
+                    </div>
+                    <div class="hero-card hidden card-gradient-4">
+                        <div class="hero-card-icon">🏠</div>
+                        <h3>Home & Living</h3>
+                        <p>Transform your living space</p>
+                        <button class="hero-card-cta">Shop Home</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TYPE 2: SIDE BY SIDE FLIP -->
+        <div id="sidebyside" class="hero-carousel" style="display: none;">
+            <div class="carousel-sidebyside">
+                <div class="card-left">
+                    <div class="sidebyside-card active-left card-gradient-1">
+                        <div class="hero-card-icon">📱</div>
+                        <h3>Latest Smartphones</h3>
+                        <p>Cutting-edge technology</p>
+                        <button class="hero-card-cta">Shop</button>
+                    </div>
+                    <div class="sidebyside-card inactive card-gradient-2">
+                        <div class="hero-card-icon">👕</div>
+                        <h3>Trending Fashion</h3>
+                        <p>Fresh styles</p>
+                        <button class="hero-card-cta">Shop</button>
+                    </div>
+                    <div class="sidebyside-card inactive card-gradient-3">
+                        <div class="hero-card-icon">⌚</div>
+                        <h3>Premium Accessories</h3>
+                        <p>Complete your look</p>
+                        <button class="hero-card-cta">Shop</button>
+                    </div>
+                    <div class="sidebyside-card inactive card-gradient-4">
+                        <div class="hero-card-icon">🏠</div>
+                        <h3>Home & Living</h3>
+                        <p>Transform space</p>
+                        <button class="hero-card-cta">Shop</button>
+                    </div>
+                </div>
+                <div class="card-right">
+                    <div class="sidebyside-card active-right card-gradient-1">
+                        <div class="hero-card-icon">📱</div>
+                        <h3>Latest Smartphones</h3>
+                        <p>Cutting-edge technology</p>
+                        <button class="hero-card-cta">Shop</button>
+                    </div>
+                    <div class="sidebyside-card inactive card-gradient-2">
+                        <div class="hero-card-icon">👕</div>
+                        <h3>Trending Fashion</h3>
+                        <p>Fresh styles</p>
+                        <button class="hero-card-cta">Shop</button>
+                    </div>
+                    <div class="sidebyside-card inactive card-gradient-3">
+                        <div class="hero-card-icon">⌚</div>
+                        <h3>Premium Accessories</h3>
+                        <p>Complete your look</p>
+                        <button class="hero-card-cta">Shop</button>
+                    </div>
+                    <div class="sidebyside-card inactive card-gradient-4">
+                        <div class="hero-card-icon">🏠</div>
+                        <h3>Home & Living</h3>
+                        <p>Transform space</p>
+                        <button class="hero-card-cta">Shop</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TYPE 3: STACKED CARDS -->
+        <div id="stacked" class="hero-carousel" style="display: none;">
+            <div class="carousel-stacked">
+                <div class="stacked-cards">
+                    <div class="stacked-card card-gradient-1">
+                        <div class="hero-card-icon">📱</div>
+                        <h3>Latest Smartphones</h3>
+                        <p>Discover cutting-edge mobile technology</p>
+                        <button class="hero-card-cta">Shop</button>
+                    </div>
+                    <div class="stacked-card card-gradient-2">
+                        <div class="hero-card-icon">👕</div>
+                        <h3>Trending Fashion</h3>
+                        <p>Fresh styles for every season</p>
+                        <button class="hero-card-cta">Shop</button>
+                    </div>
+                    <div class="stacked-card card-gradient-3">
+                        <div class="hero-card-icon">⌚</div>
+                        <h3>Premium Accessories</h3>
+                        <p>Complete your look with style</p>
+                        <button class="hero-card-cta">Shop</button>
+                    </div>
+                    <div class="stacked-card card-gradient-4">
+                        <div class="hero-card-icon">🏠</div>
+                        <h3>Home & Living</h3>
+                        <p>Transform your living space</p>
+                        <button class="hero-card-cta">Shop</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TYPE 4: ORBIT -->
+        <div id="orbit" class="hero-carousel" style="display: none;">
+            <div class="carousel-orbit">
+                <div class="orbit-center"></div>
+                <div class="orbit-card card-gradient-1">
+                    <div class="hero-card-icon">📱</div>
+                    <h3>Latest Smartphones</h3>
+                    <p>Cutting-edge tech</p>
+                    <button class="hero-card-cta">Shop</button>
+                </div>
+                <div class="orbit-card card-gradient-2">
+                    <div class="hero-card-icon">👕</div>
+                    <h3>Trending Fashion</h3>
+                    <p>Fresh styles</p>
+                    <button class="hero-card-cta">Shop</button>
+                </div>
+                <div class="orbit-card card-gradient-3">
+                    <div class="hero-card-icon">⌚</div>
+                    <h3>Premium Accessories</h3>
+                    <p>Complete your look</p>
+                    <button class="hero-card-cta">Shop</button>
+                </div>
+                <div class="orbit-card card-gradient-4">
+                    <div class="hero-card-icon">🏠</div>
+                    <h3>Home & Living</h3>
+                    <p>Transform space</p>
+                    <button class="hero-card-cta">Shop</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="carousel-controls">
+        <button class="control-btn" onclick="previousCard()">❮</button>
+        <div class="control-dots">
+            <span class="dot active" onclick="goToCard(0)"></span>
+            <span class="dot" onclick="goToCard(1)"></span>
+            <span class="dot" onclick="goToCard(2)"></span>
+            <span class="dot" onclick="goToCard(3)"></span>
+        </div>
+        <button class="control-btn" onclick="nextCard()">❯</button>
+    </div>
+
+    <!-- INFO -->
+    <div class="carousel-info">
+        <h3 id="carousel-title">Circular Rotate Animation</h3>
+        <p id="carousel-desc">Cards rotate around the center. The center card takes the spotlight, with neighbors visible on the sides. Great for showcasing multiple categories that face each other.</p>
+    </div>
+
+    <script>
+        let currentIndex = 0;
+        let currentType = 'circular';
+
+        const typeDescriptions = {
+            circular: {
+                title: 'Circular Rotate Animation',
+                desc: 'Cards rotate around the center. The center card takes the spotlight, with neighbors visible on the sides. Creates a face-off effect where cards come into focus. Perfect for multi-category showcases.'
+            },
+            sidebyside: {
+                title: 'Side by Side Flip',
+                desc: 'Two cards face each other, flipping in and out. Like opponents in a match. Great for comparisons or alternating product categories. Mirrors on left and right create symmetry.'
+            },
+            stacked: {
+                title: 'Stacked Slide Animation',
+                desc: 'Cards stack and slide forward one by one. The top card is in focus, others stacked behind with perspective. Creates depth and anticipation as cards flip up to the spotlight.'
+            },
+            orbit: {
+                title: 'Orbit Motion',
+                desc: 'Cards orbit around a center point like planets. The top card is featured, while others position around it. Mesmerizing motion that draws eyes to the center. Great for premium, eye-catching displays.'
+            }
+        };
+
+        function nextCard() {
+            currentIndex = (currentIndex + 1) % 4;
+            updateCarousel();
+        }
+
+        function previousCard() {
+            currentIndex = (currentIndex - 1 + 4) % 4;
+            updateCarousel();
+        }
+
+        function goToCard(index) {
+            currentIndex = index;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            // Update dots
+            document.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentIndex);
+            });
+
+            if (currentType === 'circular') {
+                updateCircular();
+            } else if (currentType === 'sidebyside') {
+                updateSideBySide();
+            } else if (currentType === 'stacked') {
+                updateStacked();
+            } else if (currentType === 'orbit') {
+                updateOrbit();
+            }
+        }
+
+        function updateCircular() {
+            const cards = document.querySelectorAll('#circular .hero-card');
+            cards.forEach((card, i) => {
+                card.classList.remove('spotlight', 'left', 'right', 'hidden');
+                
+                const position = (i - currentIndex + 4) % 4;
+                if (position === 0) {
+                    card.classList.add('spotlight');
+                } else if (position === 1) {
+                    card.classList.add('right');
+                } else if (position === 3) {
+                    card.classList.add('left');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        function updateSideBySide() {
+            const leftCards = document.querySelectorAll('.card-left .sidebyside-card');
+            const rightCards = document.querySelectorAll('.card-right .sidebyside-card');
+            
+            leftCards.forEach((card, i) => {
+                card.classList.remove('active-left', 'inactive');
+                card.classList.add(i === currentIndex ? 'active-left' : 'inactive');
+            });
+
+            rightCards.forEach((card, i) => {
+                card.classList.remove('active-right', 'inactive');
+                card.classList.add(i === currentIndex ? 'active-right' : 'inactive');
+            });
+        }
+
+        function updateStacked() {
+            const cards = document.querySelectorAll('.stacked-card');
+            cards.forEach((card, i) => {
+                const order = (i - currentIndex + 4) % 4;
+                card.style.zIndex = 30 - order * 10;
+                
+                const transform = `translate(-50%, -50%) translateY(${order * 20}px) scale(${1 - order * 0.05}) rotateX(${order * 10}deg)`;
+                card.style.transform = transform;
+                card.style.opacity = 1 - order * 0.3;
+            });
+        }
+
+        function updateOrbit() {
+            const cards = document.querySelectorAll('.orbit-card');
+            const positions = [
+                { x: 0, y: -160, scale: 1, z: 10 },
+                { x: 140, y: 80, scale: 0.8, z: 5 },
+                { x: -140, y: 80, scale: 0.8, z: 5 },
+                { x: 0, y: 160, scale: 0.6, z: 3 }
+            ];
+
+            cards.forEach((card, i) => {
+                const idx = (i - currentIndex + 4) % 4;
+                const pos = positions[idx];
+                card.style.transform = `translate(${pos.x}px, ${pos.y}px) scale(${pos.scale})`;
+                card.style.opacity = pos.z === 10 ? 1 : pos.z === 5 ? 0.6 : 0.4;
+                card.style.zIndex = pos.z;
+            });
+        }
+
+        // Type switching
+        document.querySelectorAll('.type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const newType = this.getAttribute('data-type');
+                
+                // Hide all carousels
+                document.querySelectorAll('.hero-carousel').forEach(carousel => {
+                    carousel.style.display = 'none';
+                    carousel.classList.remove('active-type');
+                });
+
+                // Show selected carousel
+                document.getElementById(newType).style.display = 'flex';
+                document.getElementById(newType).classList.add('active-type');
+
+                // Update buttons
+                document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                // Update info
+                const info = typeDescriptions[newType];
+                document.getElementById('carousel-title').textContent = info.title;
+                document.getElementById('carousel-desc').textContent = info.desc;
+
+                currentType = newType;
+                currentIndex = 0;
+                updateCarousel();
+            });
+        });
+
+        // Auto-rotate every 5 seconds
+        setInterval(nextCard, 5000);
+
+        // Initialize
+        updateCarousel();
+    </script>
+
+</body>
+</html>

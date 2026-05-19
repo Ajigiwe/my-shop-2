@@ -11,7 +11,7 @@ $page_title = 'Delivery Policy | ASO Online Market';
         <div class="col-lg-8 mx-auto">
             <!-- Page Header -->
             <div class="text-center mb-5">
-                <h1 class="display-5 fw-bold text-primary mb-3">Delivery Policy</h1>
+                <h1 class="display-5 fw-bold text-[#1A1A1A] mb-3">Delivery Policy</h1>
                 <p class="lead text-muted">Information about our delivery procedures, requirements, and service areas.</p>
                 <div class="alert alert-info border-0">
                     <i class="fas fa-calendar-alt me-2"></i>
@@ -38,18 +38,18 @@ $page_title = 'Delivery Policy | ASO Online Market';
                                     <h6 class="fw-bold">Greater Accra Region</h6>
                                     <p class="text-muted small mb-2">Fastest delivery area</p>
                                     <ul class="list-unstyled">
-                                        <li class="mb-1"><i class="fas fa-city text-primary me-2"></i>Accra Metropolitan</li>
-                                        <li class="mb-1"><i class="fas fa-city text-primary me-2"></i>Tema Municipality</li>
-                                        <li class="mb-1"><i class="fas fa-city text-primary me-2"></i>Ga East/West Districts</li>
+                                        <li class="mb-1"><i class="fas fa-city text-[#1A1A1A] me-2"></i>Accra Metropolitan</li>
+                                        <li class="mb-1"><i class="fas fa-city text-[#1A1A1A] me-2"></i>Tema Municipality</li>
+                                        <li class="mb-1"><i class="fas fa-city text-[#1A1A1A] me-2"></i>Ga East/West Districts</li>
                                     </ul>
                                 </div>
                                 <div class="col-md-6">
                                     <h6 class="fw-bold">Other Regions</h6>
                                     <p class="text-muted small mb-2">Standard delivery timeframes</p>
                                     <ul class="list-unstyled">
-                                        <li class="mb-1"><i class="fas fa-map text-primary me-2"></i>Ashanti Region</li>
-                                        <li class="mb-1"><i class="fas fa-map text-primary me-2"></i>Western Region</li>
-                                        <li class="mb-1"><i class="fas fa-map text-primary me-2"></i>Central Region</li>
+                                        <li class="mb-1"><i class="fas fa-map text-[#1A1A1A] me-2"></i>Ashanti Region</li>
+                                        <li class="mb-1"><i class="fas fa-map text-[#1A1A1A] me-2"></i>Western Region</li>
+                                        <li class="mb-1"><i class="fas fa-map text-[#1A1A1A] me-2"></i>Central Region</li>
                                     </ul>
                                 </div>
                             </div>
@@ -94,7 +94,7 @@ $page_title = 'Delivery Policy | ASO Online Market';
                             <div class="row">
                                 <div class="col-md-4 text-center mb-3">
                                     <div class="bg-light p-3 rounded h-100">
-                                        <div class="text-primary mb-2">
+                                        <div class="text-[#1A1A1A] mb-2">
                                             <i class="fas fa-box fa-2x"></i>
                                         </div>
                                         <h6 class="fw-bold">1. Order Processing</h6>
@@ -103,7 +103,7 @@ $page_title = 'Delivery Policy | ASO Online Market';
                                 </div>
                                 <div class="col-md-4 text-center mb-3">
                                     <div class="bg-light p-3 rounded h-100">
-                                        <div class="text-primary mb-2">
+                                        <div class="text-[#1A1A1A] mb-2">
                                             <i class="fas fa-shipping-fast fa-2x"></i>
                                         </div>
                                         <h6 class="fw-bold">2. Order Shipment</h6>
@@ -112,7 +112,7 @@ $page_title = 'Delivery Policy | ASO Online Market';
                                 </div>
                                 <div class="col-md-4 text-center mb-3">
                                     <div class="bg-light p-3 rounded h-100">
-                                        <div class="text-primary mb-2">
+                                        <div class="text-[#1A1A1A] mb-2">
                                             <i class="fas fa-check-circle fa-2x"></i>
                                         </div>
                                         <h6 class="fw-bold">3. Delivery Confirmation</h6>
@@ -164,18 +164,18 @@ $page_title = 'Delivery Policy | ASO Online Market';
                                     <h6 class="fw-bold">Same-Day Delivery</h6>
                                     <p class="text-muted small mb-2">Available in Accra for orders placed before 12 PM</p>
                                     <ul class="list-unstyled">
-                                        <li class="mb-1"><i class="fas fa-clock text-primary me-2"></i>Orders before 12 PM</li>
-                                        <li class="mb-1"><i class="fas fa-truck text-primary me-2"></i>Delivery by 6 PM</li>
-                                        <li class="mb-1"><i class="fas fa-tag text-primary me-2"></i>Additional GH₵20 fee</li>
+                                        <li class="mb-1"><i class="fas fa-clock text-[#1A1A1A] me-2"></i>Orders before 12 PM</li>
+                                        <li class="mb-1"><i class="fas fa-truck text-[#1A1A1A] me-2"></i>Delivery by 6 PM</li>
+                                        <li class="mb-1"><i class="fas fa-tag text-[#1A1A1A] me-2"></i>Additional GH₵20 fee</li>
                                     </ul>
                                 </div>
                                 <div class="col-md-6">
                                     <h6 class="fw-bold">Weekend Delivery</h6>
                                     <p class="text-muted small mb-2">Available in major cities</p>
                                     <ul class="list-unstyled">
-                                        <li class="mb-1"><i class="fas fa-calendar text-primary me-2"></i>Saturday delivery</li>
-                                        <li class="mb-1"><i class="fas fa-map text-primary me-2"></i>Accra & Tema only</li>
-                                        <li class="mb-1"><i class="fas fa-tag text-primary me-2"></i>Additional GH₵15 fee</li>
+                                        <li class="mb-1"><i class="fas fa-calendar text-[#1A1A1A] me-2"></i>Saturday delivery</li>
+                                        <li class="mb-1"><i class="fas fa-map text-[#1A1A1A] me-2"></i>Accra & Tema only</li>
+                                        <li class="mb-1"><i class="fas fa-tag text-[#1A1A1A] me-2"></i>Additional GH₵15 fee</li>
                                     </ul>
                                 </div>
                             </div>

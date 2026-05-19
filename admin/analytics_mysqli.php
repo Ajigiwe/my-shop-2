@@ -235,7 +235,7 @@ include 'includes/header.php';
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    <div class="text-xs font-weight-bold text-[#1A1A1A] text-uppercase mb-1">
                                         Total Orders</div>
                                     <div class="h5 mb-0 font-weight-bold text-gray-800">
                                         <?php echo number_format($stats['total_orders']); ?>
@@ -313,7 +313,7 @@ include 'includes/header.php';
                 <div class="col-xl-8 col-lg-7">
                     <div class="card shadow mb-4">
                         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                            <h6 class="m-0 font-weight-bold text-primary">Monthly Revenue</h6>
+                            <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Monthly Revenue</h6>
                         </div>
                         <div class="card-body">
                             <div class="chart-area">
@@ -327,7 +327,7 @@ include 'includes/header.php';
                 <div class="col-xl-4 col-lg-5">
                     <div class="card shadow mb-4">
                         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                            <h6 class="m-0 font-weight-bold text-primary">Order Status</h6>
+                            <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Order Status</h6>
                         </div>
                         <div class="card-body">
                             <div class="chart-pie pt-4 pb-2">
@@ -344,7 +344,7 @@ include 'includes/header.php';
                 <div class="col-xl-6 col-lg-6">
                     <div class="card shadow mb-4">
                         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                            <h6 class="m-0 font-weight-bold text-primary">Payment Methods</h6>
+                            <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Payment Methods</h6>
                         </div>
                         <div class="card-body">
                             <div class="chart-area">
@@ -358,7 +358,7 @@ include 'includes/header.php';
                 <div class="col-xl-6 col-lg-6">
                     <div class="card shadow mb-4">
                         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                            <h6 class="m-0 font-weight-bold text-primary">Daily Orders (Last 30 Days)</h6>
+                            <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Daily Orders (Last 30 Days)</h6>
                         </div>
                         <div class="card-body">
                             <div class="chart-area">
@@ -374,7 +374,7 @@ include 'includes/header.php';
                 <div class="col-12">
                     <div class="card shadow mb-4">
                         <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Top Products</h6>
+                            <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Top Products</h6>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">

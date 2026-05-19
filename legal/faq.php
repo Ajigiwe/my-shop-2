@@ -9,7 +9,7 @@ $page_title = 'FAQ | ASO Online Market';
         <div class="col-lg-8 mx-auto">
             <!-- Page Header -->
             <div class="text-center mb-5">
-                <h1 class="display-5 fw-bold text-primary mb-3">Frequently Asked Questions</h1>
+                <h1 class="display-5 fw-bold text-[#1A1A1A] mb-3">Frequently Asked Questions</h1>
                 <p class="lead text-muted">Find answers to common questions about our products and services.</p>
             </div>
 

@@ -37,8 +37,8 @@ function loadEnv($filePath = '.env') {
     return true;
 }
 
-// Load environment variables
-loadEnv();
+// Load environment variables from the project root
+loadEnv(__DIR__ . '/../.env');
 
 // Set default values if environment variables are not set
 $_ENV['DB_HOST'] = $_ENV['DB_HOST'] ?? 'localhost';
@@ -47,4 +47,12 @@ $_ENV['DB_USER'] = $_ENV['DB_USER'] ?? 'root';
 $_ENV['DB_PASS'] = $_ENV['DB_PASS'] ?? '';
 $_ENV['PAYSTACK_PUBLIC_KEY'] = $_ENV['PAYSTACK_PUBLIC_KEY'] ?? '';
 $_ENV['PAYSTACK_SECRET_KEY'] = $_ENV['PAYSTACK_SECRET_KEY'] ?? '';
+
+// Default SMTP values
+$_ENV['SMTP_HOST'] = $_ENV['SMTP_HOST'] ?? 'smtp.gmail.com';
+$_ENV['SMTP_PORT'] = $_ENV['SMTP_PORT'] ?? 587;
+$_ENV['SMTP_USERNAME'] = $_ENV['SMTP_USERNAME'] ?? '';
+$_ENV['SMTP_PASSWORD'] = $_ENV['SMTP_PASSWORD'] ?? '';
+$_ENV['STORE_EMAIL'] = $_ENV['STORE_EMAIL'] ?? 'support@example.com';
+$_ENV['STORE_NAME'] = $_ENV['STORE_NAME'] ?? 'ASO Online Market';
 ?>

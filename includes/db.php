@@ -22,6 +22,11 @@ $dbname = $_ENV['DB_NAME'] ?? 'ecommerce_db';
 $username = $_ENV['DB_USER'] ?? 'root';
 $password = $_ENV['DB_PASS'] ?? ''; // Default XAMPP password is empty
 
+// Site URL configuration
+if (!defined('SITE_URL')) {
+    define('SITE_URL', rtrim($_ENV['SITE_URL'] ?? 'http://localhost/my-shop-2-main/', '/') . '/');
+}
+
 try {
     // Create PDO connection with UTF-8 charset (prevents mojibake)
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
@@ -45,7 +50,7 @@ try {
     // Only die if this is a critical page that absolutely needs database
     // For navbar and other optional components, allow graceful degradation
     if (!defined('ALLOW_DB_GRACEFUL_DEGRADATION') || !ALLOW_DB_GRACEFUL_DEGRADATION) {
-        die("Database connection failed. Please try again later.");
+        die("Database connection failed. Please try again later.<br>Error Details: " . htmlspecialchars($e->getMessage()));
     }
 }
 
@@ -56,10 +61,10 @@ try {
  * @return string Sanitized data
  */
 function sanitizeInput($data) {
-    // Basic HTML entity encoding and trimming for safe echoing in templates
+    // Basic trimming and slash stripping for safe DB storage
+    // htmlspecialchars should ONLY be used on output to the template
     $data = trim($data);
     $data = stripslashes($data);
-    $data = htmlspecialchars($data);
     return $data;
 }
 

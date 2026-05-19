@@ -46,7 +46,7 @@ try {
     } else {
         // Normal database query
         $stmt = $pdo->prepare("
-            SELECT o.*, u.first_name, u.last_name, u.email, u.phone
+            SELECT o.*, u.name, u.email, u.phone
             FROM orders o
             JOIN users u ON o.user_id = u.user_id
             WHERE o.order_id = ? AND o.user_id = ?
@@ -54,7 +54,11 @@ try {
         $stmt->execute([$order_id, $user_id]);
         $order = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        if (!$order) {
+        if ($order) {
+            // Split name if needed, or just use as is
+            $order['first_name'] = $order['name'];
+            $order['last_name'] = '';
+        } else {
             header('Location: cart.php');
             exit();
         }
@@ -95,7 +99,7 @@ $payment_data = [
     'amount' => formatAmountForPaystack($order['total_amount']),
     'email' => $order['email'],
     'reference' => generateTransactionReference(),
-    'callback_url' => 'http://localhost/My%20Shop2/verify_payment.php',
+    'callback_url' => SITE_URL . 'verify_payment.php',
     'metadata' => [
         'order_id' => $order_id,
         'user_id' => $user_id,
@@ -190,7 +194,7 @@ $page_title = 'Paystack Payment';
                             </div>
                         <?php else: ?>
                             <div class="text-center">
-                                <div class="spinner-border text-primary mb-3" role="status">
+                                <div class="spinner-border text-[#1A1A1A] mb-3" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                                 <h5>Redirecting to Paystack...</h5>

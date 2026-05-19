@@ -11,7 +11,7 @@ $page_title = 'Payment Methods | ASO Online Market';
         <div class="col-lg-8 mx-auto">
             <!-- Page Header -->
             <div class="text-center mb-5">
-                <h1 class="display-5 fw-bold text-primary mb-3">Payment Methods</h1>
+                <h1 class="display-5 fw-bold text-[#1A1A1A] mb-3">Payment Methods</h1>
                 <p class="lead text-muted">Learn about our secure payment options and how to complete your purchase.</p>
                 <div class="alert alert-info border-0">
                     <i class="fas fa-calendar-alt me-2"></i>
@@ -38,7 +38,7 @@ $page_title = 'Payment Methods | ASO Online Market';
                                     <h6 class="fw-bold">Credit & Debit Cards</h6>
                                     <div class="payment-methods">
                                         <div class="payment-item d-flex align-items-center mb-3">
-                                            <i class="fab fa-cc-visa fa-2x text-primary me-3"></i>
+                                            <i class="fab fa-cc-visa fa-2x text-[#1A1A1A] me-3"></i>
                                             <div>
                                                 <strong>Visa</strong>
                                                 <br><small class="text-muted">All Visa cards accepted</small>
@@ -118,7 +118,7 @@ $page_title = 'Payment Methods | ASO Online Market';
                             <div class="row">
                                 <div class="col-md-4 text-center mb-3">
                                     <div class="bg-light p-3 rounded h-100">
-                                        <div class="text-primary mb-2">
+                                        <div class="text-[#1A1A1A] mb-2">
                                             <i class="fas fa-shopping-cart fa-2x"></i>
                                         </div>
                                         <h6 class="fw-bold">1. Add to Cart</h6>
@@ -127,7 +127,7 @@ $page_title = 'Payment Methods | ASO Online Market';
                                 </div>
                                 <div class="col-md-4 text-center mb-3">
                                     <div class="bg-light p-3 rounded h-100">
-                                        <div class="text-primary mb-2">
+                                        <div class="text-[#1A1A1A] mb-2">
                                             <i class="fas fa-address-card fa-2x"></i>
                                         </div>
                                         <h6 class="fw-bold">2. Enter Details</h6>
@@ -136,7 +136,7 @@ $page_title = 'Payment Methods | ASO Online Market';
                                 </div>
                                 <div class="col-md-4 text-center mb-3">
                                     <div class="bg-light p-3 rounded h-100">
-                                        <div class="text-primary mb-2">
+                                        <div class="text-[#1A1A1A] mb-2">
                                             <i class="fas fa-check-circle fa-2x"></i>
                                         </div>
                                         <h6 class="fw-bold">3. Complete Payment</h6>
@@ -186,17 +186,17 @@ $page_title = 'Payment Methods | ASO Online Market';
                                 <div class="col-md-6">
                                     <h6 class="fw-bold">Immediate Confirmation</h6>
                                     <ul class="list-unstyled">
-                                        <li class="mb-2"><i class="fas fa-envelope text-primary me-2"></i>Email confirmation</li>
-                                        <li class="mb-2"><i class="fas fa-file-invoice text-primary me-2"></i>Order invoice</li>
-                                        <li class="mb-2"><i class="fas fa-list text-primary me-2"></i>Itemized receipt</li>
+                                        <li class="mb-2"><i class="fas fa-envelope text-[#1A1A1A] me-2"></i>Email confirmation</li>
+                                        <li class="mb-2"><i class="fas fa-file-invoice text-[#1A1A1A] me-2"></i>Order invoice</li>
+                                        <li class="mb-2"><i class="fas fa-list text-[#1A1A1A] me-2"></i>Itemized receipt</li>
                                     </ul>
                                 </div>
                                 <div class="col-md-6">
                                     <h6 class="fw-bold">Payment Details</h6>
                                     <ul class="list-unstyled">
-                                        <li class="mb-2"><i class="fas fa-credit-card text-primary me-2"></i>Payment method used</li>
-                                        <li class="mb-2"><i class="fas fa-calendar text-primary me-2"></i>Transaction date</li>
-                                        <li class="mb-2"><i class="fas fa-hashtag text-primary me-2"></i>Transaction ID</li>
+                                        <li class="mb-2"><i class="fas fa-credit-card text-[#1A1A1A] me-2"></i>Payment method used</li>
+                                        <li class="mb-2"><i class="fas fa-calendar text-[#1A1A1A] me-2"></i>Transaction date</li>
+                                        <li class="mb-2"><i class="fas fa-hashtag text-[#1A1A1A] me-2"></i>Transaction ID</li>
                                     </ul>
                                 </div>
                             </div>

@@ -113,19 +113,19 @@ try {
 
     // Get order status counts
     $result = $pdo->query("SELECT 
-                            status, 
+                            order_status, 
                             COUNT(*) as count,
                             SUM(total_amount) as amount
                           FROM orders 
-                          GROUP BY status");
+                          GROUP BY order_status");
     
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        $chart_data['status_labels'][] = ucfirst($row['status']);
+        $chart_data['status_labels'][] = ucfirst($row['order_status']);
         $chart_data['status_counts'][] = (int)$row['count'];
         
-        if (in_array(strtolower($row['status']), ['pending', 'processing'])) {
+        if (in_array(strtolower($row['order_status']), ['pending', 'processing'])) {
             $stats['pending_orders'] += $row['count'];
-        } elseif (strtolower($row['status']) === 'delivered') {
+        } elseif (strtolower($row['order_status']) === 'delivered') {
             $stats['completed_orders'] += $row['count'];
         }
     }
@@ -137,7 +137,7 @@ try {
                             COALESCE(SUM(total_amount), 0) as revenue
                           FROM orders 
                           WHERE order_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-                          AND status != 'cancelled'
+                          AND order_status != 'cancelled'
                           GROUP BY DATE_FORMAT(order_date, '%Y-%m')
                           ORDER BY month");
     
@@ -167,8 +167,8 @@ try {
                             COALESCE(SUM(total_amount), 0) as revenue
                           FROM orders 
                           WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                          AND status != 'cancelled'
-                          GROUP BY DATE(order_date)
+                          AND order_status != 'cancelled'
+                          GROUP BY DATE (order_date)
                           ORDER BY date");
     
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
@@ -209,7 +209,7 @@ try {
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Revenue</div>
+                            <div class="text-xs font-weight-bold text-[#1A1A1A] text-uppercase mb-1">Total Revenue</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
                                 GH₵<?php echo number_format($stats['total_revenue'], 2); ?>
                             </div>
@@ -284,7 +284,7 @@ try {
         <div class="col-lg-8 mb-4">
             <div class="card shadow">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Revenue Trend (Last 12 Months)</h6>
+                    <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Revenue Trend (Last 12 Months)</h6>
                 </div>
                 <div class="card-body">
                     <canvas id="revenueChart" height="100"></canvas>
@@ -296,7 +296,7 @@ try {
         <div class="col-lg-4 mb-4">
             <div class="card shadow">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Order Status</h6>
+                    <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Order Status</h6>
                 </div>
                 <div class="card-body">
                     <canvas id="statusChart" height="300"></canvas>
@@ -308,7 +308,7 @@ try {
         <div class="col-lg-6 mb-4">
             <div class="card shadow">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Payment Methods</h6>
+                    <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Payment Methods</h6>
                 </div>
                 <div class="card-body">
                     <canvas id="paymentChart" height="200"></canvas>
@@ -320,7 +320,7 @@ try {
         <div class="col-lg-6 mb-4">
             <div class="card shadow">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Daily Activity (Last 30 Days)</h6>
+                    <h6 class="m-0 font-weight-bold text-[#1A1A1A]">Daily Activity (Last 30 Days)</h6>
                 </div>
                 <div class="card-body">
                     <canvas id="dailyChart" height="200"></canvas>

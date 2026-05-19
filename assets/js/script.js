@@ -62,10 +62,13 @@ document.addEventListener('click', function(event) {
 
 // Initialize toast container
 function initializeToastContainer() {
-    if (!toastContainer) {
+    if (!document.getElementById('shop-toast-container')) {
         toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container';
+        toastContainer.id = 'shop-toast-container';
+        toastContainer.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 pointer-events-none w-auto max-w-[90%]';
         document.body.appendChild(toastContainer);
+    } else {
+        toastContainer = document.getElementById('shop-toast-container');
     }
 }
 
@@ -74,46 +77,43 @@ function showToast(message, type = 'info', duration = 3000) {
     initializeToastContainer();
 
     const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    if (document.body.classList.contains('dark-mode')) {
-        toast.classList.add('dark-mode');
-    }
+    
+    // Type-based colors
+    const colors = {
+        success: 'bg-[#1A1A1A] border-green-500',
+        danger: 'bg-[#1A1A1A] border-red-500',
+        warning: 'bg-[#1A1A1A] border-yellow-500',
+        info: 'bg-[#1A1A1A] border-blue-500'
+    };
 
-    // Icon based on type
+    toast.className = `flex items-center gap-2.5 py-2.5 px-4 rounded-xl shadow-2xl border-l-4 text-white pointer-events-auto transition-all duration-500 translate-y-10 opacity-0 ${colors[type] || colors.info} min-w-[200px]`;
+    
     const icons = {
-        success: 'fas fa-check-circle',
-        danger: 'fas fa-exclamation-circle',
-        warning: 'fas fa-exclamation-triangle',
-        info: 'fas fa-info-circle'
+        success: 'check_circle',
+        danger: 'error',
+        warning: 'warning',
+        info: 'info'
     };
 
     toast.innerHTML = `
-        <i class="toast-icon ${icons[type] || icons.info}"></i>
-        <div class="toast-content">${message}</div>
-        <div class="toast-progress"></div>
+        <span class="material-symbols-outlined text-[20px] ${type === 'success' ? 'text-green-500' : ''}">${icons[type] || 'info'}</span>
+        <div class="text-[13px] font-bold tracking-tight">${message}</div>
     `;
 
     toastContainer.appendChild(toast);
+    
+    // Animate in
+    requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-10', 'opacity-0');
+    });
 
-    // Trigger animation
+    // Auto remove
     setTimeout(() => {
-        toast.classList.add('show');
-    }, 10);
-
-    // Auto remove after duration
-    setTimeout(() => {
-        hideToast(toast);
+        toast.classList.add('translate-y-[-10px]', 'opacity-0');
+        setTimeout(() => toast.remove(), 500);
     }, duration);
 }
 
-// Hide toast with animation
-function hideToast(toast) {
-    toast.classList.remove('show');
-    setTimeout(() => {
-        if (toast.parentNode) {
-        }
-    }, 300);
-}
 // Modern features: Dark mode, improved animations, lazy loading, better UX
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -239,6 +239,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     this.setCustomValidity('');
                 }
+            });
+        }
+    });
+
+    // Wishlist Toggle Functionality
+    document.addEventListener('click', function(e) {
+        const wishlistBtn = e.target.closest('.wishlist-btn');
+        if (wishlistBtn) {
+            e.preventDefault();
+            const productId = wishlistBtn.dataset.productId;
+            
+            // Add loading state
+            const icon = wishlistBtn.querySelector('.material-symbols-outlined');
+            const originalColor = wishlistBtn.className;
+            
+            fetch(window.SHOP_URL + 'ajax/toggle_wishlist.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `product_id=${productId}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.action === 'added') {
+                        wishlistBtn.classList.remove('text-[#1A1A1A]');
+                        wishlistBtn.classList.add('text-red-500');
+                        if (icon) icon.classList.add('fill-1');
+                    } else {
+                        wishlistBtn.classList.remove('text-red-500');
+                        wishlistBtn.classList.add('text-[#1A1A1A]');
+                        if (icon) icon.classList.remove('fill-1');
+                    }
+                    showToast(data.message, 'success', 2000);
+                } else if (data.login_required) {
+                    showToast(data.message, 'warning', 3000);
+                    // Optional: redirect to login
+                    // window.location.href = 'login.php';
+                } else {
+                    showToast(data.message, 'danger', 3000);
+                }
+            })
+            .catch(err => {
+                console.error('Wishlist error:', err);
+                showToast('Something went wrong', 'danger', 3000);
             });
         }
     });

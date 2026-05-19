@@ -16,7 +16,9 @@ $dotenv->load();
 // Store information
 define('STORE_EMAIL', $_ENV['STORE_EMAIL'] ?? 'minatoflash82@gmail.com');
 define('STORE_NAME', $_ENV['STORE_NAME'] ?? 'ASO Online Market');
-define('SITE_URL', $_ENV['SITE_URL'] ?? 'http://localhost/My%20Shop2/');
+if (!defined('SITE_URL')) {
+    define('SITE_URL', rtrim($_ENV['SITE_URL'] ?? 'http://localhost/my-shop-2-main/', '/') . '/');
+}
 
 // Development mode - Set to false in production to send real emails
 define('EMAIL_DEVELOPMENT_MODE', filter_var($_ENV['EMAIL_DEVELOPMENT_MODE'] ?? 'false', FILTER_VALIDATE_BOOLEAN));
@@ -88,6 +90,15 @@ function sendEmail($to, $subject, $message, $headers = '') {
         $mail->setFrom(STORE_EMAIL, STORE_NAME);
         $mail->addAddress($to);
         $mail->addReplyTo(STORE_EMAIL, STORE_NAME);
+
+        // Attach logo if it exists for CID inline embedding
+        $logo_path = dirname(__DIR__) . '/assets/images/logo-v3.png';
+        if (!file_exists($logo_path)) {
+            $logo_path = dirname(__DIR__) . '/assets/images/logo.png';
+        }
+        if (file_exists($logo_path)) {
+            $mail->addEmbeddedImage($logo_path, 'store_logo', 'logo.png');
+        }
 
         // Content
         $mail->isHTML(true);
@@ -170,7 +181,7 @@ function sendInvoiceEmail($customer_email, $customer_name, $order_id, $order_det
         <div class='invoice-details'>
             <p><strong>Customer:</strong> " . htmlspecialchars($customer_name) . "</p>
             <p><strong>Order Date:</strong> " . date('F j, Y \a\t g:i A', strtotime($order_details['order_date'] ?? 'now')) . "</p>
-            <p><strong>Status:</strong> " . ucfirst($order_details['status'] ?? 'processing') . "</p>
+            <p><strong>Status:</strong> " . ucfirst($order_details['order_status'] ?? $order_details['status'] ?? 'processing') . "</p>
             <p><strong>Payment Method:</strong> " . ucfirst(str_replace('_', ' ', $order_details['payment_method'] ?? 'not specified')) . "</p>
         </div>
 
@@ -275,84 +286,170 @@ function sendOrderConfirmationEmail($customer_email, $customer_name, $order_id, 
         <meta charset='UTF-8'>
         <title>Order Confirmation #$order_id</title>
         <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
-            .header { background: #f8f9fa; padding: 20px; text-align: center; border-bottom: 3px solid #28a745; }
-            .order-details { margin: 20px 0; padding: 0 20px; }
-            .order-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            .order-table th, .order-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-            .order-table th { background-color: #f8f9fa; font-weight: bold; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1A1A1A; margin: 0; padding: 20px; background-color: #F9F9F9; }
+            .container { max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+            .header { background: #0a4722; padding: 30px 20px; text-align: center; }
+            .logo { max-width: 180px; height: auto; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto; }
+            .header h2 { color: #FFFFFF; margin: 0; font-size: 24px; font-weight: 800; }
+            .content { padding: 30px; }
+            .content p { font-size: 15px; color: #444; }
+            .order-summary { background-color: #F8F9FA; border-radius: 8px; padding: 20px; margin: 25px 0; border: 1px solid #EEEEEE; }
+            .order-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+            .order-table th { padding: 12px 10px; border-bottom: 2px solid #DDDDDD; text-align: left; color: #888888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+            .order-table td { padding: 12px 10px; border-bottom: 1px solid #EEEEEE; font-size: 14px; }
             .text-right { text-align: right; }
             .text-center { text-align: center; }
-            .total-row { background-color: #e9ecef; font-weight: bold; }
-            .footer { margin-top: 30px; padding: 20px; background: #f8f9fa; border-top: 1px solid #ddd; font-size: 0.9em; color: #6c757d; }
-            .btn { display: inline-block; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; margin-top: 10px; }
+            .total-row td { padding-top: 15px; font-size: 16px; color: #1A1A1A; }
+            .address-box { padding: 15px; background: #FFFFFF; border: 1px solid #EEEEEE; border-radius: 6px; margin-top: 10px; font-size: 14px; }
+            .footer { padding: 20px; background: #F8F9FA; text-align: center; border-top: 1px solid #EEEEEE; }
+            .footer p { font-size: 12px; color: #888888; margin: 5px 0; }
+            .btn { display: inline-block; padding: 12px 24px; background-color: #0a4722; color: #FFFFFF !important; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; }
         </style>
     </head>
     <body>
-        <div class='header'>
-            <h2 style='color: #28a745;'>Order Confirmed!</h2>
-            <p>Thank you for your order, " . htmlspecialchars($customer_name) . "!</p>
-        </div>
-
-        <div class='order-details'>
-            <p>Your order has been received and is being processed. Here are your order details:</p>
-            
-            <p><strong>Order Number:</strong> #$order_id</p>
-            <p><strong>Order Date:</strong> " . date('F j, Y \a\t g:i A') . "</p>
-            <p><strong>Status:</strong> Processing</p>
-            
-            <h3>Order Summary</h3>
-            <table class='order-table'>
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th class='text-right'>Price</th>
-                        <th class='text-center'>Qty</th>
-                        <th class='text-right'>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    $order_items_html
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan='3' class='text-right'><strong>Subtotal:</strong></td>
-                        <td class='text-right'>" . formatCurrency($subtotal) . "</td>
-                    </tr>
-                    <tr>
-                        <td colspan='3' class='text-right'><strong>Shipping:</strong></td>
-                        <td class='text-right'>" . formatCurrency($shipping) . "</td>
-                    </tr>
-                    <tr>
-                        <td colspan='3' class='text-right'><strong>Tax:</strong></td>
-                        <td class='text-right'>" . formatCurrency($tax) . "</td>
-                    </tr>
-                    <tr class='total-row'>
-                        <td colspan='3' class='text-right'><strong>Total:</strong></td>
-                        <td class='text-right'><strong>" . formatCurrency($total) . "</strong></td>
-                    </tr>
-                </tfoot>
-            </table>
-            
-            <div style='margin-top: 20px;'>
-                <p><strong>Shipping Address:</strong><br>
-                " . nl2br(htmlspecialchars($order_details['shipping_address'] ?? 'Not specified')) . "</p>
-                
-                <p><strong>Billing Address:</strong><br>
-                " . nl2br(htmlspecialchars($order_details['billing_address'] ?? 'Same as shipping')) . "</p>
-                
-                <p><strong>Payment Method:</strong> " . 
-                ucwords(str_replace('_', ' ', $order_details['payment_method'] ?? 'Not specified')) . "</p>
+        <div class='container'>
+            <div class='header'>
+                <img src='cid:store_logo' alt='" . htmlspecialchars(STORE_NAME) . "' class='logo'>
+                <h2>Order Confirmed!</h2>
             </div>
-            
-            <div style='margin: 30px 0; text-align: center;'>
-                <a href='" . SITE_URL . "user/orders.php' class='btn'>View Your Order</a>
+
+            <div class='content'>
+                <p>Hi <strong>" . htmlspecialchars($customer_name) . "</strong>,</p>
+                <p>Thank you for your purchase! We've received your order and it is currently being processed.</p>
+                
+                <div class='order-summary'>
+                    <h3 style='margin-top: 0; font-size: 18px; color: #1A1A1A;'>Order Details</h3>
+                    <p style='margin: 0 0 5px 0; font-size: 14px;'><strong>Order Number:</strong> #$order_id</p>
+                    <p style='margin: 0 0 15px 0; font-size: 14px;'><strong>Order Date:</strong> " . date('F j, Y \a\t g:i A') . "</p>
+                    
+                    <table class='order-table'>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th class='text-right'>Price</th>
+                                <th class='text-center'>Qty</th>
+                                <th class='text-right'>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            $order_items_html
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan='3' class='text-right' style='padding-top: 15px;'>Subtotal:</td>
+                                <td class='text-right' style='padding-top: 15px;'>" . formatCurrency($subtotal) . "</td>
+                            </tr>
+                            <tr>
+                                <td colspan='3' class='text-right'>Shipping:</td>
+                                <td class='text-right'>" . formatCurrency($shipping) . "</td>
+                            </tr>
+                            <tr>
+                                <td colspan='3' class='text-right'>Tax:</td>
+                                <td class='text-right'>" . formatCurrency($tax) . "</td>
+                            </tr>
+                            <tr class='total-row'>
+                                <td colspan='3' class='text-right'><strong>Total Amount:</strong></td>
+                                <td class='text-right'><strong>" . formatCurrency($total) . "</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <table width='100%' cellpadding='0' cellspacing='0' border='0'>
+                    <tr>
+                        <td width='48%' valign='top'>
+                            <h4 style='margin: 0 0 10px 0; color: #1A1A1A;'>Shipping Address</h4>
+                            <div class='address-box'>
+                                " . nl2br(htmlspecialchars($order_details['shipping_address'] ?? 'Not specified')) . "
+                            </div>
+                        </td>
+                        <td width='4%'></td>
+                        <td width='48%' valign='top'>
+                            <h4 style='margin: 0 0 10px 0; color: #1A1A1A;'>Payment Method</h4>
+                            <div class='address-box'>
+                                " . ucwords(str_replace('_', ' ', $order_details['payment_method'] ?? 'Not specified')) . "
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                
+                <div style='text-align: center; margin-top: 30px;'>
+                    <a href='" . SITE_URL . "user/orders.php' class='btn'>View Your Order</a>
+                </div>
+            </div>
+
+            <div class='footer'>
+                <p>Thank you for shopping with us!</p>
+                <p>If you have any questions, contact us at <a href='mailto:" . STORE_EMAIL . "' style='color: #0a4722;'>" . STORE_EMAIL . "</a>.</p>
+                <p>&copy; " . date('Y') . " " . htmlspecialchars(STORE_NAME) . ". All rights reserved.</p>
             </div>
         </div>
+    </body>
+    </html>";
 
-        <div class='footer'>
-            <p>Thank you for shopping with us! If you have any questions about your order, please don't hesitate to contact our customer service team at <a href='mailto:" . STORE_EMAIL . "'>" . STORE_EMAIL . "</a>.</p>
-            <p>This is an automated message. Please do not reply to this email.</p>
+    return sendEmail($customer_email, $subject, $message);
+}
+
+// Utility function to check if email functionality is working
+function sendStatusUpdateEmail($order_number, $new_status, $customer_email, $customer_name = 'Customer') {
+    $status_display = ucfirst($new_status);
+    $subject = "Order Status Update - {$status_display} (#{$order_number})";
+
+    // Determine specific messaging based on status
+    $status_message = "Your order status has been updated to <strong>{$status_display}</strong>.";
+    if ($new_status === 'shipped') {
+        $status_message = "Great news! Your order has been <strong>Shipped</strong> and is on its way to you.";
+    } elseif ($new_status === 'delivered') {
+        $status_message = "Your order has been <strong>Delivered</strong>! We hope you enjoy your purchase.";
+    } elseif ($new_status === 'cancelled') {
+        $status_message = "Your order has been <strong>Cancelled</strong>. If you did not request this, please contact support immediately.";
+    }
+
+    $message = "
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>Order Status Update</title>
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1A1A1A; margin: 0; padding: 20px; background-color: #F9F9F9; }
+            .container { max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+            .header { background: #0a4722; padding: 30px 20px; text-align: center; }
+            .logo { max-width: 180px; height: auto; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto; }
+            .header h2 { color: #FFFFFF; margin: 0; font-size: 24px; font-weight: 800; }
+            .content { padding: 30px; }
+            .content p { font-size: 15px; color: #444; }
+            .status-box { background-color: #F8F9FA; border-left: 4px solid #0a4722; padding: 20px; border-radius: 8px; margin: 25px 0; }
+            .footer { padding: 20px; background: #F8F9FA; text-align: center; border-top: 1px solid #EEEEEE; }
+            .footer p { font-size: 12px; color: #888888; margin: 5px 0; }
+            .btn { display: inline-block; padding: 12px 24px; background-color: #0a4722; color: #FFFFFF !important; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class='container'>
+            <div class='header'>
+                <img src='cid:store_logo' alt='" . htmlspecialchars(STORE_NAME) . "' class='logo'>
+                <h2>Order Status Update</h2>
+            </div>
+            <div class='content'>
+                <p>Hi <strong>" . htmlspecialchars($customer_name) . "</strong>,</p>
+                <p>We're writing to provide an update on your order <strong>#{$order_number}</strong>.</p>
+                
+                <div class='status-box'>
+                    <p style='margin: 0; font-size: 16px; color: #1A1A1A;'>{$status_message}</p>
+                </div>
+                
+                <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
+                
+                <div style='text-align: center; margin-top: 30px;'>
+                    <a href='" . SITE_URL . "user/orders.php' class='btn'>Track Your Order</a>
+                </div>
+            </div>
+            <div class='footer'>
+                <p>Thank you for shopping with us!</p>
+                <p>If you have any questions, contact us at <a href='mailto:" . STORE_EMAIL . "' style='color: #0a4722;'>" . STORE_EMAIL . "</a>.</p>
+                <p>&copy; " . date('Y') . " " . htmlspecialchars(STORE_NAME) . ". All rights reserved.</p>
+            </div>
         </div>
     </body>
     </html>";

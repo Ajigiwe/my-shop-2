@@ -1,18 +1,12 @@
 <?php
 /**
  * User: Order Details
- * - Shows detailed view of a specific order for the logged-in user
- * - Displays order items, shipping/billing addresses, status timeline
- * - Allows users to track order progress and see order history
+ * - Rebuilt to be significantly less bulky.
+ * - Minimalist, information-dense, and refined.
  */
-
-// Include database connection
 require_once '../includes/db.php';
-
-// Start session
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
+require_once '../includes/functions.php';
+session_start();
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
@@ -20,20 +14,20 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Get order ID from URL
 $order_id = (int)($_GET['id'] ?? 0);
 if ($order_id <= 0) {
     header('Location: orders.php');
     exit();
 }
 
-// Get order details with user info
-$order = null;
+// Get order details
 try {
-    $stmt = $pdo->prepare("SELECT o.*, u.name, u.email, u.phone
-                          FROM orders o
-                          JOIN users u ON u.user_id = o.user_id
-                          WHERE o.order_id = ? AND o.user_id = ?");
+    $stmt = $pdo->prepare("
+        SELECT o.*, u.name, u.email, u.phone 
+        FROM orders o 
+        JOIN users u ON u.user_id = o.user_id 
+        WHERE o.order_id = ? AND o.user_id = ?
+    ");
     $stmt->execute([$order_id, $_SESSION['user_id']]);
     $order = $stmt->fetch();
 
@@ -41,373 +35,167 @@ try {
         header('Location: orders.php');
         exit();
     }
+
+    // Get items
+    $stmt = $pdo->prepare("
+        SELECT oi.*, p.name, p.image 
+        FROM order_items oi 
+        JOIN products p ON p.product_id = oi.product_id 
+        WHERE oi.order_id = ?
+    ");
+    $stmt->execute([$order_id]);
+    $items = $stmt->fetchAll();
+
 } catch(PDOException $e) {
-    error_log("Error fetching order: " . $e->getMessage());
-    $order = null;
+    error_log("Error: " . $e->getMessage());
+    header('Location: orders.php');
+    exit();
 }
 
-// Get order items
-$order_items = [];
-if ($order) {
-    try {
-        $stmt = $pdo->prepare("SELECT oi.*, p.name, p.image, oi.price, (oi.price * oi.quantity) as total_price
-                              FROM order_items oi
-                              JOIN products p ON p.product_id = oi.product_id
-                              WHERE oi.order_id = ?
-                              ORDER BY oi.order_item_id");
-        $stmt->execute([$order_id]);
-        $order_items = $stmt->fetchAll();
-    } catch(PDOException $e) {
-        error_log("Error fetching order items: " . $e->getMessage());
-    }
-}
-
-// Set page title
-$page_title = 'Order #' . str_pad($order_id, 6, '0', STR_PAD_LEFT);
+$page_title = 'Order Details';
+include '../includes/header.php';
 ?>
 
-<?php include '../includes/header.php'; ?>
+<div class="flex-1 bg-[#F9F9F9] min-h-screen">
+    <div class="max-w-[1200px] mx-auto px-6 py-8">
+        
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 bg-white border border-[#EEEEEE] p-6 rounded-xl shadow-sm">
+            <div>
+                <nav class="flex items-center gap-1.5 text-[9px] font-black text-[#888888] uppercase tracking-widest mb-3">
+                    <a href="dashboard.php" class="hover:text-[#1A1A1A]">Dashboard</a>
+                    <span class="material-symbols-outlined text-[12px]">chevron_right</span>
+                    <a href="orders.php" class="hover:text-[#1A1A1A]">Orders</a>
+                    <span class="material-symbols-outlined text-[12px]">chevron_right</span>
+                    <span class="text-[#1A1A1A]">#<?php echo str_pad($order_id, 6, '0', STR_PAD_LEFT); ?></span>
+                </nav>
+                <h1 class="text-[24px] font-black text-[#1A1A1A] tracking-tighter mb-1">Order Summary</h1>
+                <p class="text-[12px] text-[#666666] font-medium">Placed on <?php echo date('F j, Y', strtotime($order['order_date'])); ?></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <?php
+                $status = strtolower($order['order_status']);
+                $status_classes = match($status) {
+                    'pending' => 'bg-amber-100 text-amber-700 border-amber-200',
+                    'processing' => 'bg-blue-100 text-blue-700 border-blue-200',
+                    'shipped' => 'bg-purple-100 text-purple-700 border-purple-200',
+                    'delivered' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                    'cancelled' => 'bg-rose-100 text-rose-700 border-rose-200',
+                    default => 'bg-gray-100 text-gray-700 border-gray-200'
+                };
+                ?>
+                <span class="px-4 py-2 rounded-lg border <?php echo $status_classes; ?> text-[10px] font-black uppercase tracking-widest">
+                    Status: <?php echo $order['order_status']; ?>
+                </span>
+                <a href="invoice.php?order_id=<?php echo $order_id; ?>" target="_blank" class="h-10 px-6 rounded-lg border border-primary text-[#1A1A1A] font-black text-[11px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[16px]">receipt_long</span> Invoice
+                </a>
+            </div>
+        </div>
 
-<!-- Navbar Styles (for dropdown functionality) -->
-<style>
-.dropdown-container {
-    position: relative;
-}
-
-.dropdown-menu-custom {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    min-width: 200px;
-    background-color: white;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 1000;
-    padding: 8px 0;
-}
-
-.dropdown-menu-custom.show {
-    display: block;
-}
-
-.dropdown-item-custom {
-    display: block;
-    padding: 10px 16px;
-    color: #333;
-    text-decoration: none;
-    transition: background-color 0.2s;
-}
-
-.dropdown-item-custom:hover {
-    background-color: #f8f9fa;
-    color: #007bff;
-    text-decoration: none;
-}
-
-.dropdown-divider-custom {
-    height: 1px;
-    margin: 8px 0;
-    background-color: #e9ecef;
-}
-</style>
-
-<div class="container py-4">
-
-
-    <?php if ($order): ?>
-        <div class="row">
-            <div class="col-12">
-                <!-- Order Header -->
-                <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <div class="row align-items-center">
-                            <div class="col-md-6">
-                                <h4 class="mb-0">
-                                    <i class="fas fa-receipt me-2"></i>
-                                    Order #<?php echo str_pad($order_id, 6, '0', STR_PAD_LEFT); ?>
-                                </h4>
-                            </div>
-                            <div class="col-md-6 text-md-end">
-                                <span class="badge fs-6 p-2 <?php
-                                    $status = $order['status'] ?? $order['order_status'] ?? 'pending';
-                                    echo match($status) {
-                                        'pending' => 'bg-warning',
-                                        'processing' => 'bg-info',
-                                        'shipped' => 'bg-primary',
-                                        'delivered' => 'bg-success',
-                                        'cancelled' => 'bg-danger',
-                                        default => 'bg-secondary'
-                                    };
-                                ?>">
-                                    <?php echo ucfirst($status); ?>
-                                </span>
-                            </div>
-                        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left: Items -->
+            <div class="lg:col-span-8 space-y-6">
+                <div class="bg-white border border-[#EEEEEE] rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-5 py-4 border-b border-[#EEEEEE] bg-[#FBFBFB] flex items-center justify-between">
+                        <h3 class="text-[12px] font-black text-[#1A1A1A] uppercase tracking-widest">Purchased Items (<?php echo count($items); ?>)</h3>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p class="mb-1"><strong>Order Date:</strong></p>
-                                <p class="text-muted"><?php echo date('F j, Y \a\t g:i A', strtotime($order['order_date'])); ?></p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="mb-1"><strong>Payment Method:</strong></p>
-                                <p class="text-muted"><?php
-                                    $payment_methods = [
-                                        'cash_on_delivery' => 'Cash on Delivery',
-                                        'paypal' => 'PayPal',
-                                        'paystack' => 'Paystack'
-                                    ];
-                                    echo htmlspecialchars($payment_methods[$order['payment_method']] ?? $order['payment_method']);
-                                ?></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <!-- Order Items -->
-                    <div class="col-lg-8">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Order Items</h5>
-                            </div>
-                            <div class="card-body">
-                                <?php if (empty($order_items)): ?>
-                                    <p class="text-muted text-center py-4">No items found in this order.</p>
-                                <?php else: ?>
-                                    <div class="table-responsive">
-                                        <table class="table table-borderless">
-                                            <thead>
-                                                <tr>
-                                                    <th>Product</th>
-                                                    <th>Price</th>
-                                                    <th>Quantity</th>
-                                                    <th>Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($order_items as $item): ?>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="d-flex align-items-center">
-                                                                <img src="../assets/images/<?php echo htmlspecialchars($item['image'] ?? 'placeholder.jpg'); ?>"
-                                                                     alt="<?php echo htmlspecialchars($item['name']); ?>"
-                                                                     class="me-3 rounded" style="width: 60px; height: 60px; object-fit: cover;">
-                                                                <div>
-                                                                    <h6 class="mb-0"><?php echo htmlspecialchars($item['name']); ?></h6>
-                                                                    <small class="text-muted">Order Item #<?php echo $item['order_item_id']; ?></small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td><?php echo formatCurrency($item['price']); ?></td>
-                                                        <td><?php echo $item['quantity']; ?></td>
-                                                        <td><strong><?php echo formatCurrency($item['price'] * $item['quantity']); ?></strong></td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="border-top">
-                                                    <td colspan="3"><strong>Order Total</strong></td>
-                                                    <td><strong><?php echo formatCurrency($order['total_amount']); ?></strong></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
+                    <div class="divide-y divide-[#EEEEEE]">
+                        <?php foreach ($items as $item): ?>
+                            <div class="p-5 flex items-center justify-between gap-5 hover:bg-[#F9F9F9] transition-colors">
+                                <div class="flex items-center gap-5">
+                                    <div class="w-12 h-12 rounded-lg border border-[#EEEEEE] bg-[#F9F9F9] p-2 flex items-center justify-center flex-shrink-0">
+                                        <img src="../assets/images/<?php echo htmlspecialchars($item['image'] ?? 'placeholder.jpg'); ?>" class="max-w-full max-h-full object-contain">
                                     </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Order Status & Addresses -->
-                    <div class="col-lg-4">
-                        <!-- Order Status Timeline -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Order Status</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="status-timeline">
-                                    <?php
-                                    $statuses = [
-                                        'pending' => ['icon' => 'fa-clock', 'label' => 'Order Placed', 'color' => 'warning'],
-                                        'processing' => ['icon' => 'fa-cog', 'label' => 'Processing', 'color' => 'info'],
-                                        'shipped' => ['icon' => 'fa-truck', 'label' => 'Shipped', 'color' => 'primary'],
-                                        'delivered' => ['icon' => 'fa-check-circle', 'label' => 'Delivered', 'color' => 'success'],
-                                        'cancelled' => ['icon' => 'fa-times-circle', 'label' => 'Cancelled', 'color' => 'danger']
-                                    ];
-
-                                    $current_status = $order['status'] ?? $order['order_status'] ?? 'pending';
-                                    $status_keys = array_keys($statuses);
-                                    $current_index = array_search($current_status, $status_keys);
-                                    ?>
-
-                                    <?php foreach ($statuses as $status_key => $status_info): ?>
-                                        <?php
-                                        $is_active = ($status_key === $current_status);
-                                        $is_completed = $current_index !== false && array_search($status_key, $status_keys) <= $current_index;
-                                        ?>
-                                        <div class="status-item mb-3 <?php echo $is_completed ? 'completed' : ''; ?>">
-                                            <div class="d-flex align-items-center">
-                                                <div class="status-icon me-3 <?php echo $is_active ? 'active' : ''; ?>">
-                                                    <i class="fas <?php echo $status_info['icon']; ?> fa-lg"></i>
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <h6 class="mb-0"><?php echo $status_info['label']; ?></h6>
-                                                    <?php if ($is_active): ?>
-                                                        <small class="text-muted">Current status</small>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
+                                    <div>
+                                        <h4 class="text-[13px] font-black text-[#1A1A1A] leading-tight mb-1"><?php echo htmlspecialchars($item['name']); ?></h4>
+                                        <p class="text-[11px] font-bold text-[#888888]">Qty: <?php echo $item['quantity']; ?> × GH₵<?php echo number_format($item['price'], 2); ?></p>
+                                    </div>
                                 </div>
+                                <div class="text-[14px] font-black text-[#1A1A1A]">GH₵<?php echo number_format($item['price'] * $item['quantity'], 2); ?></div>
                             </div>
-                        </div>
-
-                        <!-- Shipping Address -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Shipping Address</h5>
+                        <?php endforeach; ?>
+                    </div>
+                    <!-- Totals -->
+                    <div class="p-6 border-t border-[#EEEEEE] bg-[#FBFBFB]">
+                        <div class="max-w-[200px] ml-auto space-y-2">
+                            <div class="flex justify-between text-[11px] font-medium text-[#666666]">
+                                <span>Subtotal</span>
+                                <span>GH₵<?php echo number_format($order['total_amount'], 2); ?></span>
                             </div>
-                            <div class="card-body">
-                                <address class="mb-0">
-                                    <?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?>
-                                </address>
+                            <div class="flex justify-between text-[11px] font-medium text-[#666666]">
+                                <span>Shipping</span>
+                                <span class="text-green-600 font-black">FREE</span>
                             </div>
-                        </div>
-
-                        <!-- Billing Address -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Billing Address</h5>
-                            </div>
-                            <div class="card-body">
-                                <address class="mb-0">
-                                    <?php echo nl2br(htmlspecialchars($order['billing_address'])); ?>
-                                </address>
+                            <div class="h-[1px] bg-[#EEEEEE] my-2"></div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-[13px] font-black text-[#1A1A1A]">Total</span>
+                                <span class="text-[18px] font-black text-[#1A1A1A] tracking-tighter">GH₵<?php echo number_format($order['total_amount'], 2); ?></span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Actions -->
-                <div class="card mt-4">
-                    <div class="card-body text-center">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <a href="orders.php" class="btn btn-outline-primary w-100">
-                                    <i class="fas fa-arrow-left me-2"></i>Back to Orders
-                                </a>
+                <!-- Simple Tracker -->
+                <div class="bg-white border border-[#EEEEEE] rounded-xl p-6 shadow-sm">
+                    <h3 class="text-[11px] font-black text-[#888888] uppercase tracking-widest mb-6">Delivery Progress</h3>
+                    <div class="flex items-center justify-between relative px-4">
+                        <?php
+                        $status_steps = ['pending', 'processing', 'shipped', 'delivered'];
+                        $current_status = strtolower($order['order_status']);
+                        $status_map = ['pending' => 0, 'processing' => 1, 'shipped' => 2, 'delivered' => 3];
+                        $current_idx = $status_map[$current_status] ?? 0;
+                        ?>
+                        <div class="absolute top-4 left-8 right-8 h-1 bg-[#F5F5F5] rounded-full z-0">
+                            <div class="h-full bg-primary transition-all duration-1000" style="width: <?php echo ($current_idx / 3) * 100; ?>%"></div>
+                        </div>
+                        <?php foreach ($status_steps as $idx => $step): ?>
+                            <div class="flex flex-col items-center gap-3 relative z-10">
+                                <div class="w-8 h-8 rounded-lg flex items-center justify-center border-2 transition-all <?php echo $idx <= $current_idx ? 'bg-primary border-primary text-white shadow-md' : 'bg-white border-[#EEEEEE] text-[#DDDDDD]'; ?>">
+                                    <span class="material-symbols-outlined text-[16px]">
+                                        <?php echo match($step) { 'pending' => 'receipt', 'processing' => 'package_2', 'shipped' => 'local_shipping', 'delivered' => 'verified' }; ?>
+                                    </span>
+                                </div>
+                                <span class="text-[9px] font-black uppercase tracking-widest <?php echo $idx <= $current_idx ? 'text-[#1A1A1A]' : 'text-[#DDDDDD]'; ?>"><?php echo $step; ?></span>
                             </div>
-                            <div class="col-md-4">
-                                <a href="../shop.php" class="btn btn-primary w-100">
-                                    <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
-                                </a>
-                            </div>
-                            <div class="col-md-4">
-                                <a href="invoice.php?order_id=<?php echo $order_id; ?>" class="btn btn-outline-info w-100" target="_blank">
-                                    <i class="fas fa-file-invoice me-2"></i>View Invoice
-                                </a>
-                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Details -->
+            <div class="lg:col-span-4 space-y-6">
+                <!-- Shipping Info -->
+                <div class="bg-white border border-[#EEEEEE] rounded-xl p-6 shadow-sm">
+                    <h3 class="text-[11px] font-black text-[#888888] uppercase tracking-widest mb-5">Shipping Information</h3>
+                    <div class="bg-[#FBFBFB] rounded-lg p-4 mb-5 border border-[#F5F5F5]">
+                        <p class="text-[13px] font-black text-[#1A1A1A] mb-1"><?php echo htmlspecialchars($order['name']); ?></p>
+                        <p class="text-[12px] text-[#666666] font-medium leading-relaxed"><?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?></p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-[#F9F9F9] border border-[#EEEEEE] flex items-center justify-center text-[#1A1A1A]">
+                            <span class="material-symbols-outlined text-[16px]">call</span>
+                        </div>
+                        <div class="text-[13px] font-black text-[#1A1A1A]"><?php echo htmlspecialchars($order['phone'] ?? 'N/A'); ?></div>
+                    </div>
+                </div>
+
+                <!-- Payment Info -->
+                <div class="bg-white border border-[#EEEEEE] rounded-xl p-6 shadow-sm">
+                    <h3 class="text-[11px] font-black text-[#888888] uppercase tracking-widest mb-5">Payment Details</h3>
+                    <div class="flex items-center gap-4 p-4 rounded-lg bg-[#F9F9F9] border border-[#EEEEEE]">
+                        <div class="w-8 h-6 rounded bg-white border border-[#EEEEEE] flex items-center justify-center text-[#1A1A1A]">
+                            <span class="material-symbols-outlined text-[16px]">payments</span>
+                        </div>
+                        <div>
+                            <p class="text-[12px] font-black text-[#1A1A1A] uppercase tracking-tighter"><?php echo str_replace('_', ' ', $order['payment_method']); ?></p>
+                            <p class="text-[9px] font-bold text-[#888888]">REF: #<?php echo $order['order_id']; ?></p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    <?php else: ?>
-        <div class="alert alert-danger">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            Order not found or you don't have permission to view it.
-        </div>
-        <div class="text-center mt-4">
-            <a href="orders.php" class="btn btn-primary">Back to My Orders</a>
-        </div>
-    <?php endif; ?>
+    </div>
 </div>
 
-<style>
-.status-timeline {
-    position: relative;
-    padding-left: 30px;
-}
-
-.status-timeline::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #e9ecef;
-}
-
-.status-item {
-    position: relative;
-    margin-bottom: 1rem;
-}
-
-.status-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #e9ecef;
-    color: #6c757d;
-    transition: all 0.3s ease;
-}
-
-.status-item.completed .status-icon {
-    background: var(--success-color);
-    color: white;
-}
-
-.status-item.active .status-icon {
-    background: var(--primary-color);
-    color: white;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-}
-
-address {
-    font-style: normal;
-    line-height: 1.6;
-}
-</style>
-
 <?php include '../includes/footer.php'; ?>
-
-<!-- Navbar Dropdown JavaScript -->
-<script>
-function toggleCustomDropdown(event, menuId) {
-    event.preventDefault();
-
-    // Close all other dropdowns first
-    document.querySelectorAll('.dropdown-menu-custom').forEach(menu => {
-        if (menu.id !== menuId) {
-            menu.classList.remove('show');
-        }
-    });
-
-    // Toggle the clicked dropdown
-    const menu = document.getElementById(menuId);
-    if (menu) {
-        menu.classList.toggle('show');
-    }
-
-    // Close dropdown when clicking outside
-    setTimeout(() => {
-        document.addEventListener('click', function closeDropdown(e) {
-            if (!e.target.closest('.dropdown-container')) {
-                menu.classList.remove('show');
-                document.removeEventListener('click', closeDropdown);
-            }
-        });
-    }, 100);
-}
-</script>
-</body>
-</html>
