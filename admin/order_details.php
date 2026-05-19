@@ -48,7 +48,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$new_status, $order_id]);
                 $success = 'Order status updated successfully';
 
-                // If status was updated to "delivered", send invoice email
+                // Fetch fresh order and customer info to send notifications
+                $stmt = $pdo->prepare('SELECT o.*, u.name, u.email, o.order_status as current_status FROM orders o JOIN users u ON u.user_id = o.user_id WHERE o.order_id = ?');
+                $stmt->execute([$order_id]);
+                $order_for_email = $stmt->fetch();
+
+                if ($order_for_email && !empty($order_for_email['email'])) {
+                    // Send a status update notification for any status change
+                    // Uses includes/email_config.php which is already required at the top
+                    $status_email_sent = sendStatusUpdateEmail($order_for_email['order_number'], $new_status, $order_for_email['email'], $order_for_email['name']);
+                    if ($status_email_sent) {
+                        $success .= ' Customer notified by email about status change.';
+                    } else {
+                        $errors[] = 'Order status updated but failed to send status notification email. Please check email configuration.';
+                    }
+                } else {
+                    $errors[] = 'Could not find customer email for this order. Status notification not sent.';
+                }
+
+                // If status was updated to "delivered", also send invoice email
                 if ($current_status !== 'delivered' && $new_status === 'delivered') {
                     // Get fresh order details after update to ensure we have the latest status
                     $stmt = $pdo->prepare('SELECT o.*, u.name, u.email, o.order_status as current_status FROM orders o JOIN users u ON u.user_id = o.user_id WHERE o.order_id = ?');

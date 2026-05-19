@@ -50,10 +50,10 @@ if (isset($pdo)) {
 
             <!-- Logo & Brand Name -->
             <span class="flex items-center gap-2">
-                <a href="<?php echo $link_base; ?>index.php" class="flex items-center transition-transform hover:scale-105 h-full py-1">
+                <a href="<?php echo $link_base; ?>index.php" class="flex items-center transition-transform hover:scale-105">
                     <img src="<?php echo $link_base; ?>assets/images/logo-v3.png" alt="<?php echo htmlspecialchars($site_name); ?>" class="h-10 lg:h-12 w-auto object-contain" />
                 </a>
-                <h2 class="shop-text text-[20px] lg:text-[22px] font-semibold leading-none tracking-tight select-none" style="color: <?php echo $primary_color; ?>;">Aso Online</h2>
+                <h2 class="shop-text text-[20px] lg:text-[22px] font-semibold m-0 p-0 leading-normal tracking-tight select-none" style="color: <?php echo $primary_color; ?>;">Aso Online</h2>
             </span>
             
             
@@ -70,16 +70,33 @@ if (isset($pdo)) {
                 
                 <!-- Dynamic Categories -->
                 <div class="relative group">
-                    <button class="text-on-surface-variant hover:text-[#1A1A1A] transition-all font-headline-sm text-[15px] tracking-tight flex items-center gap-xs">
-                        Categories <span class="material-symbols-outlined text-[18px] group-hover:rotate-180 transition-transform">expand_more</span>
+                    <button class="text-on-surface-variant hover:text-[#1A1A1A] font-headline-sm text-[15px] tracking-tight flex items-center gap-xs focus:outline-none transition-colors">
+                        Categories <span class="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:rotate-180">expand_more</span>
                     </button>
-                    <div class="absolute top-full left-0 mt-3 w-56 bg-surface-container-lowest/95 backdrop-blur-md border border-outline-variant rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0 transition-all z-50 py-3">
-                        <?php foreach ($nav_categories as $category): ?>
-                            <a href="<?php echo $link_base; ?>category.php?id=<?php echo $category['category_id']; ?>" class="flex items-center gap-md px-md py-sm hover:bg-primary/5 text-on-surface-variant hover:text-[#1A1A1A] transition-colors font-label-md">
-                                <span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
-                                <?php echo htmlspecialchars($category['category_name']); ?>
+                    <div class="absolute left-0 top-full mt-2 w-64 bg-surface-container-lowest border border-outline-variant/60 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-1 group-hover:translate-y-0 transition-all duration-300 z-50 p-2.5">
+                        <div class="border-b border-outline-variant/60 pb-1.5 mb-1.5 px-1.5">
+                            <p class="font-bold text-[#111827] text-[11px] uppercase tracking-wider opacity-60">Shop by Category</p>
+                        </div>
+                        <div class="flex flex-col gap-0.5 max-h-[260px] overflow-y-auto hide-scrollbar">
+                            <?php foreach ($nav_categories as $category): ?>
+                                <a href="<?php echo $link_base; ?>category.php?id=<?php echo $category['category_id']; ?>" class="flex items-center gap-2.5 p-1.5 hover:bg-surface-container rounded-lg text-on-surface hover:text-[#1A1A1A] transition-all duration-200 text-[13px] font-semibold group/item">
+                                    <span class="w-7 h-7 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden shrink-0 border border-outline-variant/35 group-hover/item:bg-primary/10 transition-colors">
+                                        <?php if (!empty($category['image'])): ?>
+                                            <img src="<?php echo $link_base; ?>assets/images/categories/<?php echo htmlspecialchars($category['image']); ?>" alt="<?php echo htmlspecialchars($category['category_name']); ?>" class="w-full h-full object-cover" />
+                                        <?php else: ?>
+                                            <span class="material-symbols-outlined text-[14px] text-primary">category</span>
+                                        <?php endif; ?>
+                                    </span>
+                                    <span class="truncate"><?php echo htmlspecialchars($category['category_name']); ?></span>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="border-t border-outline-variant/60 mt-2 pt-2">
+                            <a href="<?php echo $link_base; ?>categories.php" class="flex items-center justify-center gap-1.5 text-primary hover:text-primary/80 font-bold text-[12px] transition-colors py-1 hover:bg-primary/5 rounded-lg">
+                                <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                                <span>View all categories</span>
                             </a>
-                        <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
                 

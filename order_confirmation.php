@@ -138,7 +138,7 @@ include 'includes/header.php';
 
             <!-- Summary -->
             <div class="space-y-8">
-                <div class="bg-white rounded-[2rem] p-8 md:p-10 border border-[#EEEEEE] shadow-sm sticky top-24">
+                <div class="bg-white rounded-[2rem] p-8 md:p-10 border border-[#EEEEEE] shadow-sm lg:sticky lg:top-24">
                     <h2 class="text-[20px] font-black text-[#1A1A1A] mb-8">Summary</h2>
                     <div class="space-y-4 mb-8 pb-8 border-b border-[#F5F5F5]">
                         <div class="flex justify-between text-[14px] font-bold">

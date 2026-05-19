@@ -29,7 +29,23 @@ body {
     padding: 1.5rem 1rem;
     display: flex;
     flex-direction: column;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.admin-sidebar.open {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+@media (min-width: 1200px) {
+    .admin-sidebar {
+        transform: translateX(0) !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
 }
 
 .admin-logo {
@@ -91,6 +107,90 @@ body {
     margin-bottom: 2rem;
 }
 
+.admin-sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1050;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.admin-sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+@media (max-width: 1199px) {
+    .admin-header {
+        padding-right: 1rem;
+        padding-left: 1rem;
+        background: #ffffff;
+        position: sticky;
+        top: 0;
+        z-index: 1070;
+    }
+
+    #adminSidebarToggle {
+        display: inline-flex !important;
+    }
+}
+
+.admin-sidebar.collapsed,
+.admin-sidebar-collapsed .admin-sidebar {
+    width: 80px !important;
+    min-width: 80px !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    overflow: hidden !important;
+}
+
+.admin-sidebar.collapsed .admin-logo,
+.admin-sidebar-collapsed .admin-logo {
+    justify-content: center;
+}
+
+.admin-sidebar.collapsed .admin-logo span,
+.admin-sidebar-collapsed .admin-logo span {
+    display: none !important;
+}
+
+.admin-sidebar.collapsed .admin-nav-link,
+.admin-sidebar-collapsed .admin-nav-link {
+    justify-content: center !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.admin-sidebar.collapsed .admin-nav-label,
+.admin-sidebar-collapsed .admin-nav-label {
+    display: none !important;
+}
+
+.admin-sidebar.collapsed .admin-nav-link i,
+.admin-sidebar-collapsed .admin-nav-link i {
+    margin-right: 0 !important;
+    font-size: 18px !important;
+}
+
+.admin-sidebar.collapsed .admin-nav .px-3,
+.admin-sidebar-collapsed .admin-nav .px-3 {
+    display: none !important;
+}
+
+.admin-sidebar.collapsed + .admin-main,
+.admin-sidebar-collapsed .admin-main {
+    margin-left: 80px !important;
+}
+
+@media (max-width: 767px) {
+    .admin-header {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+}
+
 .admin-title {
     font-size: 24px;
     font-weight: 900;
@@ -109,6 +209,57 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
 }
+
+/* Admin inline notice redesign (overrides Bootstrap alert in admin area) */
+.admin-main .alert {
+    background: #f8fafc; /* soft background */
+    border-left: 6px solid #e5e7eb; /* default muted border */
+    color: #0f172a;
+    padding: 18px 20px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.admin-main .alert i,
+.admin-main .alert .fa,
+.admin-main .alert .fas {
+    font-size: 18px;
+    margin-top: 2px;
+    color: inherit;
+}
+
+.admin-main .alert.alert-success {
+    background: #ecfdf5;
+    border-left-color: #16a34a;
+    color: #064e3b;
+}
+
+.admin-main .alert.alert-danger {
+    background: #fff1f2;
+    border-left-color: #dc2626;
+    color: #7f1d1d;
+}
+
+.admin-main .alert.alert-warning {
+    background: #fffbeb;
+    border-left-color: #f59e0b;
+    color: #92400e;
+}
+
+.admin-main .alert.alert-info {
+    background: #eff6ff;
+    border-left-color: #2563eb;
+    color: #1e3a8a;
+}
+
+.admin-main .alert .alert-content {
+    flex: 1;
+}
+
+.admin-main .alert.small { padding: 12px 14px; }
 
 .admin-user-pill:hover {
     border-color: var(--primary);

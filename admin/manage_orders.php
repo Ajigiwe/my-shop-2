@@ -30,7 +30,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update_status') {
             
             if ($order && !empty($order['customer_email'])) {
                 require_once '../includes/email_config.php';
-                sendStatusUpdateEmail($order['order_number'], $status, $order['customer_email'], $order['customer_name']);
+                // File-based logging for status email attempt
+                $log_file = dirname(__DIR__) . '/logs/email_' . date('Y-m-d') . '.log';
+                $pre = "[" . date('Y-m-d H:i:s') . "] Admin triggered status email: order={$order['order_number']}, to={$order['customer_email']}, status={$status} - attempt\n";
+                file_put_contents($log_file, $pre, FILE_APPEND);
+
+                $email_sent = sendStatusUpdateEmail($order['order_number'], $status, $order['customer_email'], $order['customer_name']);
+
+                $post = "[" . date('Y-m-d H:i:s') . "] Admin status email result: order={$order['order_number']}, to={$order['customer_email']}, status={$status}, result=" . ($email_sent ? 'sent' : 'failed') . "\n";
+                file_put_contents($log_file, $post, FILE_APPEND);
+                error_log("Status update email send result for order {$order['order_number']}: " . ($email_sent ? 'sent' : 'failed'));
+                if (!$email_sent) {
+                    $errors[] = 'Order status updated, but notification email could not be sent. Please check your email configuration.';
+                }
             }
         } catch (PDOException $e) {
             $errors[] = 'Update failed: ' . $e->getMessage();

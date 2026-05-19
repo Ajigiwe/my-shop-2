@@ -240,7 +240,23 @@ function sendInvoiceEmail($customer_email, $customer_name, $order_id, $order_det
     </body>
     </html>";
 
-    return sendEmail($customer_email, $subject, $message);
+    // Prepare a logfile path (same file used by sendEmail)
+    $log_file = dirname(__FILE__) . '/../logs/email_' . date('Y-m-d') . '.log';
+
+    // Log the attempt before sending (file-based)
+    $attempt_entry = "[" . date('Y-m-d H:i:s') . "] Status update email attempt: order={$order_number}, to={$customer_email}, status={$new_status} - sending...\n";
+    file_put_contents($log_file, $attempt_entry, FILE_APPEND);
+
+    // Attempt to send and log the result for debugging
+    $result = sendEmail($customer_email, $subject, $message);
+
+    $result_entry = "[" . date('Y-m-d H:i:s') . "] Status update email result: order={$order_number}, to={$customer_email}, status={$new_status}, result=" . ($result ? 'sent' : 'failed') . "\n";
+    file_put_contents($log_file, $result_entry, FILE_APPEND);
+
+    // Also log to PHP error log for immediate visibility
+    error_log("Status update email attempt: order={$order_number}, to={$customer_email}, status={$new_status}, result=" . ($result ? 'sent' : 'failed'));
+
+    return $result;
 }
 
 /**
@@ -390,19 +406,23 @@ function sendOrderConfirmationEmail($customer_email, $customer_name, $order_id, 
     return sendEmail($customer_email, $subject, $message);
 }
 
-// Utility function to check if email functionality is working
+// Send an order status update notification to the customer
 function sendStatusUpdateEmail($order_number, $new_status, $customer_email, $customer_name = 'Customer') {
     $status_display = ucfirst($new_status);
     $subject = "Order Status Update - {$status_display} (#{$order_number})";
 
     // Determine specific messaging based on status
     $status_message = "Your order status has been updated to <strong>{$status_display}</strong>.";
+    $status_highlight = '#0a4722';
     if ($new_status === 'shipped') {
         $status_message = "Great news! Your order has been <strong>Shipped</strong> and is on its way to you.";
+        $status_highlight = '#1d6fbd';
     } elseif ($new_status === 'delivered') {
         $status_message = "Your order has been <strong>Delivered</strong>! We hope you enjoy your purchase.";
+        $status_highlight = '#15803d';
     } elseif ($new_status === 'cancelled') {
         $status_message = "Your order has been <strong>Cancelled</strong>. If you did not request this, please contact support immediately.";
+        $status_highlight = '#dc2626';
     }
 
     $message = "
@@ -412,43 +432,50 @@ function sendStatusUpdateEmail($order_number, $new_status, $customer_email, $cus
         <meta charset='UTF-8'>
         <title>Order Status Update</title>
         <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1A1A1A; margin: 0; padding: 20px; background-color: #F9F9F9; }
-            .container { max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-            .header { background: #0a4722; padding: 30px 20px; text-align: center; }
-            .logo { max-width: 180px; height: auto; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto; }
-            .header h2 { color: #FFFFFF; margin: 0; font-size: 24px; font-weight: 800; }
-            .content { padding: 30px; }
-            .content p { font-size: 15px; color: #444; }
-            .status-box { background-color: #F8F9FA; border-left: 4px solid #0a4722; padding: 20px; border-radius: 8px; margin: 25px 0; }
-            .footer { padding: 20px; background: #F8F9FA; text-align: center; border-top: 1px solid #EEEEEE; }
-            .footer p { font-size: 12px; color: #888888; margin: 5px 0; }
-            .btn { display: inline-block; padding: 12px 24px; background-color: #0a4722; color: #FFFFFF !important; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1A1A1A; margin: 0; padding: 0; background-color: #F4F6F8; }
+            .wrapper { width: 100%; padding: 20px 0; }
+            .container { max-width: 640px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08); }
+            .header { background: #0a4722; padding: 32px 24px; text-align: center; }
+            .logo { max-width: 160px; height: auto; margin: 0 auto 12px; display: block; }
+            .header h2 { color: #FFFFFF; margin: 0; font-size: 26px; letter-spacing: 0.03em; }
+            .hero { padding: 32px 28px 20px; }
+            .hero p { margin: 0 0 18px; font-size: 16px; color: #374151; }
+            .notice { background-color: #F8FAFC; border-left: 5px solid {$status_highlight}; padding: 22px 20px; border-radius: 12px; }
+            .notice p { margin: 0; color: #111827; font-size: 16px; }
+            .details { margin-top: 24px; }
+            .details .item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #E5E7EB; font-size: 14px; color: #4B5563; }
+            .details .item:last-child { border-bottom: none; }
+            .cta { text-align: center; margin-top: 28px; }
+            .btn { display: inline-block; padding: 14px 28px; background: #0a4722; color: #FFFFFF !important; text-decoration: none; border-radius: 999px; font-weight: 700; font-size: 14px; }
+            .footer { padding: 24px 28px 28px; background: #F8FAFC; color: #6B7280; font-size: 13px; text-align: center; }
+            .footer a { color: #0a4722; text-decoration: none; }
         </style>
     </head>
     <body>
-        <div class='container'>
-            <div class='header'>
-                <img src='cid:store_logo' alt='" . htmlspecialchars(STORE_NAME) . "' class='logo'>
-                <h2>Order Status Update</h2>
-            </div>
-            <div class='content'>
-                <p>Hi <strong>" . htmlspecialchars($customer_name) . "</strong>,</p>
-                <p>We're writing to provide an update on your order <strong>#{$order_number}</strong>.</p>
-                
-                <div class='status-box'>
-                    <p style='margin: 0; font-size: 16px; color: #1A1A1A;'>{$status_message}</p>
+        <div class='wrapper'>
+            <div class='container'>
+                <div class='header'>
+                    <img src='cid:store_logo' alt='" . htmlspecialchars(STORE_NAME) . "' class='logo'>
+                    <h2>Order Status Update</h2>
                 </div>
-                
-                <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
-                
-                <div style='text-align: center; margin-top: 30px;'>
-                    <a href='" . SITE_URL . "user/orders.php' class='btn'>Track Your Order</a>
+                <div class='hero'>
+                    <p>Hi <strong>" . htmlspecialchars($customer_name) . "</strong>,</p>
+                    <p>We wanted to let you know that the status for your order <strong>#{$order_number}</strong> has changed.</p>
+                    <div class='notice'>
+                        <p>{$status_message}</p>
+                    </div>
+                    <div class='details'>
+                        <div class='item'><span>Order Number</span><strong>#{$order_number}</strong></div>
+                        <div class='item'><span>Current Status</span><strong>{$status_display}</strong></div>
+                    </div>
+                    <div class='cta'>
+                        <a href='" . SITE_URL . "user/orders.php' class='btn'>View Your Order</a>
+                    </div>
                 </div>
-            </div>
-            <div class='footer'>
-                <p>Thank you for shopping with us!</p>
-                <p>If you have any questions, contact us at <a href='mailto:" . STORE_EMAIL . "' style='color: #0a4722;'>" . STORE_EMAIL . "</a>.</p>
-                <p>&copy; " . date('Y') . " " . htmlspecialchars(STORE_NAME) . ". All rights reserved.</p>
+                <div class='footer'>
+                    <p>Thank you for shopping with us! If you need help, reply to this email or contact us at <a href='mailto:" . STORE_EMAIL . "'>" . STORE_EMAIL . "</a>.</p>
+                    <p>&copy; " . date('Y') . " " . htmlspecialchars(STORE_NAME) . ". All rights reserved.</p>
+                </div>
             </div>
         </div>
     </body>

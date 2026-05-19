@@ -29,44 +29,44 @@ if (session_status() == PHP_SESSION_NONE) {
 
     <nav class="admin-nav">
         <a href="dashboard.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : ''; ?>">
-            <i class="material-symbols-outlined">dashboard</i> Dashboard
+            <i class="material-symbols-outlined">dashboard</i><span class="admin-nav-label">Dashboard</span>
         </a>
         
         <!-- Management Sections -->
         <div class="px-3 mb-2 small text-muted fw-bold uppercase tracking-widest" style="font-size: 10px; opacity: 0.5;">Management</div>
         
         <a href="manage_products.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'manage_products.php' ? 'active' : ''; ?>">
-            <i class="material-symbols-outlined">inventory_2</i> Products
+            <i class="material-symbols-outlined">inventory_2</i><span class="admin-nav-label">Products</span>
         </a>
         <a href="manage_categories.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'manage_categories.php' ? 'active' : ''; ?>">
-            <i class="material-symbols-outlined">category</i> Categories
+            <i class="material-symbols-outlined">category</i><span class="admin-nav-label">Categories</span>
         </a>
         <a href="manage_orders.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'manage_orders.php' ? 'active' : ''; ?>">
-            <i class="material-symbols-outlined">shopping_cart</i> Orders
+            <i class="material-symbols-outlined">shopping_cart</i><span class="admin-nav-label">Orders</span>
         </a>
         <a href="manage_users.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'manage_users.php' ? 'active' : ''; ?>">
-            <i class="material-symbols-outlined">group</i> Users
+            <i class="material-symbols-outlined">group</i><span class="admin-nav-label">Users</span>
         </a>
         <a href="analytics.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'analytics.php' ? 'active' : ''; ?>">
-            <i class="material-symbols-outlined">insights</i> Analytics
+            <i class="material-symbols-outlined">insights</i><span class="admin-nav-label">Analytics</span>
         </a>
 
         <!-- System Sections -->
         <div class="px-3 mt-4 mb-2 small text-muted fw-bold uppercase tracking-widest" style="font-size: 10px; opacity: 0.5;">System</div>
 
         <a href="settings.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : ''; ?>">
-            <i class="material-symbols-outlined">settings</i> System Settings
+            <i class="material-symbols-outlined">settings</i><span class="admin-nav-label">System Settings</span>
         </a>
         <a href="theme_settings.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'theme_settings.php' ? 'active' : ''; ?>">
-            <i class="material-symbols-outlined">palette</i> Brand Settings
+            <i class="material-symbols-outlined">palette</i><span class="admin-nav-label">Brand Settings</span>
         </a>
         <a href="promo_settings.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'promo_settings.php' ? 'active' : ''; ?>">
-            <i class="material-symbols-outlined">campaign</i> Promo Popup
+            <i class="material-symbols-outlined">campaign</i><span class="admin-nav-label">Promo Popup</span>
         </a>
         
         <div class="mt-auto pt-5">
             <a href="../logout.php" class="admin-nav-link text-danger mt-5">
-                <i class="material-symbols-outlined">logout</i> Logout
+                <i class="material-symbols-outlined">logout</i><span class="admin-nav-label">Logout</span>
             </a>
         </div>
     </nav>
@@ -74,7 +74,12 @@ if (session_status() == PHP_SESSION_NONE) {
 
 <main class="admin-main">
     <header class="admin-header animate-up">
-        <h1 class="admin-title mb-0"><?php echo $page_title ?? 'Dashboard'; ?></h1>
+        <div class="d-flex align-items-center gap-3">
+            <button id="adminSidebarToggle" class="btn btn-outline-secondary p-2 d-inline-flex align-items-center justify-content-center" type="button" aria-label="Toggle sidebar">
+                <i class="material-symbols-outlined">menu</i>
+            </button>
+            <h1 class="admin-title mb-0"><?php echo $page_title ?? 'Dashboard'; ?></h1>
+        </div>
         
         <div class="d-flex align-items-center gap-4">
             <a href="../index.php" class="btn-premium-outline text-decoration-none">View Website</a>
@@ -87,3 +92,16 @@ if (session_status() == PHP_SESSION_NONE) {
             </div>
         </div>
     </header>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggle = document.getElementById('adminSidebarToggle');
+            const sidebar = document.querySelector('.admin-sidebar');
+            function toggleSidebar() {
+                sidebar?.classList.toggle('collapsed');
+                document.body.classList.toggle('admin-sidebar-collapsed');
+            }
+            if (toggle) {
+                toggle.addEventListener('click', toggleSidebar);
+            }
+        });
+    </script>

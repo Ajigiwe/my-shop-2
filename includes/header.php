@@ -184,6 +184,57 @@ $root_url = SITE_URL;
         }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Navbar alignment fixes */
+        @media (min-width: 768px) {
+            header > div > div > nav {
+                align-items: center;
+                gap: 1.5rem;
+                flex-wrap: nowrap;
+            }
+            header > div > div > nav > * {
+                white-space: nowrap;
+            }
+        }
+
+        #mobileMenuBtn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            min-height: 40px;
+            line-height: 1;
+            margin-top: 0;
+            margin-bottom: 0;
+            align-self: center;
+        }
+
+        header > div > div {
+            align-items: center;
+        }
+
+        .shop-text {
+            white-space: nowrap;
+        }
+
+        @media (max-width: 767px) {
+            .shop-text {
+                display: none !important;
+            }
+        }
+
+        #mobileDrawer nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        #mobileDrawer nav a {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
