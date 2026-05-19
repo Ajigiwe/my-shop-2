@@ -19,6 +19,22 @@ $page = (int)($_GET['page'] ?? 1);
 $per_page = 12; // Standardizing to 12
 $offset = ($page - 1) * $per_page;
 
+// Get sort parameter
+$sort = sanitizeInput($_GET['sort'] ?? 'newest');
+$order_by = 'p.created_at DESC';
+if ($sort === 'price_asc') {
+    $order_by = 'p.price ASC';
+} elseif ($sort === 'price_desc') {
+    $order_by = 'p.price DESC';
+}
+
+// Helper to build page URLs while preserving sorting and categories
+function getPageUrl($pageNum) {
+    $params = $_GET;
+    $params['page'] = $pageNum;
+    return '?' . http_build_query($params);
+}
+
 // Build WHERE clause
 $where_conditions = ['p.stock_quantity > 0'];
 $params = [];
@@ -70,7 +86,7 @@ try {
                             FROM products p 
                             JOIN categories c ON p.category_id = c.category_id 
                             $where_sql 
-                            ORDER BY p.created_at DESC LIMIT $per_page OFFSET $offset");
+                            ORDER BY $order_by LIMIT $per_page OFFSET $offset");
     $stmt->execute($params);
     $products = $stmt->fetchAll();
 } catch(PDOException $e) {
@@ -142,10 +158,10 @@ include 'includes/header.php';
                 <p class="font-body-sm text-on-surface-variant ml-sm">Showing <span class="font-bold text-on-surface"><?php echo count($products); ?></span> of <?php echo $total_products; ?> results</p>
                 <div class="flex items-center gap-sm">
                     <span class="material-symbols-outlined text-on-surface-variant text-[20px]">sort</span>
-                    <select class="bg-transparent border-none focus:ring-0 font-label-sm text-on-surface-variant cursor-pointer py-1">
-                        <option>Newest Arrivals</option>
-                        <option>Price: Low to High</option>
-                        <option>Price: High to Low</option>
+                    <select id="sortSelect" class="bg-transparent border-none focus:ring-0 font-label-sm text-on-surface-variant cursor-pointer py-1">
+                        <option value="newest" <?php echo $sort === 'newest' ? 'selected' : ''; ?>>Newest Arrivals</option>
+                        <option value="price_asc" <?php echo $sort === 'price_asc' ? 'selected' : ''; ?>>Price: Low to High</option>
+                        <option value="price_desc" <?php echo $sort === 'price_desc' ? 'selected' : ''; ?>>Price: High to Low</option>
                     </select>
                 </div>
             </div>
@@ -255,20 +271,20 @@ include 'includes/header.php';
                 <?php if ($total_pages > 1): ?>
                     <div class="flex justify-center mt-xl gap-sm">
                         <?php if ($page > 1): ?>
-                            <a href="?page=<?php echo $page - 1; ?><?php echo $category_name ? '&category=' . urlencode($category_name) : ''; ?>" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                            <a href="<?php echo getPageUrl($page - 1); ?>" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-high transition-colors text-on-surface-variant">
                                 <span class="material-symbols-outlined">chevron_left</span>
                             </a>
                         <?php endif; ?>
 
                         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                            <a href="?page=<?php echo $i; ?><?php echo $category_name ? '&category=' . urlencode($category_name) : ''; ?>" 
+                            <a href="<?php echo getPageUrl($i); ?>" 
                                class="w-10 h-10 flex items-center justify-center rounded-lg border <?php echo $i === $page ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant bg-surface-container-lowest hover:bg-surface-container-high'; ?> transition-all font-label-lg">
                                 <?php echo $i; ?>
                             </a>
                         <?php endfor; ?>
 
                         <?php if ($page < $total_pages): ?>
-                            <a href="?page=<?php echo $page + 1; ?><?php echo $category_name ? '&category=' . urlencode($category_name) : ''; ?>" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                            <a href="<?php echo getPageUrl($page + 1); ?>" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-high transition-colors text-on-surface-variant">
                                 <span class="material-symbols-outlined">chevron_right</span>
                             </a>
                         <?php endif; ?>
@@ -281,6 +297,18 @@ include 'includes/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Sorting functionality
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            const selectedSort = this.value;
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('sort', selectedSort);
+            urlParams.set('page', '1'); // Reset to page 1
+            window.location.search = urlParams.toString();
+        });
+    }
+
     // Mobile Filter Toggle
     const toggleFilters = document.getElementById('toggleFilters');
     const filterSidebar = document.getElementById('filterSidebar');
