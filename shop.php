@@ -91,7 +91,7 @@ include 'includes/header.php';
 
 <main class="bg-surface-container-low min-h-screen">
     <!-- Shop Header -->
-    <section class="bg-surface-container-lowest border-b border-outline-variant py-lg">
+    <section class="bg-surface-container-lowest border-b border-outline-variant py-md">
         <div class="max-w-container-max mx-auto px-md">
             <h1 class="font-headline-lg text-headline-lg text-on-background mb-xs"><?php echo $page_title; ?></h1>
             <p class="font-body-md text-on-surface-variant">Discover our curated collection of <?php echo $category_name ? strtolower($page_title) : 'premium products'; ?>.</p>
@@ -99,20 +99,11 @@ include 'includes/header.php';
     </section>
 
     <!-- Content -->
-    <div class="max-w-container-max mx-auto px-md py-xl flex flex-col lg:flex-row gap-lg">
+    <div class="max-w-container-max mx-auto px-md pt-md pb-lg flex flex-col lg:flex-row gap-lg">
         <!-- Sidebar Filters -->
-        <aside class="w-full lg:w-72 flex-shrink-0">
-            <!-- Mobile Toggle -->
-            <button id="toggleFilters" class="lg:hidden w-full flex items-center justify-between bg-surface-container-lowest border border-outline-variant px-md py-sm rounded-xl mb-md font-label-lg text-on-surface">
-                <div class="flex items-center gap-xs">
-                    <span class="material-symbols-outlined text-[#1A1A1A] text-[20px]">category</span>
-                    Browse Categories
-                </div>
-                <span id="filterChevron" class="material-symbols-outlined transition-transform">expand_more</span>
-            </button>
-
-            <div id="filterSidebar" class="hidden lg:block bg-surface-container-lowest rounded-xl border border-outline-variant p-md lg:sticky lg:top-28">
-                <h3 class="hidden lg:flex font-label-lg text-label-lg text-on-surface mb-md items-center gap-xs">
+        <aside class="hidden lg:block w-72 flex-shrink-0">
+            <div id="filterSidebar" class="bg-surface-container-lowest rounded-xl border border-outline-variant p-md lg:sticky lg:top-28">
+                <h3 class="font-label-lg text-label-lg text-on-surface mb-md flex items-center gap-xs">
                     <span class="material-symbols-outlined text-[#1A1A1A] text-[20px]">category</span>
                     Browse Categories
                 </h3>
@@ -147,7 +138,7 @@ include 'includes/header.php';
         <!-- Product Listing -->
         <div class="flex-1">
             <!-- Toolbar -->
-            <div class="flex items-center justify-between mb-lg bg-surface-container-lowest p-sm rounded-xl border border-outline-variant">
+            <div class="flex items-center justify-between mb-md bg-surface-container-lowest p-sm rounded-xl border border-outline-variant">
                 <p class="font-body-sm text-on-surface-variant ml-sm">Showing <span class="font-bold text-on-surface"><?php echo count($products); ?></span> of <?php echo $total_products; ?> results</p>
                 <div class="flex items-center gap-sm">
                     <span class="material-symbols-outlined text-on-surface-variant text-[20px]">sort</span>
