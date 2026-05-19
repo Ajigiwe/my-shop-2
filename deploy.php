@@ -30,14 +30,24 @@ function run_git_cmd($cmd) {
 }
 
 // Automatically initialize git and set remote origin if it doesn't exist
+$github_token = $_ENV['GITHUB_TOKEN'] ?? '';
+if (!empty($github_token)) {
+    $remote_url = "https://{$github_token}@github.com/Ajigiwe/my-shop-2.git";
+} else {
+    $remote_url = "https://github.com/Ajigiwe/my-shop-2.git";
+}
+
 if (!file_exists(__DIR__ . '/.git')) {
     echo "No Git repository found on server. Initializing...\n";
     run_git_cmd("git init");
-    run_git_cmd("git remote add origin https://github.com/Ajigiwe/my-shop-2.git");
+    run_git_cmd("git remote add origin {$remote_url}");
     // Ensure we fetch from remote branch
     run_git_cmd("git fetch origin");
     // Align master/main branch
     run_git_cmd("git checkout -b main");
+} else {
+    // If repository already exists, update remote URL in case token changed
+    run_git_cmd("git remote set-url origin {$remote_url}");
 }
 
 // 1. Fetch the latest changes from GitHub
