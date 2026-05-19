@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Offline - ASO Online Market</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#004225',
+              secondary: '#0D5C34',
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen flex flex-col items-center justify-center p-6">
+    <div class="max-w-md w-full text-center bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/50 shadow-2xl p-8 md:p-10 transition-all hover:scale-[1.01]">
+        <!-- Brand Logo -->
+        <div class="flex justify-center mb-8">
+            <img src="assets/images/logo-rounded.png" alt="Logo" class="h-16 w-16 object-contain rounded-full shadow-lg" />
+        </div>
+        
+        <!-- Offline Icon -->
+        <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary">
+            <span class="material-symbols-outlined text-[40px] animate-pulse">wifi_off</span>
+        </div>
+        
+        <!-- Heading -->
+        <h1 class="text-3xl font-black tracking-tight text-slate-900 mb-3" style="font-family: 'Outfit', sans-serif;">
+            You are Offline
+        </h1>
+        
+        <!-- Description -->
+        <p class="text-[14px] text-slate-500 font-medium leading-relaxed mb-8">
+            It looks like your internet connection is unavailable. Please check your network settings and try again to continue shopping.
+        </p>
+        
+        <!-- Retry Button -->
+        <button onclick="window.location.reload();" class="w-full bg-primary hover:bg-black text-white font-bold py-3.5 px-6 rounded-2xl transition-all duration-300 shadow-lg shadow-primary/10 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]">
+            <span class="material-symbols-outlined text-[20px]">refresh</span>
+            Try Again
+        </button>
+        
+        <!-- Footer -->
+        <p class="text-[11px] text-slate-400 font-medium mt-6">
+            ASO Online Market - Fast, Secure & Premium
+        </p>
+    </div>
+</body>
+</html>

@@ -38,6 +38,18 @@ $root_url = SITE_URL;
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title><?php echo isset($page_title) ? htmlspecialchars($page_title) : 'Home'; ?> - <?php echo htmlspecialchars($site_name); ?></title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="<?php echo $base; ?>assets/images/logo-rounded.png" />
+
+    <!-- PWA Manifest & Meta Tags -->
+    <link rel="manifest" href="<?php echo $base; ?>manifest.json" />
+    <meta name="theme-color" content="<?php echo $primary_color; ?>" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="<?php echo htmlspecialchars($site_name); ?>" />
+    <link rel="apple-touch-icon" href="<?php echo $base; ?>assets/images/logo-rounded.png" />
+    
     <!-- Tailwind CSS with Plugins -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
@@ -48,6 +60,16 @@ $root_url = SITE_URL;
     
     <script>
         window.SHOP_URL = '<?php echo SITE_URL; ?>';
+        
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swPath = window.SHOP_URL ? window.SHOP_URL + 'service-worker.js' : 'service-worker.js';
+                navigator.serviceWorker.register(swPath)
+                    .then(reg => console.log('Service Worker registered.'))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
     </script>
     
     <!-- Swiper.js -->

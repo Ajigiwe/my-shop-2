@@ -1,0 +1,36 @@
+{
+  "name": "ASO Online Market",
+  "short_name": "ASO Market",
+  "description": "Premium storefront for ASO Online Market products",
+  "start_url": "index.php",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#004225",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/images/logo-rounded.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/images/logo-rounded.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/images/logo-rounded.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/images/logo-rounded.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
