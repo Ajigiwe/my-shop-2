@@ -66,8 +66,8 @@ include 'includes/header.php';
     
     <?php if ($is_facing_style): ?>
         <!-- GORGEOUS FACING HERO CARDS SECTION -->
-        <section class="relative bg-gradient-to-br from-[#f5f7fa] to-[#c3cfe2] py-12 px-4 overflow-hidden border-b border-[#EEEEEE] flex flex-col items-center w-full z-20">
-            <div class="max-w-[1200px] w-full mx-auto relative mt-6">
+        <section class="relative bg-gradient-to-br from-[#f5f7fa] to-[#c3cfe2] pt-4 pb-6 px-4 overflow-hidden border-b border-[#EEEEEE] flex flex-col items-center w-full z-20">
+            <div class="max-w-[1200px] w-full mx-auto relative mt-2">
 
                 <!-- HERO CAROUSEL WRAPPER -->
                 <div class="facing-carousel-wrapper">
@@ -310,27 +310,16 @@ include 'includes/header.php';
 
                 </div>
 
-                <!-- CONTROLS -->
-                <?php if (count($hero_slides) > 1): ?>
-                <div class="facing-controls">
-                    <button class="facing-control-btn" id="facing-prev-btn">❮</button>
-                    <div class="facing-control-dots">
-                        <?php foreach ($hero_slides as $idx => $slide): ?>
-                            <span class="facing-dot <?php echo ($idx === 0) ? 'active' : ''; ?>" data-index="<?php echo $idx; ?>"></span>
-                        <?php endforeach; ?>
-                    </div>
-                    <button class="facing-control-btn" id="facing-next-btn">❯</button>
-                </div>
-                <?php endif; ?>
+
             </div>
         </section>
     <?php else: ?>
         <!-- Hero Slider Section -->
         <section class="relative bg-[#F9F9F9] overflow-hidden border-b border-[#EEEEEE]">
-            <div class="swiper heroSwiper pb-12 lg:pb-0">
+            <div class="swiper heroSwiper pb-0">
                 <div class="swiper-wrapper">
                     <?php foreach ($hero_slides as $slide): ?>
-                        <div class="swiper-slide overflow-visible py-8 md:py-16 bg-transparent px-4">
+                        <div class="swiper-slide overflow-visible pt-2 pb-6 md:pt-4 md:pb-8 bg-transparent px-4">
                             <?php if ($hero_style === 'split'): ?>
                                 <!-- SPLIT SCREEN LAYOUT SLIDE -->
                                 <div class="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 rounded-[2rem] overflow-hidden bg-white border border-[#EEEEEE] shadow-2xl min-h-[420px] w-full">
@@ -484,8 +473,6 @@ include 'includes/header.php';
                     <span class="material-symbols-outlined text-[#1A1A1A] text-[24px]">arrow_forward_ios</span>
                 </div>
 
-                <!-- Pagination -->
-                <div class="swiper-pagination !bottom-8 lg:!bottom-12"></div>
             </div>
         </section>
     <?php endif; ?>
@@ -600,7 +587,7 @@ include 'includes/header.php';
         
         @media (max-width: 1024px) {
             .heroSwiper {
-                padding: 40px 0 80px 0;
+                padding: 20px 0 20px 0;
             }
             .heroSwiper .swiper-slide {
                 opacity: 1 !important;
@@ -620,7 +607,7 @@ include 'includes/header.php';
 
         @media (max-width: 640px) {
             .heroSwiper {
-                padding: 10px 0 40px 0 !important;
+                padding: 10px 0 10px 0 !important;
             }
             .heroSwiper .swiper-slide {
                 padding: 0 8px !important;
@@ -1600,6 +1587,52 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize state
         updateFacingCarousel();
 
+        // Touch/Mouse swipe support for Facing Carousel
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const facingCarouselEl = document.querySelector('.facing-carousel-wrapper');
+        if (facingCarouselEl) {
+            // Touch events
+            facingCarouselEl.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            facingCarouselEl.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                const threshold = 50;
+                if (touchEndX < touchStartX - threshold) {
+                    nextFacingCard();
+                } else if (touchEndX > touchStartX + threshold) {
+                    prevFacingCard();
+                }
+            }, { passive: true });
+
+            // Mouse events for drag-to-slide on desktop
+            let isDragging = false;
+            let dragStartX = 0;
+            
+            facingCarouselEl.addEventListener('mousedown', e => {
+                isDragging = true;
+                dragStartX = e.screenX;
+            });
+            
+            facingCarouselEl.addEventListener('mouseup', e => {
+                if (!isDragging) return;
+                isDragging = false;
+                const dragEndX = e.screenX;
+                const threshold = 50;
+                if (dragEndX < dragStartX - threshold) {
+                    nextFacingCard();
+                } else if (dragEndX > dragStartX + threshold) {
+                    prevFacingCard();
+                }
+            });
+            
+            facingCarouselEl.addEventListener('mouseleave', () => {
+                isDragging = false;
+            });
+        }
+
         // Auto-rotation every 5 seconds
         setInterval(nextFacingCard, 5000);
     }
@@ -1611,10 +1644,7 @@ document.addEventListener('DOMContentLoaded', function() {
             delay: 6000,
             disableOnInteraction: false,
         },
-        pagination: {
-            el: '.swiper-pagination',
-            clickable: true,
-        },
+        allowTouchMove: true,
         navigation: {
             nextEl: '.swiper-button-next-custom',
             prevEl: '.swiper-button-prev-custom',
