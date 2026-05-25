@@ -105,6 +105,8 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
+    position: relative;
+    z-index: 990;
 }
 
 .admin-sidebar-overlay {
