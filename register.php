@@ -94,6 +94,14 @@ include 'includes/header.php';
 ?>
 
 <main class="min-h-screen flex relative overflow-hidden bg-[#F9F9F9]">
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="fixed inset-0 bg-white flex flex-col items-center justify-center z-[9999] transition-all duration-500 ease-out">
+        <div class="flex flex-col items-center gap-6 animate-pulse">
+            <img src="assets/images/logo-rounded.png" alt="ASO Logo" class="w-16 h-16 object-contain" />
+            <div class="w-7 h-7 border-4 border-[#EEEEEE] border-t-primary rounded-full animate-spin"></div>
+        </div>
+    </div>
+
     <!-- Desktop Side Panel -->
     <div class="hidden lg:block lg:w-1/2 h-screen sticky top-0">
         <img src="assets/images/login_side_panel.png" alt="Store Aesthetic" class="w-full h-full object-cover" />
@@ -106,7 +114,7 @@ include 'includes/header.php';
 
     <!-- Form Side -->
     <div class="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 z-10 relative">
-        <div class="w-full max-w-[420px] bg-white rounded-2xl p-6 sm:p-8 border border-[#EEEEEE] shadow-sm">
+        <div class="w-full max-w-[390px] bg-white rounded-2xl p-6 sm:p-8 border border-[#EEEEEE] shadow-sm">
             <div class="mb-6 sm:mb-7 text-center lg:text-left">
                 <h1 class="text-[24px] sm:text-[28px] font-black text-[#1A1A1A] mb-1 sm:mb-2 tracking-tight">Create Account.</h1>
                 <p class="text-[#888888] font-bold text-[10px] sm:text-[11px] uppercase tracking-widest">Start your journey with us</p>
@@ -194,6 +202,16 @@ include 'includes/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Hide Splash Screen
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+            setTimeout(() => splash.remove(), 500);
+        }, 600);
+    }
+
     document.querySelectorAll('.password-toggle').forEach(btn => {
         btn.addEventListener('click', function() {
             const targetId = this.getAttribute('data-target');
