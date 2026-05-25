@@ -125,7 +125,7 @@ include 'includes/header.php';
                 </div>
             <?php endif; ?>
 
-            <form action="register.php" method="POST" class="space-y-4">
+            <form action="" method="POST" class="space-y-4">
                 <!-- Full Name -->
                 <div class="space-y-1.5">
                     <label for="name" class="text-[11px] font-bold text-[#888888] uppercase tracking-widest ml-4">Full Name</label>

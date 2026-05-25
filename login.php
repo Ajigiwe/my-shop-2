@@ -102,7 +102,7 @@ include 'includes/header.php';
                 </div>
             <?php endif; ?>
 
-            <form action="login.php" method="POST" class="space-y-4 sm:space-y-5">
+            <form action="" method="POST" class="space-y-4 sm:space-y-5">
                 <!-- Email Address -->
                 <div class="space-y-1.5">
                     <label for="email" class="text-[11px] font-bold text-[#888888] uppercase tracking-widest ml-4">Email Address</label>
