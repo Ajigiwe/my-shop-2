@@ -8,10 +8,6 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Write request log to login_debug.txt
-$log_msg = date('Y-m-d H:i:s') . " - Method: " . $_SERVER['REQUEST_METHOD'] . " - URI: " . $_SERVER['REQUEST_URI'] . " - POST Keys: " . implode(', ', array_keys($_POST)) . "\n";
-file_put_contents(__DIR__ . '/login_debug.txt', $log_msg, FILE_APPEND);
-
 
 if (isset($_SESSION['user_id'])) {
     if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') {
@@ -87,15 +83,15 @@ include 'includes/header.php';
     </div>
 
     <!-- Form Side -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 md:p-12 z-10 relative">
-        <div class="w-full max-w-[420px] bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 md:p-12 border border-[#EEEEEE] shadow-sm">
-            <div class="mb-6 sm:mb-8 text-center lg:text-left">
-                <h1 class="text-[26px] sm:text-[32px] font-black text-[#1A1A1A] mb-1 sm:mb-2 tracking-tight">Welcome Back.</h1>
-                <p class="text-[#888888] font-bold text-[11px] sm:text-[12px] uppercase tracking-widest">Sign in to your account</p>
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 z-10 relative">
+        <div class="w-full max-w-[380px] bg-white rounded-2xl p-6 sm:p-8 border border-[#EEEEEE] shadow-sm">
+            <div class="mb-6 sm:mb-7 text-center lg:text-left">
+                <h1 class="text-[24px] sm:text-[28px] font-black text-[#1A1A1A] mb-1 sm:mb-2 tracking-tight">Welcome Back.</h1>
+                <p class="text-[#888888] font-bold text-[10px] sm:text-[11px] uppercase tracking-widest">Sign in to your account</p>
             </div>
 
             <?php if (!empty($errors)): ?>
-                <div class="bg-[#FEF2F2] border border-[#FEE2E2] rounded-2xl p-4 mb-6">
+                <div class="bg-[#FEF2F2] border border-[#FEE2E2] rounded-xl p-4 mb-6">
                     <ul class="flex flex-col gap-1">
                         <?php foreach ($errors as $error): ?>
                             <li class="text-[#EF4444] text-[13px] font-bold flex items-center gap-2">
@@ -107,42 +103,42 @@ include 'includes/header.php';
                 </div>
             <?php endif; ?>
 
-            <form action="" method="POST" class="space-y-4 sm:space-y-5">
+            <form action="" method="POST" class="space-y-4">
                 <!-- Email Address -->
                 <div class="space-y-1.5">
-                    <label for="email" class="text-[11px] font-bold text-[#888888] uppercase tracking-widest ml-4">Email Address</label>
+                    <label for="email" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest ml-2">Email Address</label>
                     <input type="email" id="email" name="email" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required 
-                           class="w-full px-5 py-3 sm:px-6 sm:py-4 bg-[#F9F9F9] border border-[#EEEEEE] rounded-full focus:border-primary outline-none text-[14px] sm:text-[15px] transition-all" />
+                           class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
                 </div>
 
                 <!-- Password -->
                 <div class="space-y-1.5">
-                    <div class="flex items-center justify-between px-4">
-                        <label for="password" class="text-[11px] font-bold text-[#888888] uppercase tracking-widest">Password</label>
-                        <a href="forgot_password.php" class="text-[11px] sm:text-[12px] font-bold text-[#1A1A1A] hover:underline">Forgot?</a>
+                    <div class="flex items-center justify-between px-2">
+                        <label for="password" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest">Password</label>
+                        <a href="forgot_password.php" class="text-[10px] sm:text-[11px] font-bold text-[#1A1A1A] hover:underline">Forgot?</a>
                     </div>
                     <div class="relative group">
                         <input type="password" id="password" name="password" required 
-                               class="w-full px-5 py-3 sm:px-6 sm:py-4 bg-[#F9F9F9] border border-[#EEEEEE] rounded-full focus:border-primary outline-none text-[14px] sm:text-[15px] transition-all" />
-                        <button type="button" id="togglePassword" class="absolute right-5 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#1A1A1A] transition-colors">
+                               class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
+                        <button type="button" id="togglePassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#1A1A1A] transition-colors">
                             <span class="material-symbols-outlined text-[20px]" id="toggleIcon">visibility</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Remember Me -->
-                <div class="flex items-center gap-2.5 ml-4">
-                    <input type="checkbox" id="remember" name="remember" class="w-4.5 h-4.5 rounded border-[#EEEEEE] text-[#1A1A1A] focus:ring-[#1A1A1A]" />
-                    <label for="remember" class="text-[13px] sm:text-[14px] font-medium text-[#666666] cursor-pointer">Keep me logged in</label>
+                <div class="flex items-center gap-2.5 ml-2">
+                    <input type="checkbox" id="remember" name="remember" class="w-4 h-4 rounded border-[#EEEEEE] text-[#1A1A1A] focus:ring-[#1A1A1A]" />
+                    <label for="remember" class="text-[12px] font-medium text-[#666666] cursor-pointer">Keep me logged in</label>
                 </div>
 
                 <!-- Action Button -->
-                <button type="submit" class="w-full bg-primary text-white font-bold text-[15px] sm:text-[16px] py-3.5 sm:py-4 rounded-full mt-4 hover:bg-primary shadow-xl hover:shadow-primary/10 transition-all active:scale-[0.98]">
+                <button type="submit" class="w-full bg-primary text-white font-bold text-[14px] sm:text-[15px] py-3 rounded-xl mt-4 hover:bg-primary shadow-xl hover:shadow-primary/10 transition-all active:scale-[0.98]">
                     Sign In <span class="material-symbols-outlined text-[20px] ml-2 align-middle">login</span>
                 </button>
             </form>
 
-            <p class="mt-6 sm:mt-8 text-center text-[13px] sm:text-[14px] text-[#666666] font-medium">
+            <p class="mt-6 sm:mt-8 text-center text-[12px] sm:text-[13px] text-[#666666] font-medium">
                 Don't have an account? <a href="register.php" class="text-[#1A1A1A] font-black hover:underline">Create One</a>
             </p>
         </div>

@@ -105,15 +105,15 @@ include 'includes/header.php';
     </div>
 
     <!-- Form Side -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 md:p-12 z-10 relative">
-        <div class="w-full max-w-[480px] bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 md:p-12 border border-[#EEEEEE] shadow-sm">
-            <div class="mb-6 sm:mb-8 text-center lg:text-left">
-                <h1 class="text-[26px] sm:text-[32px] font-black text-[#1A1A1A] mb-1 sm:mb-2 tracking-tight">Create Account.</h1>
-                <p class="text-[#888888] font-bold text-[11px] sm:text-[12px] uppercase tracking-widest">Start your journey with us</p>
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 z-10 relative">
+        <div class="w-full max-w-[420px] bg-white rounded-2xl p-6 sm:p-8 border border-[#EEEEEE] shadow-sm">
+            <div class="mb-6 sm:mb-7 text-center lg:text-left">
+                <h1 class="text-[24px] sm:text-[28px] font-black text-[#1A1A1A] mb-1 sm:mb-2 tracking-tight">Create Account.</h1>
+                <p class="text-[#888888] font-bold text-[10px] sm:text-[11px] uppercase tracking-widest">Start your journey with us</p>
             </div>
 
             <?php if (!empty($errors)): ?>
-                <div class="bg-[#FEF2F2] border border-[#FEE2E2] rounded-2xl p-4 mb-6">
+                <div class="bg-[#FEF2F2] border border-[#FEE2E2] rounded-xl p-4 mb-6">
                     <ul class="flex flex-col gap-1">
                         <?php foreach ($errors as $error): ?>
                             <li class="text-[#EF4444] text-[13px] font-bold flex items-center gap-2">
@@ -128,43 +128,43 @@ include 'includes/header.php';
             <form action="" method="POST" class="space-y-4">
                 <!-- Full Name -->
                 <div class="space-y-1.5">
-                    <label for="name" class="text-[11px] font-bold text-[#888888] uppercase tracking-widest ml-4">Full Name</label>
+                    <label for="name" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest ml-2">Full Name</label>
                     <input type="text" id="name" name="name" value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>" required 
-                           class="w-full px-5 py-3 sm:px-6 sm:py-4 bg-[#F9F9F9] border border-[#EEEEEE] rounded-full focus:border-primary outline-none text-[14px] sm:text-[15px] transition-all" />
+                           class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
                 </div>
 
                 <!-- Email -->
                 <div class="space-y-1.5">
-                    <label for="email" class="text-[11px] font-bold text-[#888888] uppercase tracking-widest ml-4">Email Address</label>
+                    <label for="email" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest ml-2">Email Address</label>
                     <input type="email" id="email" name="email" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required 
-                           class="w-full px-5 py-3 sm:px-6 sm:py-4 bg-[#F9F9F9] border border-[#EEEEEE] rounded-full focus:border-primary outline-none text-[14px] sm:text-[15px] transition-all" />
+                           class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
                 </div>
 
                 <!-- Phone -->
                 <div class="space-y-1.5">
-                    <label for="phone" class="text-[11px] font-bold text-[#888888] uppercase tracking-widest ml-4">Phone Number</label>
+                    <label for="phone" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest ml-2">Phone Number</label>
                     <input type="tel" id="phone" name="phone" value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>" required 
-                           class="w-full px-5 py-3 sm:px-6 sm:py-4 bg-[#F9F9F9] border border-[#EEEEEE] rounded-full focus:border-primary outline-none text-[14px] sm:text-[15px] transition-all" />
+                           class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
                 </div>
 
                 <!-- Passwords -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="space-y-1.5">
-                        <label for="password" class="text-[11px] font-bold text-[#888888] uppercase tracking-widest ml-4">Password</label>
+                        <label for="password" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest ml-2">Password</label>
                         <div class="relative group">
                             <input type="password" id="password" name="password" required 
-                                   class="w-full px-5 py-3 sm:px-6 sm:py-4 bg-[#F9F9F9] border border-[#EEEEEE] rounded-full focus:border-primary outline-none text-[14px] sm:text-[15px] transition-all" />
-                            <button type="button" class="password-toggle absolute right-5 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#1A1A1A] transition-colors" data-target="password">
+                                   class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
+                            <button type="button" class="password-toggle absolute right-4 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#1A1A1A] transition-colors" data-target="password">
                                 <span class="material-symbols-outlined text-[20px]">visibility</span>
                             </button>
                         </div>
                     </div>
                     <div class="space-y-1.5">
-                        <label for="confirm_password" class="text-[11px] font-bold text-[#888888] uppercase tracking-widest ml-4">Confirm</label>
+                        <label for="confirm_password" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest ml-2">Confirm</label>
                         <div class="relative group">
                             <input type="password" id="confirm_password" name="confirm_password" required 
-                                   class="w-full px-5 py-3 sm:px-6 sm:py-4 bg-[#F9F9F9] border border-[#EEEEEE] rounded-full focus:border-primary outline-none text-[14px] sm:text-[15px] transition-all" />
-                            <button type="button" class="password-toggle absolute right-5 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#1A1A1A] transition-colors" data-target="confirm_password">
+                                   class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
+                            <button type="button" class="password-toggle absolute right-4 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#1A1A1A] transition-colors" data-target="confirm_password">
                                 <span class="material-symbols-outlined text-[20px]">visibility</span>
                             </button>
                         </div>
@@ -172,20 +172,20 @@ include 'includes/header.php';
                 </div>
 
                 <!-- Terms -->
-                <div class="flex items-start gap-2.5 ml-4">
-                    <input type="checkbox" id="terms" name="terms" required class="mt-1 w-4.5 h-4.5 rounded border-[#EEEEEE] text-[#1A1A1A] focus:ring-[#1A1A1A]" />
+                <div class="flex items-start gap-2.5 ml-2">
+                    <input type="checkbox" id="terms" name="terms" required class="mt-1 w-4 h-4 rounded border-[#EEEEEE] text-[#1A1A1A] focus:ring-[#1A1A1A]" />
                     <label for="terms" class="text-[11px] sm:text-[12px] font-medium text-[#666666] leading-relaxed">
                         I agree to the <a href="#" class="text-[#1A1A1A] font-bold hover:underline">Terms</a> and <a href="#" class="text-[#1A1A1A] font-bold hover:underline">Privacy Policy</a>.
                     </label>
                 </div>
 
                 <!-- Action Button -->
-                <button type="submit" class="w-full bg-primary text-white font-bold text-[15px] sm:text-[16px] py-3.5 sm:py-4 rounded-full mt-4 hover:bg-primary shadow-xl hover:shadow-primary/10 transition-all active:scale-[0.98]">
+                <button type="submit" class="w-full bg-primary text-white font-bold text-[14px] sm:text-[15px] py-3 rounded-xl mt-4 hover:bg-primary shadow-xl hover:shadow-primary/10 transition-all active:scale-[0.98]">
                     Create Account <span class="material-symbols-outlined text-[20px] ml-2 align-middle">person_add</span>
                 </button>
             </form>
 
-            <p class="mt-6 sm:mt-8 text-center text-[13px] sm:text-[14px] text-[#666666] font-medium">
+            <p class="mt-6 sm:mt-8 text-center text-[12px] sm:text-[13px] text-[#666666] font-medium">
                 Already have an account? <a href="login.php" class="text-[#1A1A1A] font-black hover:underline">Sign In</a>
             </p>
         </div>
