@@ -213,9 +213,9 @@ CREATE INDEX IF NOT EXISTS idx_products_price ON products(price);
 CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 
--- 17. Insert default admin user (password: admin123)
+-- 17. Insert default admin user (password: asoadmin123)
 INSERT IGNORE INTO users (name, email, password, role) VALUES
-('Administrator', 'admin@shop.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+('Administrator', 'aso@admin.gh', '$2y$10$oWeApACNTXf1bFH7R1jbLOacu.upbWjeWcwepdKS7yxQi0tenOIR.', 'admin');
 
 -- 18. Insert sample categories
 INSERT IGNORE INTO categories (category_name, description) VALUES

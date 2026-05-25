@@ -7,8 +7,8 @@
 require_once __DIR__ . '/includes/db.php';
 
 try {
-    $email = 'admin@shop.com';
-    $password = 'admin123';
+    $email = 'aso@admin.gh';
+    $password = 'asoadmin123';
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
     $name = 'Administrator';
     $role = 'admin';
@@ -22,12 +22,12 @@ try {
         // Update existing user
         $stmt = $pdo->prepare("UPDATE users SET password = ?, role = ? WHERE email = ?");
         $stmt->execute([$hashedPassword, $role, $email]);
-        echo "Admin user found. Password reset to 'admin123' and role set to 'admin'.\n";
+        echo "Admin user found. Password reset to 'asoadmin123' and role set to 'admin'.\n";
     } else {
         // Create new admin user
         $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
         $stmt->execute([$name, $email, $hashedPassword, $role]);
-        echo "Admin user created with email 'admin@shop.com' and password 'admin123'.\n";
+        echo "Admin user created with email 'aso@admin.gh' and password 'asoadmin123'.\n";
     }
 
 } catch (PDOException $e) {
