@@ -8,6 +8,11 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+// Write request log to login_debug.txt
+$log_msg = date('Y-m-d H:i:s') . " - Method: " . $_SERVER['REQUEST_METHOD'] . " - URI: " . $_SERVER['REQUEST_URI'] . " - POST Keys: " . implode(', ', array_keys($_POST)) . "\n";
+file_put_contents(__DIR__ . '/login_debug.txt', $log_msg, FILE_APPEND);
+
+
 if (isset($_SESSION['user_id'])) {
     if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') {
         header('Location: admin/dashboard.php');
