@@ -83,12 +83,20 @@ if (session_status() == PHP_SESSION_NONE) {
         
         <div class="d-flex align-items-center gap-4">
             <a href="../index.php" class="btn-premium-outline text-decoration-none">View Website</a>
-            <div class="admin-user-pill">
-                <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                    <span class="material-symbols-outlined text-[16px]">person</span>
+            <div class="dropdown">
+                <div class="admin-user-pill" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
+                    <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                        <span class="material-symbols-outlined text-[16px]">person</span>
+                    </div>
+                    <span class="fw-bold small"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin'); ?></span>
+                    <i class="material-symbols-outlined text-[18px]">expand_more</i>
                 </div>
-                <span class="fw-bold small"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin'); ?></span>
-                <i class="material-symbols-outlined text-[18px]">expand_more</i>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 rounded-3" style="min-width: 180px;">
+                    <li><a class="dropdown-item py-2 d-flex align-items-center gap-2 small fw-bold" href="../index.php"><i class="material-symbols-outlined text-[18px]">home</i> View Site</a></li>
+                    <li><a class="dropdown-item py-2 d-flex align-items-center gap-2 small fw-bold" href="settings.php"><i class="material-symbols-outlined text-[18px]">settings</i> Settings</a></li>
+                    <li><hr class="dropdown-divider my-1"></li>
+                    <li><a class="dropdown-item py-2 text-danger d-flex align-items-center gap-2 small fw-bold" href="../logout.php"><i class="material-symbols-outlined text-[18px] text-danger">logout</i> Logout</a></li>
+                </ul>
             </div>
         </div>
     </header>
