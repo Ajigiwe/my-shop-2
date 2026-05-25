@@ -106,7 +106,7 @@ body {
     align-items: center;
     margin-bottom: 2rem;
     position: relative;
-    z-index: 990;
+    z-index: 1050;
 }
 
 .admin-sidebar-overlay {
