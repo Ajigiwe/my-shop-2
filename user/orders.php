@@ -1,13 +1,10 @@
 <?php
 /**
- * User: My Orders
- * - Rebuilt to be significantly less bulky.
- * - Tighter list layout, reduced padding, and information-dense cards.
+ * User: My Orders (Avazonia account layout)
  */
 require_once '../includes/db.php';
 session_start();
 
-// Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../login.php');
     exit();
@@ -16,7 +13,15 @@ if (!isset($_SESSION['user_id'])) {
 $page_title = 'My Orders';
 $user_id = $_SESSION['user_id'];
 
-// Get user's orders
+try {
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    $user = $stmt->fetch();
+} catch(PDOException $e) {
+    error_log("Error fetching user: " . $e->getMessage());
+}
+
+$orders = [];
 try {
     $stmt = $pdo->prepare("
         SELECT o.*, 
@@ -35,108 +40,113 @@ try {
 include '../includes/header.php';
 ?>
 
-<div class="flex-1 bg-[#F9F9F9] min-h-screen">
-    <div class="max-w-[1200px] mx-auto px-6 py-8">
-        
-        <!-- Compact Header -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-            <div>
-                <nav class="flex items-center gap-1.5 text-[9px] font-black text-[#888888] uppercase tracking-widest mb-3">
-                    <a href="../index.php" class="hover:text-[#1A1A1A]">Home</a>
-                    <span class="material-symbols-outlined text-[12px]">chevron_right</span>
-                    <a href="dashboard.php" class="hover:text-[#1A1A1A]">Dashboard</a>
-                    <span class="material-symbols-outlined text-[12px]">chevron_right</span>
-                    <span class="text-[#1A1A1A]">My Orders</span>
-                </nav>
-                <h1 class="text-[24px] font-black text-[#1A1A1A] tracking-tighter">My <span class="text-[#888888]">Orders.</span></h1>
-            </div>
-            <div class="bg-white border border-[#EEEEEE] px-5 py-3 rounded-lg shadow-sm">
-                <div class="text-[9px] font-black text-[#888888] uppercase tracking-widest mb-0.5">Total Purchases</div>
-                <div class="text-[18px] font-black text-[#1A1A1A]"><?php echo count($orders); ?> Orders</div>
-            </div>
-        </div>
+<section class="account-page" style="padding: 100px 0 80px; background: #fafafa; min-height: 80vh;">
+    <div class="container" style="max-width: 1100px;">
 
-        <?php if (empty($orders)): ?>
-            <div class="bg-white rounded-xl border border-[#EEEEEE] p-12 text-center shadow-sm">
-                <span class="material-symbols-outlined text-[40px] text-[#DDDDDD] mb-4">shopping_basket</span>
-                <p class="text-[14px] font-bold text-[#888888]">No orders found yet.</p>
-                <a href="../shop.php" class="inline-block mt-6 px-6 py-2.5 bg-primary text-white rounded-lg font-black text-[11px] uppercase tracking-widest">Shop Now</a>
+        <!-- Breadcrumb & Header -->
+        <nav style="margin-bottom: 32px;">
+            <div style="font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); letter-spacing: 0.1em; display: flex; align-items: center; gap: 8px;">
+                <a href="<?php echo $base; ?>index.php" style="color: inherit; text-decoration: none;">ASO</a>
+                <span>/</span>
+                <a href="dashboard.php" style="color: inherit; text-decoration: none;">Account</a>
+                <span>/</span>
+                <span style="color: var(--ink);">My Orders</span>
             </div>
-        <?php else: ?>
-            <div class="space-y-4">
-                <?php foreach ($orders as $order): ?>
-                    <div class="bg-white border border-[#EEEEEE] rounded-xl shadow-sm hover:shadow-md transition-all group">
-                        <div class="flex flex-col lg:flex-row items-center">
-                            <!-- Left: Order Meta -->
-                            <div class="p-5 lg:w-[220px] border-b lg:border-b-0 lg:border-r border-[#EEEEEE] bg-[#FBFBFB] rounded-t-xl lg:rounded-t-none lg:rounded-l-xl flex flex-col gap-1">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[10px] font-black text-[#1A1A1A] uppercase">#<?php echo str_pad($order['order_id'], 6, '0', STR_PAD_LEFT); ?></span>
-                                    <?php
-                                    $status = strtolower($order['order_status']);
-                                    $status_classes = match($status) {
-                                        'pending' => 'bg-amber-100 text-amber-700 border-amber-200',
-                                        'processing' => 'bg-blue-100 text-blue-700 border-blue-200',
-                                        'shipped' => 'bg-purple-100 text-purple-700 border-purple-200',
-                                        'delivered' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                                        'cancelled' => 'bg-rose-100 text-rose-700 border-rose-200',
-                                        default => 'bg-gray-100 text-gray-700 border-gray-200'
-                                    };
-                                    ?>
-                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full border <?php echo $status_classes; ?> uppercase tracking-tighter">
-                                        <?php echo $order['order_status']; ?>
-                                    </span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 16px; flex-wrap: wrap; gap: 12px;">
+                <h1 style="font-family: var(--f-display); font-weight: 800; font-size: 32px; margin: 0; color: var(--ink); letter-spacing: -0.02em;">My Orders</h1>
+                <div style="font-family: var(--f-mono); font-size: 11px; font-weight: 700; color: var(--mid-gray);"><?php echo count($orders); ?> Orders</div>
+            </div>
+        </nav>
+
+        <div class="account-grid" style="display: grid; grid-template-columns: 240px 1fr; gap: 48px;">
+
+            <!-- Sidebar -->
+            <?php include '_sidebar.php'; ?>
+
+            <!-- Main Content -->
+            <div style="min-width: 0;">
+                <?php if (empty($orders)): ?>
+                    <div style="padding: 80px 40px; text-align: center; background: #fff; border: 1px solid #eee; border-radius: 12px;">
+                        <span style="font-size: 40px; display: block; margin-bottom: 16px;">📦</span>
+                        <p style="font-weight: 700; font-size: 16px; color: var(--ink); margin-bottom: 8px;">No orders yet</p>
+                        <p style="font-size: 13px; color: var(--mid-gray); margin-bottom: 24px;">Your orders will appear here once you make your first purchase.</p>
+                        <a href="<?php echo $base; ?>shop.php" style="display: inline-block; padding: 12px 32px; background: var(--ink); color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Start shopping</a>
+                    </div>
+                <?php else: ?>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <?php foreach ($orders as $order):
+                            $previews = [];
+                            try {
+                                $stmt = $pdo->prepare("SELECT p.image FROM order_items oi JOIN products p ON oi.product_id = p.product_id WHERE oi.order_id = ? LIMIT 3");
+                                $stmt->execute([$order['order_id']]);
+                                $previews = $stmt->fetchAll();
+                            } catch(PDOException $e) {
+                                error_log("Error: " . $e->getMessage());
+                            }
+                            $statusColors = [
+                                'pending'    => ['bg' => '#fff7e6', 'text' => '#fa8c16'],
+                                'processing' => ['bg' => '#f9f0ff', 'text' => '#722ed1'],
+                                'confirmed'  => ['bg' => '#e6f7ff', 'text' => '#1890ff'],
+                                'shipped'    => ['bg' => '#e6f7ff', 'text' => '#1890ff'],
+                                'delivered'  => ['bg' => '#f6ffed', 'text' => '#52c41a'],
+                                'cancelled'  => ['bg' => '#fff1f0', 'text' => '#f5222d']
+                            ];
+                            $s = $statusColors[strtolower($order['order_status'])] ?? ['bg' => '#f5f5f5', 'text' => '#a1a1a1'];
+                        ?>
+                        <div class="order-card" style="background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr auto; align-items: center; gap: 24px; transition: 0.2s;">
+                            <div>
+                                <div style="font-family: var(--f-mono); font-weight: 700; font-size: 11px; color: var(--red);">#<?php echo htmlspecialchars($order['order_number'] ?? str_pad($order['order_id'], 6, '0', STR_PAD_LEFT)); ?></div>
+                                <div style="font-size: 12px; color: var(--mid-gray); margin-top: 4px;"><?php echo date('d M Y', strtotime($order['order_date'])); ?> · <?php echo (int)$order['item_count']; ?> item<?php echo $order['item_count'] != 1 ? 's' : ''; ?> · <?php echo str_replace('_', ' ', $order['payment_method']); ?></div>
+                                <div style="display: flex; gap: 6px; margin-top: 12px;">
+                                    <?php foreach ($previews as $prev): ?>
+                                        <img src="<?php echo $base . getProductImage($prev['image']); ?>" onerror="this.src='<?php echo $base; ?>assets/images/placeholder.jpg'; this.onerror=null;" style="width: 44px; height: 44px; border: 1px solid #eee; object-fit: contain; padding: 4px; background: #fff; border-radius: 6px;" alt="">
+                                    <?php endforeach; ?>
+                                    <?php if ($order['item_count'] > count($previews)): ?>
+                                        <span style="width: 44px; height: 44px; border: 1px solid #eee; background: #f5f5f5; color: var(--mid-gray); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; border-radius: 6px;">+<?php echo $order['item_count'] - count($previews); ?></span>
+                                    <?php endif; ?>
                                 </div>
-                                <div class="text-[14px] font-black text-[#1A1A1A]"><?php echo date('M j, Y', strtotime($order['order_date'])); ?></div>
-                                <div class="text-[10px] font-bold text-[#888888] uppercase"><?php echo date('g:i A', strtotime($order['order_date'])); ?></div>
                             </div>
 
-                            <!-- Center: Items & Previews -->
-                            <div class="flex-1 p-5 flex flex-col sm:flex-row items-center justify-between gap-6">
-                                <div class="flex items-center gap-5">
-                                    <div class="flex -space-x-3">
-                                        <?php
-                                        $stmt_items = $pdo->prepare("SELECT p.image FROM order_items oi JOIN products p ON oi.product_id = p.product_id WHERE oi.order_id = ? LIMIT 3");
-                                        $stmt_items->execute([$order['order_id']]);
-                                        $previews = $stmt_items->fetchAll();
-                                        foreach($previews as $prev): ?>
-                                            <div class="w-10 h-10 rounded-lg border-2 border-white bg-white shadow-sm overflow-hidden flex items-center justify-center p-1">
-                                                <img class="max-w-full max-h-full object-contain" src="../assets/images/<?php echo $prev['image']; ?>" alt="">
-                                            </div>
-                                        <?php endforeach; ?>
-                                        <?php if($order['item_count'] > 3): ?>
-                                            <div class="w-10 h-10 rounded-lg border-2 border-white bg-primary text-white flex items-center justify-center text-[10px] font-black shadow-sm">
-                                                +<?php echo $order['item_count'] - 3; ?>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div>
-                                        <div class="text-[13px] font-black text-[#1A1A1A]"><?php echo $order['item_count']; ?> Premium Items</div>
-                                        <div class="text-[11px] font-medium text-[#888888]"><?php echo str_replace('_', ' ', $order['payment_method']); ?></div>
-                                    </div>
-                                </div>
+                            <div>
+                                <span style="display: inline-block; font-size: 9px; text-transform: uppercase; padding: 4px 10px; background: <?php echo $s['bg']; ?>; color: <?php echo $s['text']; ?>; border-radius: 4px; font-weight: 800; letter-spacing: 0.05em;">
+                                    <?php echo htmlspecialchars($order['order_status']); ?>
+                                </span>
+                            </div>
 
-                                <div class="flex items-center gap-8">
-                                    <div class="text-right">
-                                        <div class="text-[9px] font-black text-[#888888] uppercase tracking-widest mb-0.5">Grand Total</div>
-                                        <div class="text-[18px] font-black text-[#1A1A1A] tracking-tighter">GH₵<?php echo number_format($order['total_amount'], 2); ?></div>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <a href="order_details.php?id=<?php echo $order['order_id']; ?>" class="h-10 px-6 rounded-lg bg-primary text-white font-black text-[11px] uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-sm">
-                                            View
-                                            <span class="material-symbols-outlined text-[16px]">visibility</span>
-                                        </a>
-                                        <a href="invoice.php?order_id=<?php echo $order['order_id']; ?>" target="_blank" class="w-10 h-10 rounded-lg border border-[#EEEEEE] flex items-center justify-center text-[#888888] hover:bg-[#F9F9F9] transition-all">
-                                            <span class="material-symbols-outlined text-[18px]">receipt_long</span>
-                                        </a>
-                                    </div>
-                                </div>
+                            <div>
+                                <div style="font-size: 10px; font-family: var(--f-mono); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--mid-gray); margin-bottom: 4px;">Total</div>
+                                <div style="font-weight: 800; font-size: 16px; color: var(--ink);"><?php echo formatCurrency($order['total_amount']); ?></div>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <a href="invoice.php?order_id=<?php echo (int)$order['order_id']; ?>" target="_blank" title="Invoice" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid #ddd; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 15px; transition: 0.2s;">🧾</a>
+                                <a href="order_details.php?id=<?php echo (int)$order['order_id']; ?>" title="View order" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid #ddd; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 16px; transition: 0.2s;">→</a>
                             </div>
                         </div>
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
+                <?php endif; ?>
             </div>
-        <?php endif; ?>
+        </div>
     </div>
-</div>
+</section>
+
+<style>
+    .order-card:hover { border-color: var(--ink) !important; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+    .account-sidebar a:hover { background: var(--off); color: var(--ink) !important; opacity: 1 !important; }
+
+    @media (max-width: 900px) {
+        .account-page { padding: 60px 0 60px !important; }
+        .account-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+        .account-sidebar { position: static !important; }
+        .order-card { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
+        h1 { font-size: 24px !important; }
+    }
+
+    @media (max-width: 520px) {
+        .order-card { grid-template-columns: 1fr !important; }
+        .order-card > div:last-child { justify-content: flex-start !important; }
+    }
+</style>
 
 <?php include '../includes/footer.php'; ?>

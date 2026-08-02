@@ -1,6 +1,6 @@
 <?php
 /**
- * Order Confirmation Page
+ * Order Confirmation Page (Avazonia success layout)
  */
 require_once 'includes/db.php';
 require_once 'includes/email_config.php';
@@ -61,7 +61,7 @@ try {
                 'quantity' => $item['quantity']
             ];
         }
-        
+
         if (sendOrderConfirmationEmail($order['customer_email'], $order['customer_name'], $order_id, $email_details)) {
             $_SESSION['email_sent_for_order'] = $order_id;
         }
@@ -75,106 +75,128 @@ try {
 
 unset($_SESSION['last_order_id']);
 
+$is_bank_transfer = ($order['payment_method'] === 'bank_transfer' || $order['payment_method'] === 'in_person');
+
+// Shipping is stored inside total_amount (subtotal + delivery fee)
+$subtotal = 0;
+foreach ($order_items as $item) {
+    $subtotal += (float)$item['product_price'] * (int)$item['quantity'];
+}
+$shipping = max(0, (float)$order['total_amount'] - $subtotal);
+
 $page_title = 'Order Confirmation';
 include 'includes/header.php';
 ?>
 
-<main class="bg-[#F9F9F9] min-h-screen py-md md:py-xl">
-    <div class="max-w-[1200px] mx-auto px-6">
-        <div class="flex flex-col items-center text-center mb-16">
-            <div class="w-24 h-24 bg-white rounded-full border border-[#EEEEEE] shadow-sm flex items-center justify-center mb-6">
-                <span class="material-symbols-outlined text-[#1A1A1A] text-[48px]">check_circle</span>
-            </div>
-            <h1 class="text-[36px] md:text-[48px] font-black text-[#1A1A1A] mb-2 tracking-tighter">Order Confirmed.</h1>
-            <p class="text-[#666666] font-medium max-w-lg">Thank you for your purchase. Your order <span class="text-[#1A1A1A] font-black underline decoration-2">#<?php echo htmlspecialchars($order['order_number']); ?></span> has been placed successfully.</p>
+<div class="success-page" style="padding: 120px 24px; text-align: center; background: #fff; min-height: 80vh;">
+    <div class="container" style="max-width: 720px;">
+        <div style="width: 80px; height: 80px; background: rgba(22,163,74,.1); border: 2px solid #16a34a; border-radius: 100px; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px; font-size: 32px; color: #16a34a; animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+            ✓
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Order Details -->
-            <div class="lg:col-span-2 space-y-8">
-                <div class="bg-white rounded-[2rem] p-8 md:p-10 border border-[#EEEEEE] shadow-sm">
-                    <h2 class="text-[20px] font-black text-[#1A1A1A] mb-8 flex items-center gap-3">
-                        <span class="material-symbols-outlined text-[24px]">shopping_bag</span> Items Ordered
-                    </h2>
-                    <div class="space-y-6">
-                        <?php foreach ($order_items as $item): ?>
-                            <div class="flex items-center gap-6 pb-6 border-b border-[#F5F5F5] last:border-0 last:pb-0">
-                                <div class="w-20 h-20 rounded-2xl overflow-hidden bg-[#F9F9F9] border border-[#EEEEEE] flex-shrink-0 p-2">
-                                    <img class="w-full h-full object-contain" src="assets/images/<?php echo htmlspecialchars($item['image'] ?? 'placeholder.jpg'); ?>" alt="" />
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="text-[15px] font-black text-[#1A1A1A] truncate"><?php echo htmlspecialchars($item['product_name']); ?></h3>
-                                    <p class="text-[13px] font-bold text-[#888888]">Quantity: <?php echo $item['quantity']; ?> × <?php echo formatCurrency($item['product_price']); ?></p>
-                                </div>
-                                <p class="text-[16px] font-black text-[#1A1A1A]"><?php echo formatCurrency($item['product_price'] * $item['quantity']); ?></p>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
+        <h1 style="font-family: var(--f-display); font-size: clamp(40px, 8vw, 64px); font-weight: 700; letter-spacing: -0.04em; line-height: 0.9; margin-bottom: 12px;">
+            Order<br><span style="color: #16a34a;">Confirmed!</span>
+        </h1>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="bg-white rounded-[2rem] p-8 md:p-10 border border-[#EEEEEE] shadow-sm">
-                        <h2 class="text-[18px] font-black text-[#1A1A1A] mb-6 flex items-center gap-3">
-                            <span class="material-symbols-outlined text-[20px]">location_on</span> Delivery
-                        </h2>
-                        <div class="space-y-2">
-                            <p class="text-[15px] font-black text-[#1A1A1A]"><?php echo htmlspecialchars($order['customer_name']); ?></p>
-                            <p class="text-[14px] font-medium text-[#666666] leading-relaxed"><?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?></p>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-[2rem] p-8 md:p-10 border border-[#EEEEEE] shadow-sm">
-                        <h2 class="text-[18px] font-black text-[#1A1A1A] mb-6 flex items-center gap-3">
-                            <span class="material-symbols-outlined text-[20px]">payments</span> Payment
-                        </h2>
-                        <div class="space-y-4">
-                            <p class="text-[15px] font-black text-[#1A1A1A]"><?php echo ucfirst(str_replace('_', ' ', $order['payment_method'])); ?></p>
-                            <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FFFBEB] text-[#B45309] rounded-full text-[11px] font-black uppercase tracking-widest border border-[#FEF3C7]">
-                                <span class="material-symbols-outlined text-[14px]">pending</span> Pending
-                            </div>
-                        </div>
-                    </div>
+        <p style="font-family: var(--f-mono); font-size: 10px; color: #aaa; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 48px;">
+            Thanks for shopping with us — your order has been placed successfully
+        </p>
+
+        <div style="background: #f9f9f9; border: 1px solid #eee; padding: 32px; border-radius: 12px; margin-bottom: 48px; position: relative; overflow: hidden; text-align: left;">
+            <div style="font-family: var(--f-mono); font-size: 9px; color: #999; margin-bottom: 8px; text-transform: uppercase;">Order Reference</div>
+            <div style="font-family: var(--f-display); font-size: 32px; font-weight: 800; color: var(--ink);">#<?php echo htmlspecialchars($order['order_number']); ?></div>
+            <div style="position: absolute; top: -10px; right: -10px; font-size: 80px; opacity: 0.03; font-weight: 900; pointer-events: none;">SUCCESS</div>
+        </div>
+
+        <?php if ($is_bank_transfer):
+    $is_in_person = ($order['payment_method'] === 'in_person');
+?>
+        <div style="background: #fff8e1; border: 1px solid #ffe082; padding: 32px; border-radius: 12px; margin-bottom: 32px; text-align: left;">
+            <div style="font-family: var(--f-mono); font-size: 9px; color: #b7791f; text-transform: uppercase; margin-bottom: 8px; font-weight: 700;">🏦 <?php echo $is_in_person ? 'Pay In Person' : 'Pay by Bank Transfer'; ?></div>
+            <p style="font-size: 14px; line-height: 1.6; color: #856404; margin-bottom: 20px;">
+                <?php echo $is_in_person ? 'Your order is reserved for 24 hours. Please transfer the total below to the account and reply to your confirmation email with the payment receipt.' : 'Your order is reserved for 24 hours. Please transfer the total below to the account and reply to your confirmation email with the payment receipt.'; ?>
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+                <div style="background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 14px 16px;">
+                    <div style="font-family: var(--f-mono); font-size: 8px; color: #999; text-transform: uppercase; margin-bottom: 4px;">Account name</div>
+                    <div style="font-weight: 700; color: #111;"><?php echo htmlspecialchars($settings['bank_account_name'] ?? 'ASO Online Market'); ?></div>
+                </div>
+                <div style="background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 14px 16px;">
+                    <div style="font-family: var(--f-mono); font-size: 8px; color: #999; text-transform: uppercase; margin-bottom: 4px;">Account number</div>
+                    <div style="font-weight: 700; color: #111;"><?php echo htmlspecialchars($settings['bank_account_number'] ?? '0000000000'); ?></div>
+                </div>
+                <div style="background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 14px 16px;">
+                    <div style="font-family: var(--f-mono); font-size: 8px; color: #999; text-transform: uppercase; margin-bottom: 4px;">Bank</div>
+                    <div style="font-weight: 700; color: #111;"><?php echo htmlspecialchars($settings['bank_name'] ?? '—'); ?></div>
+                </div>
+                <div style="background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 14px 16px;">
+                    <div style="font-family: var(--f-mono); font-size: 8px; color: #999; text-transform: uppercase; margin-bottom: 4px;">Amount</div>
+                    <div style="font-weight: 700; color: var(--red);"><?php echo formatCurrency($order['total_amount']); ?></div>
                 </div>
             </div>
+        </div>
+        <?php endif; ?>
 
-            <!-- Summary -->
-            <div class="space-y-8">
-                <div class="bg-white rounded-[2rem] p-8 md:p-10 border border-[#EEEEEE] shadow-sm lg:sticky lg:top-24">
-                    <h2 class="text-[20px] font-black text-[#1A1A1A] mb-8">Summary</h2>
-                    <div class="space-y-4 mb-8 pb-8 border-b border-[#F5F5F5]">
-                        <div class="flex justify-between text-[14px] font-bold">
-                            <span class="text-[#888888]">Subtotal</span>
-                            <span class="text-[#1A1A1A]"><?php echo formatCurrency($order['total_amount']); ?></span>
-                        </div>
-                        <div class="flex justify-between text-[14px] font-bold">
-                            <span class="text-[#888888]">Delivery</span>
-                            <span class="text-[#22C55E] uppercase tracking-widest text-[11px]">Free</span>
-                        </div>
-                    </div>
-                    <div class="flex justify-between text-[#1A1A1A] mb-10">
-                        <span class="text-[18px] font-black">Total</span>
-                        <span class="text-[24px] font-black tracking-tighter"><?php echo formatCurrency($order['total_amount']); ?></span>
-                    </div>
-                    <div class="space-y-4">
-                        <a href="index.php" class="w-full bg-primary text-white font-bold text-[16px] py-5 rounded-full flex items-center justify-center gap-3 hover:bg-primary shadow-xl hover:shadow-primary/10 transition-all active:scale-[0.98]">
-                            Continue Shopping <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
-                        </a>
-                        <a href="user/orders.php" class="w-full text-center text-[14px] font-black text-[#1A1A1A] py-2 hover:underline block">View My Orders</a>
-                    </div>
-                </div>
+        <div style="background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 32px; margin-bottom: 48px; text-align: left;">
+            <div style="font-family: var(--f-display); font-weight: 700; font-size: 20px; color: #111; margin-bottom: 24px;">Order Summary</div>
 
-                <div class="bg-[#F5F5F5] rounded-[2rem] p-8 border border-[#EEEEEE]">
-                    <h3 class="text-[12px] font-black text-[#1A1A1A] uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[18px]">info</span> Next Steps
-                    </h3>
-                    <ul class="text-[13px] text-[#666666] font-medium space-y-3">
-                        <li class="flex gap-2"><span class="text-[#1A1A1A] font-black">•</span> You will receive an email confirmation shortly.</li>
-                        <li class="flex gap-2"><span class="text-[#1A1A1A] font-black">•</span> Our team will call you to confirm delivery.</li>
-                        <li class="flex gap-2"><span class="text-[#1A1A1A] font-black">•</span> Please have the exact amount ready if paying COD.</li>
-                    </ul>
-                </div>
+            <div style="border-bottom: 1px solid #f0f0f0; padding-bottom: 24px; margin-bottom: 24px;">
+                <?php foreach ($order_items as $item): ?>
+                    <div style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px;">
+                        <div style="width: 44px; height: 44px; border: 1px solid #eee; border-radius: 4px; overflow: hidden; flex-shrink: 0; background: #f9f9f9;">
+                            <img src="<?php echo htmlspecialchars(getProductImage($item['image'] ?? 'placeholder.jpg')); ?>" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;" alt="">
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-family: var(--f-display); font-weight: 700; font-size: 14px; color: #111;"><?php echo htmlspecialchars($item['product_name']); ?></div>
+                            <div style="font-family: var(--f-mono); font-size: 9px; color: #aaa; margin-top: 4px; text-transform: uppercase;">QTY: <?php echo (int)$item['quantity']; ?> × <?php echo formatCurrency($item['product_price']); ?></div>
+                        </div>
+                        <div style="font-family: var(--f-display); font-weight: 700; font-size: 15px;"><?php echo formatCurrency((float)$item['product_price'] * (int)$item['quantity']); ?></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 12px;">
+                <span style="color: #999;">Subtotal</span><span style="font-weight: 700; color: #111;"><?php echo formatCurrency($subtotal); ?></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 12px;">
+                <span style="color: #999;">Delivery</span><span style="font-weight: 700; color: #111;"><?php echo $shipping > 0 ? formatCurrency($shipping) : 'FREE'; ?></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #111; margin-top: 12px; padding-top: 20px;">
+                <span style="font-family: var(--f-display); font-weight: 800; font-size: 16px; text-transform: uppercase;">Order Total</span>
+                <span style="font-family: var(--f-display); font-weight: 900; font-size: 30px; letter-spacing: -.03em; color: var(--red);"><?php echo formatCurrency($order['total_amount']); ?></span>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px; align-items: center;">
+            <a href="shop.php" class="btn-ink" style="width: 100%; max-width: 300px; height: 56px; display: flex; align-items: center; justify-content: center; font-family: var(--f-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none;">
+                Continue Shopping →
+            </a>
+            <div style="display: flex; gap: 24px; flex-wrap: wrap; justify-content: center;">
+                <a href="user/invoice.php?order_id=<?php echo $order_id; ?>" target="_blank" style="font-family: var(--f-mono); font-size: 11px; color: var(--mid-gray); text-decoration: underline; text-underline-offset: 4px; text-transform: uppercase; letter-spacing: 0.05em;">View Invoice</a>
+                <a href="user/orders.php" style="font-family: var(--f-mono); font-size: 11px; color: var(--mid-gray); text-decoration: underline; text-underline-offset: 4px; text-transform: uppercase; letter-spacing: 0.05em;">View Order Status in Account</a>
             </div>
         </div>
     </div>
-</main>
+</div>
+
+<style>
+@keyframes scaleIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.success-page .btn-ink {
+    background: var(--ink);
+    color: #fff;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.success-page .btn-ink:hover {
+    background: var(--red);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(229, 0, 26, 0.15);
+}
+</style>
 
 <?php include 'includes/footer.php'; ?>

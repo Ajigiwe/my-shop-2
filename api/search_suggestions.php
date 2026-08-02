@@ -18,7 +18,8 @@ try {
     $stmt = $pdo->prepare("
         SELECT product_id, name, price, image 
         FROM products 
-        WHERE name LIKE ? OR description LIKE ? 
+        WHERE status = 'published'
+          AND (name LIKE ? OR description LIKE ?) 
         LIMIT 5
     ");
     $stmt->execute(["%$query%", "%$query%"]);
@@ -30,7 +31,9 @@ try {
             'id' => $p['product_id'],
             'name' => $p['name'],
             'price' => formatCurrency($p['price']),
-            'image' => $p['image'] ?? 'placeholder.jpg'
+            'image' => $p['image'] ?? 'placeholder.jpg',
+            'image_url' => getProductImage($p['image'] ?? 'placeholder.jpg'),
+            'url' => 'product.php?id=' . $p['product_id']
         ];
     }
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Storefront: Login
+ * Storefront: Login (auth-split layout)
  */
 require_once 'includes/db.php';
 
@@ -8,6 +8,32 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+
+// Restore session from "remember me" cookie
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_me'])) {
+    $parts = explode('.', $_COOKIE['remember_me'], 3);
+    if (count($parts) === 3) {
+        list($rm_uid, $rm_token, $rm_sig) = $parts;
+        $expected = hash_hmac('sha256', $rm_uid . '|' . $rm_token, REMEMBER_SECRET);
+        if (hash_equals($expected, $rm_sig)) {
+            try {
+                $stmt = $pdo->prepare("SELECT user_id, name, email, role FROM users WHERE user_id = ?");
+                $stmt->execute([(int)$rm_uid]);
+                $rm_user = $stmt->fetch();
+                if ($rm_user) {
+                    $_SESSION['user_id'] = $rm_user['user_id'];
+                    $_SESSION['user_name'] = $rm_user['name'];
+                    $_SESSION['user_email'] = $rm_user['email'];
+                    $_SESSION['user_role'] = $rm_user['role'];
+                    if ($rm_user['role'] === 'admin') {
+                        header('Location: admin/dashboard.php');
+                        exit();
+                    }
+                }
+            } catch(PDOException $e) {}
+        }
+    }
+}
 
 if (isset($_SESSION['user_id'])) {
     if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') {
@@ -39,20 +65,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            $stmt = $pdo->prepare("SELECT user_id, name, email, password, role FROM users WHERE email = ?");
+            $stmt = $pdo->prepare("SELECT user_id, name, email, password, role, email_verified FROM users WHERE email = ?");
             $stmt->execute([$email]);
             $user = $stmt->fetch();
 
             if ($user && verifyPassword($password, $user['password'])) {
+                if (!(int)($user['email_verified'] ?? 1)) {
+                    header('Location: verify_email.php?email=' . urlencode($email) . '&required=1');
+                    exit();
+                }
+
                 $_SESSION['user_id'] = $user['user_id'];
                 $_SESSION['user_name'] = $user['name'];
                 $_SESSION['user_email'] = $user['email'];
                 $_SESSION['user_role'] = $user['role'];
 
+                // Carry guest cart items into the user's account cart
+                asoMergeGuestCart($pdo, $user['user_id']);
+
+                // Remember me — signed 30-day cookie
+                if (isset($_POST['remember'])) {
+                    $rm_token = bin2hex(random_bytes(32));
+                    $rm_value = $user['user_id'] . '.' . $rm_token . '.' . hash_hmac('sha256', $user['user_id'] . '|' . $rm_token, REMEMBER_SECRET);
+                    setcookie('remember_me', $rm_value, time() + (30 * 24 * 3600), '/', '', false, true);
+                } else {
+                    setcookie('remember_me', '', time() - 3600, '/');
+                }
+
                 if ($user['role'] === 'admin') {
                     header('Location: admin/dashboard.php');
                     exit();
                 } else {
+                    if (!isset($_SESSION['redirect_after_login']) && isset($_SESSION['pending_checkout']) && !empty($_SESSION['pending_checkout'])) {
+                        $_SESSION['redirect_after_login'] = 'checkout.php';
+                    }
                     $redirect = $_SESSION['redirect_after_login'] ?? 'index.php';
                     unset($_SESSION['redirect_after_login']);
                     header("Location: $redirect");
@@ -71,115 +117,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 include 'includes/header.php';
 ?>
 
-<main class="min-h-screen flex relative overflow-hidden bg-[#F9F9F9]">
-    <!-- Splash Screen -->
-    <div id="splash-screen" class="fixed inset-0 bg-white flex flex-col items-center justify-center z-[9999] transition-all duration-500 ease-out">
-        <div class="flex flex-col items-center gap-6 animate-pulse">
-            <img src="assets/images/logo-rounded.png" alt="ASO Logo" class="w-16 h-16 object-contain" />
-            <div class="w-7 h-7 border-4 border-[#EEEEEE] border-t-primary rounded-full animate-spin"></div>
-        </div>
-    </div>
-
-    <!-- Desktop Side Panel -->
-    <div class="hidden lg:block lg:w-1/2 h-screen sticky top-0">
-        <img src="assets/images/login_side_panel.png" alt="Store Aesthetic" class="w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-primary/10"></div>
-        <div class="absolute inset-0 flex flex-col justify-end p-20 bg-gradient-to-t from-black/80 via-transparent to-transparent">
-            <h2 class="text-white text-[48px] font-black leading-tight mb-4 tracking-tighter">Premium Quality.<br><span class="text-white/60">Delivered Fast.</span></h2>
-            <p class="text-white/70 text-[18px] font-medium max-w-sm">Experience the fusion of fresh groceries and light-speed technology hardware.</p>
-        </div>
-    </div>
-
+<div class="auth-split">
     <!-- Form Side -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 z-10 relative">
-        <div class="w-full max-w-[350px] bg-white rounded-2xl p-6 sm:p-8 border border-[#EEEEEE] shadow-sm">
-            <div class="mb-6 sm:mb-7 text-center lg:text-left">
-                <h1 class="text-[24px] sm:text-[28px] font-black text-[#1A1A1A] mb-1 sm:mb-2 tracking-tight">Welcome Back.</h1>
-                <p class="text-[#888888] font-bold text-[10px] sm:text-[11px] uppercase tracking-widest">Sign in to your account</p>
-            </div>
+    <div class="auth-form-side">
+        <div style="max-width: 400px; width: 100%; margin: 0 auto;">
+
+            <h1 style="font-family: var(--f-display); font-weight: 900; font-size: 40px; text-transform: uppercase; margin-bottom: 8px; line-height: 1; letter-spacing: -0.04em;">Welcome back</h1>
+            <p style="font-family: var(--f-body); font-size: 14px; color: var(--mid-gray); margin-bottom: 48px;">Please enter your details to initialize session.</p>
 
             <?php if (!empty($errors)): ?>
-                <div class="bg-[#FEF2F2] border border-[#FEE2E2] rounded-xl p-4 mb-6">
-                    <ul class="flex flex-col gap-1">
-                        <?php foreach ($errors as $error): ?>
-                            <li class="text-[#EF4444] text-[13px] font-bold flex items-center gap-2">
-                                <span class="material-symbols-outlined text-[18px]">error</span>
-                                <?php echo htmlspecialchars($error); ?>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
+                <div style="background: #fffafa; border: 1px solid #feeaea; color: var(--red); padding: 16px; font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; border-radius: 4px; margin-bottom: 32px;">
+                    <?php foreach ($errors as $error): ?>
+                        [ERROR] <?php echo htmlspecialchars($error); ?><br>
+                    <?php endforeach; ?>
                 </div>
             <?php endif; ?>
 
-            <form action="" method="POST" class="space-y-4">
-                <!-- Email Address -->
-                <div class="space-y-1.5">
-                    <label for="email" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest ml-2">Email Address</label>
-                    <input type="email" id="email" name="email" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required 
-                           class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
+            <form action="login.php" method="POST" style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="form-group">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Email Address</label>
+                    <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>" placeholder="USER@DOMAIN.COM" required style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">
                 </div>
 
-                <!-- Password -->
-                <div class="space-y-1.5">
-                    <div class="flex items-center justify-between px-2">
-                        <label for="password" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest">Password</label>
-                        <a href="forgot_password.php" class="text-[10px] sm:text-[11px] font-bold text-[#1A1A1A] hover:underline">Forgot?</a>
-                    </div>
-                    <div class="relative group">
-                        <input type="password" id="password" name="password" required 
-                               class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
-                        <button type="button" id="togglePassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#1A1A1A] transition-colors">
-                            <span class="material-symbols-outlined text-[20px]" id="toggleIcon">visibility</span>
+                <div class="form-group">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Password</label>
+                    <div class="password-wrapper" style="position: relative;">
+                        <input type="password" name="password" id="password-input" placeholder="••••••••" required style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 48px 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">
+                        <button type="button" id="toggle-password" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #BBB; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
                         </button>
                     </div>
                 </div>
 
-                <!-- Remember Me -->
-                <div class="flex items-center gap-2.5 ml-2">
-                    <input type="checkbox" id="remember" name="remember" class="w-4 h-4 rounded border-[#EEEEEE] text-[#1A1A1A] focus:ring-[#1A1A1A]" />
-                    <label for="remember" class="text-[12px] font-medium text-[#666666] cursor-pointer">Keep me logged in</label>
+                <script>
+                document.getElementById('toggle-password').addEventListener('click', function() {
+                    const input = document.getElementById('password-input');
+                    const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                    input.setAttribute('type', type);
+                    this.querySelector('svg').style.color = type === 'text' ? 'var(--red)' : '#BBB';
+                });
+                </script>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-family: var(--f-body); font-size: 12px; color: var(--mid-gray); cursor: pointer;">
+                        <input type="checkbox" name="remember" style="accent-color: var(--ink);"> Remember for 30 days
+                    </label>
+                    <a href="forgot_password.php" style="font-family: var(--f-semi); font-size: 12px; color: var(--ink); font-weight: 600; text-decoration: underline;">Forgot password</a>
                 </div>
 
-                <!-- Action Button -->
-                <button type="submit" class="w-full bg-primary text-white font-bold text-[14px] sm:text-[15px] py-3 rounded-xl mt-4 hover:bg-primary shadow-xl hover:shadow-primary/10 transition-all active:scale-[0.98]">
-                    Sign In <span class="material-symbols-outlined text-[20px] ml-2 align-middle">login</span>
-                </button>
-            </form>
 
-            <p class="mt-6 sm:mt-8 text-center text-[12px] sm:text-[13px] text-[#666666] font-medium">
-                Don't have an account? <a href="register.php" class="text-[#1A1A1A] font-black hover:underline">Create One</a>
-            </p>
+                <button type="submit" class="btn-ink" style="width: 100%; height: 48px; font-size: 11px; margin-top: 16px;">Sign In →</button>
+
+                <div style="margin-top: 32px; text-align: center;">
+                    <p style="font-family: var(--f-body); font-size: 13px; color: var(--mid-gray);">
+                        Don't have an account? <a href="register.php" style="color: var(--red); font-weight: 700; margin-left:8px; border-bottom: 1px solid var(--red); text-decoration: none;">Sign up</a>
+                    </p>
+                </div>
+            </form>
         </div>
     </div>
-</main>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Hide Splash Screen
-    const splash = document.getElementById('splash-screen');
-    if (splash) {
-        setTimeout(() => {
-            splash.style.opacity = '0';
-            splash.style.visibility = 'hidden';
-            setTimeout(() => splash.remove(), 500);
-        }, 600);
-    }
-
-    const emailField = document.getElementById('email');
-    if (emailField) emailField.focus();
-
-    const toggleBtn = document.getElementById('togglePassword');
-    const passInput = document.getElementById('password');
-    const toggleIcon = document.getElementById('toggleIcon');
-
-    if (toggleBtn && passInput && toggleIcon) {
-        toggleBtn.addEventListener('click', function() {
-            const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passInput.setAttribute('type', type);
-            toggleIcon.textContent = type === 'password' ? 'visibility' : 'visibility_off';
-        });
-    }
-});
-</script>
+    <!-- Graphic Side -->
+    <div class="auth-graphic-side">
+        <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.8)); z-index: 1;"></div>
+        <img src="assets/images/login_side_panel.png" alt="ASO Brand Photography" style="width: 100%; height: 100%; object-fit: cover;">
+        <div style="position: absolute; bottom: 80px; left: 80px; right: 80px; color: #fff; z-index: 2;">
+            <p style="font-family: var(--f-display); font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 24px; opacity: 0.8;">ASO Online Market</p>
+            <h2 style="font-family: var(--f-display); font-weight: 900; font-size: 48px; text-transform: uppercase; line-height: 1; letter-spacing: -0.04em;">PREMIUM QUALITY.<br>DELIVERED FAST.</h2>
+        </div>
+    </div>
+</div>
 
 <?php include 'includes/footer.php'; ?>

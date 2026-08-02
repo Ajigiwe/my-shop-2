@@ -1,7 +1,8 @@
 <?php
 /**
- * Paystack Checkout Page
- * Handles Paystack payment initialization and processing
+ * Paystack Checkout (Avazonia)
+ * Opens the Paystack Inline popup so customers pay without leaving the store.
+ * Successful payments return to verify_payment.php to confirm the order.
  */
 
 // Include database connection and Paystack configuration
@@ -29,184 +30,162 @@ if (!$order_id) {
     exit();
 }
 
+// Handle payment cancellation from the popup's onClose callback:
+// cancel the order, restore the cart, and return to checkout so nothing "goes through".
+if (isset($_GET['cancel']) && $_GET['cancel'] === '1') {
+    try {
+        $stmt = $pdo->prepare("UPDATE orders SET order_status = 'cancelled', payment_status = 'failed' WHERE order_id = ? AND user_id = ? AND payment_status = 'pending'");
+        $stmt->execute([(int)$order_id, $user_id]);
+
+        // Restore cart items so the customer can review or retry
+        $st = $pdo->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = ?");
+        $st->execute([(int)$order_id]);
+        $items = $st->fetchAll(PDO::FETCH_ASSOC);
+        if ($items) {
+            $ins = $pdo->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)");
+            foreach ($items as $it) {
+                $ins->execute([$user_id, $it['product_id'], $it['quantity']]);
+            }
+        }
+    } catch (PDOException $e) {
+        error_log("Cancel order error: " . $e->getMessage());
+    }
+    header('Location: checkout.php?cancelled=1');
+    exit();
+}
+
 // Get order details
 try {
-    // Check if this is a session-based order (fallback)
-    if (isset($_SESSION['pending_order']) && $_SESSION['pending_order']['order_id'] === $order_id) {
-        // Use session data for Paystack (fallback mode)
-        $pending_order = $_SESSION['pending_order'];
-        $order = [
-            'order_id' => $order_id,
-            'total_amount' => $pending_order['amount'],
-            'email' => $pending_order['email'],
-            'first_name' => $_SESSION['user_name'] ?? 'Customer',
-            'last_name' => '',
-            'phone' => $pending_order['phone']
-        ];
+    // Normal database query
+    $stmt = $pdo->prepare("
+        SELECT o.*, u.name, u.email, u.phone
+        FROM orders o
+        JOIN users u ON o.user_id = u.user_id
+        WHERE o.order_id = ? AND o.user_id = ?
+    ");
+    $stmt->execute([$order_id, $user_id]);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($order) {
+        // Split name if needed, or just use as is
+        $order['first_name'] = $order['name'];
+        $order['last_name'] = '';
     } else {
-        // Normal database query
-        $stmt = $pdo->prepare("
-            SELECT o.*, u.name, u.email, u.phone
-            FROM orders o
-            JOIN users u ON o.user_id = u.user_id
-            WHERE o.order_id = ? AND o.user_id = ?
-        ");
-        $stmt->execute([$order_id, $user_id]);
-        $order = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($order) {
-            // Split name if needed, or just use as is
-            $order['first_name'] = $order['name'];
-            $order['last_name'] = '';
-        } else {
-            header('Location: cart.php');
-            exit();
-        }
+        header('Location: cart.php');
+        exit();
     }
-    
+
     // Get order items
-    if (isset($_SESSION['pending_order']) && $_SESSION['pending_order']['order_id'] === $order_id) {
-        // Use session order items (fallback mode)
-        $order_items = [];
-        foreach ($pending_order['cart_items'] as $item) {
-            $order_items[] = [
-                'name' => $item['name'],
-                'image' => $item['image'] ?? 'default.jpg',
-                'quantity' => $item['quantity'],
-                'price' => $item['price']
-            ];
-        }
-    } else {
-        // Normal database query
-        $stmt = $pdo->prepare("
-            SELECT oi.*, p.name, p.image
-            FROM order_items oi
-            JOIN products p ON oi.product_id = p.product_id
-            WHERE oi.order_id = ?
-        ");
-        $stmt->execute([$order_id]);
-        $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-    
+    $stmt = $pdo->prepare("
+        SELECT oi.*, p.name, p.image
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.product_id
+        WHERE oi.order_id = ?
+    ");
+    $stmt->execute([$order_id]);
+    $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (PDOException $e) {
     error_log("Error fetching order details: " . $e->getMessage());
     header('Location: cart.php');
     exit();
 }
 
-// Initialize Paystack payment
-$payment_data = [
-    'amount' => formatAmountForPaystack($order['total_amount']),
-    'email' => $order['email'],
-    'reference' => generateTransactionReference(),
-    'callback_url' => SITE_URL . 'verify_payment.php',
-    'metadata' => [
-        'order_id' => $order_id,
-        'user_id' => $user_id,
-        'customer_name' => $order['first_name'] . ' ' . $order['last_name']
-    ]
-];
-
-// Debug: Log payment data
-error_log("Paystack payment data: " . json_encode($payment_data));
-
+// Generate a unique reference for this transaction and persist it so
+// verify_payment.php can look up the order when the popup reports success.
+$reference = generateTransactionReference();
 try {
-    $paystack_response = initializePaystackPayment($payment_data);
-    
-    // Debug: Log response
-    error_log("Paystack response: " . json_encode($paystack_response));
-    
-    if ($paystack_response->status) {
-        $authorization_url = $paystack_response->data->authorization_url;
-        $reference = $paystack_response->data->reference;
-        
-        // Update database or session with Paystack reference
-        if (isset($_SESSION['pending_order'])) {
-            // Fallback mode - update session
-            $_SESSION['pending_order']['payment_reference'] = $reference;
-        } else {
-            // Normal mode - update database
-            try {
-                $stmt = $pdo->prepare("UPDATE orders SET payment_reference = ? WHERE order_id = ?");
-                $stmt->execute([$reference, $order_id]);
-            } catch (Exception $e) {
-                error_log('Failed to update payment reference: ' . $e->getMessage());
-            }
-        }
-        
-        // Debug: Log redirect URL
-        error_log("Redirecting to: " . $authorization_url);
-        
-        // Redirect to Paystack payment page
-        header('Location: ' . $authorization_url);
-        exit();
-    } else {
-        $error_message = 'Payment initialization failed: ' . ($paystack_response->message ?? 'Unknown error');
-        error_log('Paystack initialization failed: ' . $error_message);
-    }
-} catch (Exception $e) {
-    error_log('Paystack payment error: ' . $e->getMessage());
-    $error_message = 'Payment initialization failed: ' . $e->getMessage();
+    $stmt = $pdo->prepare("UPDATE orders SET payment_reference = ? WHERE order_id = ?");
+    $stmt->execute([$reference, $order_id]);
+} catch (PDOException $e) {
+    error_log("Failed to store payment reference: " . $e->getMessage());
 }
 
-// Set page title
+$paystack_public_key = getPaystackPublicKey();
+
 $page_title = 'Paystack Payment';
+include 'includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $page_title; ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="assets/css/style.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">
-                            <i class="fas fa-credit-card me-2"></i>
-                            Paystack Payment
-                        </h4>
-                    </div>
-                    <div class="card-body">
-                        <?php if (isset($error_message)): ?>
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                <?php echo htmlspecialchars($error_message); ?>
-                            </div>
-                            <div class="alert alert-info">
-                                <h6>Debug Information:</h6>
-                                <p><strong>Order ID:</strong> <?php echo htmlspecialchars($order_id); ?></p>
-                                <p><strong>Amount:</strong> <?php echo htmlspecialchars($order['total_amount']); ?></p>
-                                <p><strong>Email:</strong> <?php echo htmlspecialchars($order['email']); ?></p>
-                                <p><strong>Payment Data:</strong> <pre><?php echo json_encode($payment_data, JSON_PRETTY_PRINT); ?></pre></p>
-                            </div>
-                            <div class="text-center">
-                                <a href="checkout.php" class="btn btn-primary">
-                                    <i class="fas fa-arrow-left me-2"></i>Back to Checkout
-                                </a>
-                            </div>
-                        <?php else: ?>
-                            <div class="text-center">
-                                <div class="spinner-border text-[#1A1A1A] mb-3" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <h5>Redirecting to Paystack...</h5>
-                                <p class="text-muted">Please wait while we redirect you to the payment page.</p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<main style="padding: 120px 24px; min-height: 80vh; display: flex; align-items: center; justify-content: center; background: #fff;">
+    <?php if (isset($error_message) || empty($paystack_public_key)): ?>
+        <div style="max-width: 560px; width: 100%; text-align: center;">
+            <div style="width: 80px; height: 80px; background: rgba(229,0,26,.1); border: 2px solid var(--red); border-radius: 100px; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px; font-size: 32px; color: var(--red);">!</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+            <h1 style="font-family: var(--f-display); font-size: clamp(40px, 8vw, 56px); font-weight: 900; letter-spacing: -0.04em; line-height: 0.9; margin-bottom: 12px;">Payment<br><span style="color: var(--red);">Error</span></h1>
+
+            <p style="font-family: var(--f-mono); font-size: 10px; color: #aaa; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 32px;">Could not initialize payment</p>
+
+            <div style="background: #f9f9f9; border: 1px solid #eee; padding: 24px; border-radius: 12px; margin-bottom: 32px; text-align: left; font-size: 14px; line-height: 1.7;">
+                <p style="color: var(--red); font-weight: 700; margin-bottom: 12px;"><?php echo htmlspecialchars($error_message ?? 'Payment configuration error'); ?></p>
+                <p style="color: var(--mid-gray); font-size: 13px;">Order ID: <?php echo htmlspecialchars($order_id); ?></p>
+                <p style="color: var(--mid-gray); font-size: 13px;">Amount: <?php echo formatCurrency($order['total_amount']); ?></p>
+            </div>
+
+            <a href="checkout.php" class="btn-ink" style="display:inline-block; padding: 14px 32px; font-size: 11px; text-decoration: none; border-radius: 12px;">← Back to Checkout</a>
+        </div>
+    <?php else: ?>
+        <div style="max-width: 560px; width: 100%; text-align: center;">
+            <div style="width: 80px; height: 80px; border: 3px solid var(--light-gray); border-top-color: var(--red); border-radius: 100px; margin: 0 auto 32px; animation: paystackSpin 1s linear infinite;"></div>
+
+            <h1 style="font-family: var(--f-display); font-size: clamp(40px, 8vw, 56px); font-weight: 900; letter-spacing: -0.04em; line-height: 0.9; margin-bottom: 12px;">Payment<br><span style="color: var(--red);">Window</span></h1>
+
+            <p style="font-family: var(--f-mono); font-size: 10px; color: #aaa; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 32px;">Opening secure payment popup...</p>
+
+            <button id="paystack-retry" style="display:none;" onclick="pays()">Open Payment</button>
+        </div>
+    <?php endif; ?>
+</main>
+
+<?php if (empty($error_message) && !empty($paystack_public_key)): ?>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+    var pays = function() {
+        var handler = PaystackPop.setup({
+            key: '<?php echo htmlspecialchars($paystack_public_key, ENT_QUOTES); ?>',
+            email: '<?php echo htmlspecialchars($order['email'], ENT_QUOTES); ?>',
+            amount: <?php echo (int)formatAmountForPaystack($order['total_amount']); ?>,
+            currency: 'GHS',
+            ref: '<?php echo htmlspecialchars($reference, ENT_QUOTES); ?>',
+            metadata: <?php echo json_encode(['order_id' => $order_id, 'user_id' => $user_id]); ?>,
+            callback: function(response) {
+                // Payment succeeded — verify server-side, then confirm the order.
+                window.location.href = '<?php echo SITE_URL; ?>verify_payment.php?reference=' + response.reference;
+            },
+            onClose: function() {
+                // User closed the popup without paying. Cancel the order, restore the
+                // cart, and return to checkout so nothing "goes through".
+                window.location.href = 'checkout_paystack.php?cancel=1&order_id=<?php echo (int)$order_id; ?>';
+            }
+        });
+        handler.openIframe();
+    };
+
+    if (typeof PaystackPop !== 'undefined') {
+        pays();
+    } else {
+        // Retry a few times in case the CDN script loads after this block.
+        var tries = 0;
+        var timer = setInterval(function() {
+            tries++;
+            if (typeof PaystackPop !== 'undefined') {
+                clearInterval(timer);
+                pays();
+            } else if (tries > 25) {
+                clearInterval(timer);
+                var btn = document.getElementById('paystack-retry');
+                if (btn) btn.style.display = 'inline-block';
+            }
+        }, 200);
+    }
+</script>
+<?php endif; ?>
+
+<style>
+@keyframes paystackSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<?php include 'includes/footer.php'; ?>

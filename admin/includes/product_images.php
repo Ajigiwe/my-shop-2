@@ -32,6 +32,9 @@ class ProductImages {
             return [];
         }
 
+        // Next display_order value for new images
+        $nextOrder = $this->getMaxDisplayOrder($productId);
+
         for ($i = 0; $i < count($files['name']); $i++) {
             if ($files['error'][$i] !== UPLOAD_ERR_OK) {
                 continue;
@@ -53,7 +56,8 @@ class ProductImages {
                 $uploaded[] = [
                     'product_id' => $productId,
                     'image_path' => 'products/' . $newName,
-                    'is_primary' => false
+                    'is_primary' => false,
+                    'display_order' => $nextOrder++
                 ];
             }
         }
@@ -75,15 +79,16 @@ class ProductImages {
      * Save image records to database
      */
     private function saveImages($images) {
-        $sql = "INSERT INTO product_images (product_id, image_path, is_primary) VALUES ";
+        $sql = "INSERT INTO product_images (product_id, image_path, is_primary, display_order) VALUES ";
         $values = [];
         $params = [];
         
         foreach ($images as $image) {
-            $values[] = "(?, ?, ?)";
+            $values[] = "(?, ?, ?, ?)";
             $params[] = $image['product_id'];
             $params[] = $image['image_path'];
             $params[] = $image['is_primary'] ? 1 : 0;
+            $params[] = $image['display_order'] ?? 0;
         }
         
         if (!empty($values)) {
@@ -226,10 +231,46 @@ class ProductImages {
         $stmt = $this->pdo->prepare(
             "SELECT * FROM product_images 
              WHERE product_id = ? 
-             ORDER BY is_primary DESC, image_id ASC"
+             ORDER BY is_primary DESC, display_order ASC, image_id ASC"
         );
         $stmt->execute([$productId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Get the highest display_order currently used for a product
+     */
+    public function getMaxDisplayOrder($productId) {
+        $stmt = $this->pdo->prepare(
+            "SELECT COALESCE(MAX(display_order), 0) + 1 FROM product_images WHERE product_id = ?"
+        );
+        $stmt->execute([$productId]);
+        return (int)$stmt->fetchColumn();
+    }
+    
+    /**
+     * Set the display order for a list of image ids
+     * @param int $productId
+     * @param array $orderedIds Ordered array of image ids
+     */
+    public function setDisplayOrder($productId, $orderedIds) {
+        if (empty($orderedIds)) return false;
+        $inTransaction = $this->pdo->inTransaction();
+        try {
+            if (!$inTransaction) $this->pdo->beginTransaction();
+            foreach ($orderedIds as $position => $imageId) {
+                $stmt = $this->pdo->prepare(
+                    "UPDATE product_images SET display_order = ? WHERE image_id = ? AND product_id = ?"
+                );
+                $stmt->execute([(int)$position, (int)$imageId, (int)$productId]);
+            }
+            if (!$inTransaction) $this->pdo->commit();
+            return true;
+        } catch (Exception $e) {
+            if (!$inTransaction && $this->pdo->inTransaction()) $this->pdo->rollBack();
+            error_log('Product image reorder error: ' . $e->getMessage());
+            return false;
+        }
     }
     
     /**

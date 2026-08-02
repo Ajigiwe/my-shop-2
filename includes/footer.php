@@ -1,241 +1,316 @@
 <?php
 /**
- * Footer
- * - Standard footer for all pages
+ * Footer include — ASO storefront footer.
+ * Closes #page-wrapper, renders ASO footer, floating WhatsApp, PWA install
+ * UI, mobile bottom nav, share modal and </body></html>.
  */
-$base = '';
-$current_path = $_SERVER['PHP_SELF'] ?? '';
-if (preg_match('/\/(admin|user|legal)\//', $current_path)) {
-    $base = '../';
-}
+global $settings;
+if (!isset($settings)) $settings = [];
+$cart_count = asoCartCount($pdo ?? null);
+$footer_address = $settings['footer_address'] ?? 'Q4 Gibbefish Street Beach Road Takoradi, Ghana';
+$footer_support_title = $settings['support_title'] ?? 'Direct Support';
+$footer_support_subtitle = $settings['support_subtitle'] ?? 'Have any questions or concerns? Link with us directly via email.';
+$wa_link = $settings['social_whatsapp'] ?? '';
+if (empty($wa_link) && !empty(WHATSAPP_NUMBER)) $wa_link = 'https://wa.me/' . WHATSAPP_NUMBER;
+$socials = [
+    'instagram' => $settings['social_instagram'] ?? '',
+    'facebook'  => $settings['social_facebook'] ?? '',
+    'tiktok'    => $settings['social_tiktok'] ?? '',
+    'telegram'  => $settings['social_telegram'] ?? '',
+    'youtube'   => $settings['social_youtube'] ?? '',
+];
 ?>
 
-<footer class="w-full mt-auto bg-[#F9F9F9] border-t border-[#EEEEEE] pt-8 pb-4 text-[#666666] font-sans">
-    <div class="max-w-[1200px] mx-auto px-6">
-        
-        <!-- Top Footer Column Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-4">
-            
-            <!-- Left Info Column -->
-            <div class="space-y-2">
-                <div class="mb-2">
-                    <img src="<?php echo $base; ?>assets/images/logo-v3.png" alt="<?php echo htmlspecialchars($site_name); ?>" class="h-16 w-auto object-contain" />
-                </div>
-                <p class="text-[12px] text-[#666666] leading-relaxed max-w-[240px]">
-                    123 Business District,<br>Accra, Ghana
-                </p>
-                <div class="space-y-0.5 text-[12px] text-[#666666]">
-                    <p>Email: <a href="mailto:info@asoonlinemarket.com" class="hover:text-[#1A1A1A] transition-colors">info@asoonlinemarket.com</a></p>
-                    <p>Phone: <a href="tel:+233201234567" class="hover:text-[#1A1A1A] transition-colors">+233 20 123 4567</a></p>
-                </div>
-            </div>
+</div> <!-- End #page-wrapper -->
 
-            <!-- Company Column -->
-            <div>
-                <h4 class="text-[11px] font-black uppercase tracking-widest text-[#1A1A1A] mb-3 border-b border-[#EEEEEE] pb-1 max-w-[80px]">Company</h4>
-                <ul class="space-y-1 text-[12px]">
-                    <li><a href="<?php echo $base; ?>about.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">About Us</a></li>
-                    <li><a href="<?php echo $base; ?>shop.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Shop</a></li>
-                    <li><a href="<?php echo $base; ?>contact.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Contact Us</a></li>
-                    <li><a href="<?php echo $base; ?>user/orders.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Track Your Order</a></li>
-                    <li><a href="<?php echo $base; ?>login.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Login / Register</a></li>
-                </ul>
-            </div>
-
-            <!-- Support Column -->
-            <div>
-                <h4 class="text-[11px] font-black uppercase tracking-widest text-[#1A1A1A] mb-3 border-b border-[#EEEEEE] pb-1 max-w-[80px]">Support</h4>
-                <ul class="space-y-1 text-[12px]">
-                    <li><a href="<?php echo $base; ?>legal/terms-conditions.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Terms & Conditions</a></li>
-                    <li><a href="<?php echo $base; ?>legal/privacy-policy.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Privacy Policy</a></li>
-                    <li><a href="<?php echo $base; ?>legal/shipping-policy.php" class="hover:text-[#1A1A1A] transition-colors py-0.5 block">Shipping Policy</a></li>
-                </ul>
-            </div>
-
-            <!-- Direct Support Column -->
-            <div class="space-y-2">
-                <h4 class="text-[11px] font-black uppercase tracking-widest text-[#1A1A1A] mb-3 border-b border-[#EEEEEE] pb-1 max-w-[120px]">Direct Support</h4>
-                <p class="text-[12px] leading-relaxed max-w-[240px]">
-                    Leading the way in fresh groceries and cutting-edge electronics delivered to your door.
-                </p>
-                <a href="mailto:info@asoonlinemarket.com" class="flex items-center justify-center gap-2 px-3.5 py-2 bg-transparent border border-[#DDDDDD] hover:border-[#1A1A1A] rounded-full text-[#1A1A1A] text-[11px] font-black tracking-widest uppercase transition-all duration-300 group max-w-[185px]">
-                    <span class="material-symbols-outlined text-[15px] text-gray-500 group-hover:text-[#1A1A1A] transition-colors">mail</span>
-                    EMAIL OUR TEAM
+<footer class="footer">
+    <div class="footer-inner-container">
+        <div class="footer-top">
+            <!-- Identity Pillar -->
+            <div class="reveal">
+                <a href="<?php echo $base; ?>index.php" class="footer-logo-link">
+                    <span class="footer-logo"><?php echo htmlspecialchars($site_name ?? 'ASO'); ?><span class="dot"></span></span>
                 </a>
-                <p class="text-[10px] text-[#888888]">
-                    We typically respond within 24 hours.
-                </p>
+                <p class="footer-newsletter-disclaimer"><?php echo htmlspecialchars($footer_address); ?></p>
+                <a href="https://maps.google.com" target="_blank" class="footer-directions-link" style="margin-bottom: 12px;">Get Directions</a>
+
+                <ul class="footer-contact-list">
+                    <li class="footer-contact-item">Email: <?php echo SITE_EMAIL; ?></li>
+                    <li class="footer-contact-item">Phone: +<?php echo WHATSAPP_NUMBER; ?></li>
+                </ul>
             </div>
 
-        </div>
-
-        <!-- Middle Row: Socials -->
-        <div class="flex flex-col md:flex-row items-center justify-between gap-3 border-t border-[#EEEEEE] pt-4 mb-4">
-            
-            <!-- Social Icons (Align left) -->
-            <div class="flex items-center gap-2.5">
-                <?php if (!empty($settings['social_facebook'])): ?>
-                    <a href="<?php echo htmlspecialchars($settings['social_facebook']); ?>" target="_blank" class="w-8 h-8 rounded-full bg-[#EEEEEE] hover:bg-[#1A1A1A] flex items-center justify-center text-[#1A1A1A] hover:text-white transition-colors duration-300 group" title="Facebook">
-                        <svg class="w-4 h-4 fill-current text-[#1A1A1A] group-hover:text-white transition-colors duration-300" viewBox="0 0 24 24">
-                            <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.8c4.56-.93 8-4.96 8-9.8z"/>
-                        </svg>
-                    </a>
-                <?php endif; ?>
-                <?php if (!empty($settings['social_whatsapp'])): ?>
-                    <?php 
-                        $wa_val = trim($settings['social_whatsapp']);
-                        $wa_link = htmlspecialchars($wa_val);
-                        // If it is a phone number, automatically format it as a clean wa.me link
-                        if (preg_match('/^[0-9+ ]+$/', $wa_val)) {
-                            $clean_num = preg_replace('/[^0-9]/', '', $wa_val);
-                            $wa_link = "https://wa.me/" . $clean_num;
-                        }
-                    ?>
-                    <a href="<?php echo $wa_link; ?>" target="_blank" class="w-8 h-8 rounded-full bg-[#EEEEEE] hover:bg-[#1A1A1A] flex items-center justify-center text-[#1A1A1A] hover:text-white transition-colors duration-300 group" title="WhatsApp">
-                        <svg class="w-4 h-4 fill-current text-[#1A1A1A] group-hover:text-white transition-colors duration-300" viewBox="0 0 24 24">
-                            <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.333 4.982L2 22l5.233-1.371a9.936 9.936 0 004.779 1.218h.004c5.505 0 9.988-4.478 9.989-9.984a9.975 9.975 0 00-2.925-7.064A9.932 9.932 0 0012.012 2zm5.727 14.072c-.244.688-1.201 1.249-1.657 1.297-.431.045-.994.074-1.61-.122a7.195 7.195 0 01-3.136-1.913 7.804 7.804 0 01-2.153-3.11c-.422-.724-.689-1.562-.689-2.353 0-1.659.866-2.485 1.192-2.813.244-.246.61-.31.874-.31h.244c.264 0 .528.016.752.544l.793 1.936c.081.2.146.416.033.624-.097.176-.227.352-.39.512l-.504.496c-.163.16-.341.336-.146.672a5.056 5.056 0 001.9 2.08 4.093 4.093 0 002.374.88c.325.016.512-.144.691-.336.179-.192.748-.864.96-1.168.195-.272.455-.24.715-.144l2.228 1.04c.26.128.52.256.585.368.065.112.065.656-.179 1.344z"/>
-                        </svg>
-                    </a>
+            <!-- Company Pillar -->
+            <div class="reveal rd1">
+                <h4 class="footer-col-label">Company</h4>
+                <a href="<?php echo $base; ?>about.php" class="footer-col-link">About Us</a>
+                <a href="<?php echo $base; ?>shop.php" class="footer-col-link">Shop</a>
+                <a href="<?php echo $base; ?>contact.php" class="footer-col-link">Contact Us</a>
+                <a href="<?php echo $base; ?>track-order.php" class="footer-col-link">Track Your Order</a>
+                <?php if (!isset($_SESSION['user_id'])): ?>
+                <a href="<?php echo $base; ?>login.php" class="footer-col-link">Login / Register</a>
                 <?php endif; ?>
             </div>
 
-            <!-- Empty right side since logos are removed -->
-            <div></div>
+            <!-- Support Pillar -->
+            <div class="reveal rd2">
+                <h4 class="footer-col-label">Support</h4>
+                <a href="<?php echo $base; ?>legal/terms-conditions.php" class="footer-col-link">Terms &amp; Conditions</a>
+                <a href="<?php echo $base; ?>legal/privacy-policy.php" class="footer-col-link">Privacy Policy</a>
+                <a href="<?php echo $base; ?>legal/payment-methods.php" class="footer-col-link">Payment Policy</a>
+                <a href="<?php echo $base; ?>legal/shipping-policy.php" class="footer-col-link">Shipping &amp; Delivery Policy</a>
+            </div>
 
-        </div>
-
-        <!-- Bottom Copyright Row -->
-        <div class="flex flex-col md:flex-row items-center justify-between gap-4 border-t border-[#EEEEEE] pt-4 text-[11px] text-[#888888]">
-            <p>
-                <?php echo !empty($settings['footer_notice']) ? htmlspecialchars($settings['footer_notice']) : '© ' . date('Y') . ' ' . htmlspecialchars($site_name) . '. All rights reserved.'; ?>
-            </p>
-            <div class="flex items-center gap-6">
-                <a href="<?php echo $base; ?>legal/privacy-policy.php" class="hover:text-[#1A1A1A] transition-colors">Privacy</a>
-                <a href="<?php echo $base; ?>legal/terms-conditions.php" class="hover:text-[#1A1A1A] transition-colors">Terms</a>
-                <a href="<?php echo $base; ?>legal/cookie-policy.php" class="hover:text-[#1A1A1A] transition-colors">Cookies</a>
+            <!-- Direct Support Pillar -->
+            <div class="reveal rd3 footer-contact-column">
+                <h4 class="footer-col-label"><?php echo htmlspecialchars($footer_support_title); ?></h4>
+                <p class="footer-newsletter-disclaimer"><?php echo htmlspecialchars($footer_support_subtitle); ?></p>
+                <a href="mailto:<?php echo SITE_EMAIL; ?>" class="footer-support-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    Email Our Team
+                </a>
+                <p class="footer-newsletter-disclaimer" style="margin-top: 20px;">We typically respond within 24 hours.</p>
             </div>
         </div>
 
+        <!-- Partners & Socials Section -->
+        <div class="footer-partners">
+            <div class="footer-socials" style="display: flex; gap: 8px;">
+                <?php if (!empty($socials['instagram'])): ?>
+                    <a href="<?php echo htmlspecialchars($socials['instagram']); ?>" class="fsoc-round" target="_blank" title="Instagram">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </a>
+                <?php endif; ?>
+                <?php if (!empty($socials['facebook'])): ?>
+                    <a href="<?php echo htmlspecialchars($socials['facebook']); ?>" class="fsoc-round" target="_blank" title="Facebook">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg>
+                    </a>
+                <?php endif; ?>
+                <?php if (!empty($socials['tiktok'])): ?>
+                    <a href="<?php echo htmlspecialchars($socials['tiktok']); ?>" class="fsoc-round" target="_blank" title="TikTok">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.06-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.03 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96a6.66 6.66 0 0 1 4.44-1.56c.05 1.63.07 3.26.06 4.9-.3-.04-.61-.04-.9-.01-.72.07-1.41.33-1.97.77-.51.41-.86.98-1 1.62-.17.76-.1 1.72.16 2.45.38.9 1.19 1.56 2.14 1.78.36.08.74.1 1.12.08 1.05-.01 2.05-.51 2.67-1.35.3-.41.48-.9.51-1.4.07-2.31.04-4.62.04-6.93V0h-4.01z"/></svg>
+                    </a>
+                <?php endif; ?>
+                <?php if (!empty($wa_link)): ?>
+                    <a href="<?php echo htmlspecialchars($wa_link); ?>" class="fsoc-round" target="_blank" title="WhatsApp">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 2c-5.508 0-9.987 4.479-9.987 9.987 0 1.763.461 3.42 1.262 4.853L2 22l5.335-1.4c1.401.762 2.993 1.194 4.696 1.194 5.508 0 9.987-4.479 9.987-9.987s-4.479-9.987-9.987-9.987zm0 18.281c-1.524 0-2.946-.406-4.175-1.112l-.299-.173-3.102.814.828-3.023-.191-.303c-.776-1.236-1.185-2.668-1.185-4.153 0-4.401 3.581-7.982 7.982-7.982 4.401 0 7.982 3.581 7.982 7.982s-3.581 7.982-7.982 7.982zm4.385-6.081c-.241-.121-1.423-.701-1.645-.781-.221-.081-.382-.121-.543.121-.161.241-.623.781-.764.942-.141.161-.281.181-.523.061-.241-.121-1.018-.375-1.938-1.196-.716-.639-1.199-1.428-1.34-1.669-.141-.241-.015-.371.106-.491.11-.108.241-.281.362-.421.121-.141.161-.241.241-.402.081-.161.041-.301-.02-.421-.06-.121-.543-1.305-.744-1.787-.195-.47-.394-.406-.543-.414-.141-.007-.301-.008-.462-.008-.161 0-.422.06-.643.301-.221.241-.844.824-.844 2.008 0 1.185.864 2.329.985 2.489.121.161 1.7 2.595 4.118 3.639.575.249 1.025.397 1.375.508.578.184 1.104.158 1.519.096.463-.069 1.423-.582 1.624-1.145.201-.563.201-1.044.141-1.145-.06-.101-.221-.161-.462-.281z"/></svg>
+                    </a>
+                <?php endif; ?>
+                <?php if (!empty($socials['telegram'])): ?>
+                    <a href="<?php echo htmlspecialchars($socials['telegram']); ?>" class="fsoc-round" target="_blank" title="Telegram">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.14-.26.26-.53.26l.204-2.925 5.328-4.814c.232-.206-.05-.32-.36-.11l-6.58 4.142-2.837-.887c-.615-.192-.627-.615.128-.9l11.08-4.271c.513-.192.962.115.787.892z"/></svg>
+                    </a>
+                <?php endif; ?>
+                <?php if (!empty($socials['youtube'])): ?>
+                    <a href="<?php echo htmlspecialchars($socials['youtube']); ?>" class="fsoc-round" target="_blank" title="YouTube">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505a3.017 3.017 0 0 0-2.122 2.136C0 8.055 0 12 0 12s0 3.945.501 5.814a3.017 3.017 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.945 24 12 24 12s0-3.945-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    </a>
+                <?php endif; ?>
+            </div>
+
+            <div class="partner-box">
+                <img src="<?php echo $base; ?>assets/images/ghana-post.webp" alt="Ghana Post">
+            </div>
+            <div class="partner-box">
+                <img src="<?php echo $base; ?>assets/images/paystack1.png" alt="Paystack">
+            </div>
+            <div class="partner-box">
+                <img src="<?php echo $base; ?>assets/images/uba-logo.webp" alt="UBA Bank">
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="footer-copy">
+                <?php echo FOOTER_NOTICE; ?>
+            </div>
+            <div class="footer-legal">
+                <a href="<?php echo $base; ?>legal/privacy-policy.php">Privacy</a>
+                <a href="<?php echo $base; ?>legal/terms-conditions.php">Terms</a>
+                <a href="<?php echo $base; ?>legal/cookie-policy.php">Cookies</a>
+            </div>
+        </div>
     </div>
 </footer>
 
-<?php if (isset($settings['promo_popup_enabled']) && $settings['promo_popup_enabled'] == '1'): ?>
-    <!-- Promo Popup Modal -->
-    <div id="promoPopupOverlay" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div id="promoPopupModal" class="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-[800px] w-full flex flex-col md:flex-row transform scale-95 transition-transform duration-300 relative">
-            
-            <!-- Close 'X' Button -->
-            <button onclick="closePromoPopup()" class="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center bg-white/50 hover:bg-white rounded-full text-black hover:text-red-500 transition-colors shadow-sm">
-                <span class="material-symbols-outlined text-[20px]">close</span>
-            </button>
+<a href="https://wa.me/<?php echo WHATSAPP_NUMBER; ?>" class="wa-btn" style="position: fixed; bottom: 30px; right: 30px; background: #25D366; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; z-index: 99; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 2c-5.508 0-9.987 4.479-9.987 9.987 0 1.763.461 3.42 1.262 4.853L2 22l5.335-1.4c1.401.762 2.993 1.194 4.696 1.194 5.508 0 9.987-4.479 9.987-9.987s-4.479-9.987-9.987-9.987zm0 18.281c-1.524 0-2.946-.406-4.175-1.112l-.299-.173-3.102.814.828-3.023-.191-.303c-.776-1.236-1.185-2.668-1.185-4.153 0-4.401 3.581-7.982 7.982-7.982 4.401 0 7.982 3.581 7.982 7.982s-3.581 7.982-7.982 7.982zm4.385-6.081c-.241-.121-1.423-.701-1.645-.781-.221-.081-.382-.121-.543.121-.161.241-.623.781-.764.942-.141.161-.281.181-.523.061-.241-.121-1.018-.375-1.938-1.196-.716-.639-1.199-1.428-1.34-1.669-.141-.241-.015-.371.106-.491.11-.108.241-.281.362-.421.121-.141.161-.241.241-.402.081-.161.041-.301-.02-.421-.06-.121-.543-1.305-.744-1.787-.195-.47-.394-.406-.543-.414-.141-.007-.301-.008-.462-.008-.161 0-.422.06-.643.301-.221.241-.844.824-.844 2.008 0 1.185.864 2.329.985 2.489.121.161 1.7 2.595 4.118 3.639.575.249 1.025.397 1.375.508.578.184 1.104.158 1.519.096.463-.069 1.423-.582 1.624-1.145.201-.563.201-1.044.141-1.145-.06-.101-.221-.161-.462-.281z"/></svg>
+</a>
 
-            <?php if (!empty($settings['promo_popup_image'])): ?>
-            <!-- Image Section -->
-            <div class="md:w-1/2 bg-[#F9F9F9] relative flex items-center justify-center min-h-[200px] md:min-h-[400px]">
-                <img src="<?php echo $base; ?>assets/images/<?php echo htmlspecialchars($settings['promo_popup_image']); ?>" alt="Promo" class="absolute inset-0 w-full h-full object-cover">
-            </div>
-            <?php endif; ?>
+<!-- PWA Smart Install UI -->
+<div id="pwa-install-banner" class="pwa-banner" style="display: none;">
+    <div class="pwa-banner-content">
+        <div class="pwa-banner-icon">
+            <img src="<?php echo $base; ?>assets/images/logo2-rounded.png" alt="App Icon">
+        </div>
+        <div class="pwa-banner-text">
+            <h4><?php echo htmlspecialchars($site_name ?? 'ASO'); ?> App</h4>
+            <p>Fast, reliable &amp; offline support</p>
+        </div>
+        <button id="pwa-install-btn" class="pwa-banner-btn">Install</button>
+        <button id="pwa-close-banner" class="pwa-banner-close">✕</button>
+    </div>
+</div>
 
-            <!-- Content Section -->
-            <div class="<?php echo !empty($settings['promo_popup_image']) ? 'md:w-1/2' : 'w-full'; ?> p-8 md:p-12 flex flex-col justify-center text-center md:text-left">
-                <div class="text-[10px] font-black text-[#888888] uppercase tracking-widest mb-2">Special Offer</div>
-                <h2 class="text-[28px] font-black text-[#1A1A1A] tracking-tighter leading-tight mb-4">
-                    <?php echo htmlspecialchars($settings['promo_popup_title'] ?? 'Special Promotion'); ?>
-                </h2>
-                <p class="text-[14px] text-[#666666] mb-8 leading-relaxed">
-                    <?php echo nl2br(htmlspecialchars($settings['promo_popup_content'] ?? 'Don\'t miss out on our latest deals and offers.')); ?>
-                </p>
-                
-                <div class="flex flex-col gap-3">
-                    <a href="<?php echo $base . ltrim(htmlspecialchars($settings['promo_popup_btn_link'] ?? 'shop.php'), '/'); ?>" class="bg-primary text-white text-center py-3.5 rounded-lg font-black text-[12px] uppercase tracking-widest hover:scale-105 transition-transform">
-                        <?php echo htmlspecialchars($settings['promo_popup_btn_text'] ?? 'Shop Now'); ?>
-                    </a>
-                    <button onclick="dismissPromoPopup()" class="text-[11px] font-black text-[#888888] uppercase tracking-widest hover:text-[#1A1A1A] py-2 transition-colors">
-                        Don't Show Again
-                    </button>
-                </div>
-            </div>
+<!-- iOS Install Guide -->
+<div id="ios-install-guide" class="ios-guide-modal" style="display: none;">
+    <div class="ios-guide-content">
+        <div class="ios-guide-header">
+            <img src="<?php echo $base; ?>assets/images/logo2-rounded.png" alt="Icon">
+            <h3>Install <?php echo htmlspecialchars($site_name ?? 'ASO'); ?></h3>
+            <button onclick="document.getElementById('ios-install-guide').style.display='none'" class="ios-guide-close">✕</button>
+        </div>
+        <div class="ios-guide-body">
+            <p>To install the app on your iPhone:</p>
+            <ol>
+                <li>Tap the <strong>Share</strong> button <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin: 0 4px;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg> at the bottom.</li>
+                <li>Scroll down and tap <strong>Add to Home Screen</strong> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin: 0 4px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>.</li>
+            </ol>
         </div>
     </div>
+</div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const frequency = '<?php echo htmlspecialchars($settings['promo_popup_frequency'] ?? 'session'); ?>';
-        
-        // 1. Check if permanently dismissed
-        if (localStorage.getItem('promo_dismissed') === 'true') {
-            return; // Never show
-        }
+<script>
+let deferredPrompt;
+const installBanner = document.getElementById('pwa-install-banner');
+const installBtn = document.getElementById('pwa-install-btn');
+const closeBanner = document.getElementById('pwa-close-banner');
+const iosGuide = document.getElementById('ios-install-guide');
 
-        // 2. Check frequency
-        let shouldShow = false;
-        
-        if (frequency === 'always') {
-            shouldShow = true;
-        } else if (frequency === 'session') {
-            if (!sessionStorage.getItem('promo_shown_this_session')) {
-                shouldShow = true;
-            }
-        } else if (frequency === 'daily') {
-            const lastShown = localStorage.getItem('promo_last_shown_time');
-            const now = new Date().getTime();
-            // 24 hours = 86400000 ms
-            if (!lastShown || (now - parseInt(lastShown)) > 86400000) {
-                shouldShow = true;
-            }
-        }
+const isIos = () => /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
 
-        if (shouldShow) {
-            // Slight delay so it doesn't jarringly appear instantly
-            setTimeout(() => {
-                const overlay = document.getElementById('promoPopupOverlay');
-                const modal = document.getElementById('promoPopupModal');
-                
-                if(overlay && modal) {
-                    overlay.classList.remove('hidden');
-                    // Trigger reflow
-                    void overlay.offsetWidth;
-                    
-                    overlay.classList.remove('opacity-0');
-                    modal.classList.remove('scale-95');
-                    modal.classList.add('scale-100');
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!localStorage.getItem('pwa_banner_dismissed')) installBanner.style.display = 'block';
+});
 
-                    // Record that we showed it
-                    if (frequency === 'session') {
-                        sessionStorage.setItem('promo_shown_this_session', 'true');
-                    } else if (frequency === 'daily') {
-                        localStorage.setItem('promo_last_shown_time', new Date().getTime().toString());
-                    }
-                }
-            }, 1000);
+if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            installBanner.style.display = 'none';
+        } else if (isIos() && !isInStandaloneMode()) {
+            installBanner.style.display = 'none';
+            iosGuide.style.display = 'flex';
         }
     });
+}
 
-    function closePromoPopup() {
-        const overlay = document.getElementById('promoPopupOverlay');
-        const modal = document.getElementById('promoPopupModal');
-        
-        if(overlay && modal) {
-            overlay.classList.add('opacity-0');
-            modal.classList.remove('scale-100');
-            modal.classList.add('scale-95');
-            
-            setTimeout(() => {
-                overlay.classList.add('hidden');
-            }, 300);
+if (closeBanner) {
+    closeBanner.addEventListener('click', () => {
+        installBanner.style.display = 'none';
+        localStorage.setItem('pwa_banner_dismissed', 'true');
+    });
+}
+
+if (isIos() && !isInStandaloneMode() && !localStorage.getItem('pwa_banner_dismissed')) {
+    installBanner.style.display = 'block';
+}
+
+async function toggleWishlist(pid, event) {
+    if (event) { event.preventDefault(); event.stopPropagation(); }
+    const btns = document.querySelectorAll('.wish-btn-' + pid + ', #wish-toggle-btn');
+    btns.forEach(b => { b.classList.add('pulse-heart'); setTimeout(() => b.classList.remove('pulse-heart'), 400); });
+    const formData = new FormData();
+    formData.append('product_id', pid);
+    try {
+        const res = await fetch(window.SHOP_URL + 'ajax/toggle_wishlist.php', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success === false && data.login_required) { window.location.href = window.SHOP_URL + 'login.php'; return; }
+        if (data.success) {
+            btns.forEach(b => {
+                const svg = b.querySelector('svg');
+                if (data.action === 'added') { b.classList.add('active'); if (svg) { svg.setAttribute('fill', 'var(--red)'); svg.setAttribute('stroke', 'var(--red)'); } }
+                else { b.classList.remove('active'); if (svg) { svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', 'var(--ink)'); } }
+            });
+            if (window.showToast) window.showToast(data.message);
         }
+    } catch (err) { console.error('Wishlist sync failure'); }
+}
+
+async function quickAddToCart(pid, event) {
+    if (event) { event.preventDefault(); event.stopPropagation(); }
+    const btn = event.currentTarget;
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<span style="font-size: 10px;">⌛</span>';
+    btn.style.pointerEvents = 'none';
+    const formData = new FormData();
+    formData.append('product_id', pid);
+    formData.append('quantity', 1);
+    try {
+        const res = await fetch(window.SHOP_URL + 'ajax/add_to_cart.php', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+            btn.innerHTML = '<span style="font-size: 14px;">✅</span>';
+            btn.style.background = 'var(--ink)';
+            btn.style.color = '#fff';
+            const badge = document.querySelector('.cart-badge');
+            if (badge) badge.innerText = data.cart_count || badge.innerText;
+            document.querySelectorAll('.mobile-cart-badge').forEach(el => { el.innerText = data.cart_count || el.innerText; el.classList.add('visible'); });
+            setTimeout(() => { btn.innerHTML = originalContent; btn.style.background = ''; btn.style.color = ''; btn.style.pointerEvents = ''; }, 2000);
+        } else {
+            window.location.href = window.SHOP_URL + 'login.php';
+        }
+    } catch (err) {
+        btn.innerHTML = '❌';
+        setTimeout(() => { btn.innerHTML = originalContent; btn.style.pointerEvents = ''; }, 2000);
     }
+}
 
-    function dismissPromoPopup() {
-        localStorage.setItem('promo_dismissed', 'true');
-        closePromoPopup();
-    }
-    </script>
-<?php endif; ?>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.card-auto-slider').forEach(slider => {
+        const images = slider.querySelectorAll('img.slide-img');
+        if (images.length <= 1) return;
+        let currentIndex = 0;
+        setInterval(() => {
+            images[currentIndex].style.opacity = '0';
+            images[currentIndex].style.transform = 'scale(1.05) translateY(8px)';
+            currentIndex = (currentIndex + 1) % images.length;
+            images[currentIndex].style.opacity = '1';
+            images[currentIndex].style.transform = 'scale(1) translateY(0)';
+        }, 3000);
+    });
+});
+</script>
 
-<!-- No more Bootstrap JS needed for the new UI, using Alpine or Vanilla JS for interactivity if needed -->
-<!-- But we keep the base script.js if it has critical logic like cart handling -->
-<script src="<?php echo $base; ?>assets/js/script.js"></script>
+<!-- Mobile Bottom Navigation Bar -->
+<div class="mobile-bottom-nav">
+    <a href="<?php echo $base; ?>shop.php" class="mobile-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>Shop</span>
+    </a>
+    <a href="<?php echo $base; ?>user/wishlist.php" class="mobile-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        <span>Wishlist</span>
+    </a>
+    <a href="<?php echo $base; ?>cart.php" class="mobile-nav-item mobile-nav-cart">
+        <div class="mobile-cart-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <span class="mobile-cart-badge <?php echo $cart_count > 0 ? 'visible' : ''; ?>"><?php echo $cart_count; ?></span>
+        </div>
+        <span>Cart</span>
+    </a>
+    <a href="<?php echo $base; ?>user/dashboard.php" class="mobile-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span>My account</span>
+    </a>
+</div>
 
+<?php require_once __DIR__ . '/share-modal.php'; ?>
 </body>
 </html>

@@ -1,36 +1,32 @@
 {
   "name": "ASO Online Market",
   "short_name": "ASO Market",
-  "description": "Premium storefront for ASO Online Market products",
+  "description": "Premium Online Market in Ghana. Discover great deals with nationwide delivery.",
   "start_url": "index.php",
+  "scope": ".",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#004225",
-  "orientation": "portrait-primary",
+  "theme_color": "#E8002D",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "assets/images/logo-rounded.png",
+      "src": "assets/images/logo2-rounded.png?v=2",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/images/logo-rounded.png",
+      "src": "assets/images/logo2-rounded.png?v=2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/images/logo-rounded.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "assets/images/logo-rounded.png",
+      "src": "assets/images/logo2-rounded.png?v=2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "categories": ["shopping", "technology"]
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin: Invoice (Printable)
+ * Admin: Invoice (Printable) — Avazonia design
  * - Admin-only printable invoice view for a single order
  * - Joins order with user and items to render a clean invoice layout
  * - Ready for printing; can be used as a base for PDF export libraries later
@@ -15,6 +15,10 @@ if ($order_id <= 0) {
     echo 'Invalid order ID';
     exit;
 }
+
+$settings = loadSiteSettings($pdo);
+$site_name = $settings['site_name'] ?? 'ASO Online Market';
+$site_desc = $settings['site_description'] ?? '';
 
 // Fetch order and items
 try {
@@ -42,174 +46,269 @@ try {
     exit;
 }
 
-// Basic store info (customize as needed)
-$store = [
-    'name' => 'E-Shop',
-    'address' => "123 Shopping Street\nCity, State 12345",
-    'email' => 'info@eshop.com',
-    'phone' => '+1 (555) 123-4567'
-];
+$order_number = $order['order_number'] ?? str_pad($order_id, 6, '0', STR_PAD_LEFT);
+$order_date = $order['order_date'];
+$payment_method = ucwords(str_replace('_', ' ', $order['payment_method'] ?? 'not specified'));
+$order_status = ucfirst($order['order_status'] ?? 'pending');
 
+// Prefer dedicated phone column; fallback to extract from order_notes
+$phoneDisplay = $order['phone'] ?? '';
+if (empty($phoneDisplay) && !empty($order['order_notes'])) {
+    if (preg_match('/Phone:\s*(.+)/i', $order['order_notes'], $m)) {
+        $phoneDisplay = trim($m[1]);
+    }
+}
+
+$subtotal = 0;
+foreach ($items as $it) {
+    $subtotal += $it['price'] * $it['quantity'];
+}
+$shipping = max(0, (float)$order['total_amount'] - $subtotal);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice #<?php echo str_pad($order_id, 6, '0', STR_PAD_LEFT); ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Invoice #<?php echo htmlspecialchars($order_number); ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@600;700;900&display=swap" rel="stylesheet">
     <style>
-        @media print {
-            /* Hide everything except the invoice */
-            body * {
-                visibility: hidden;
-            }
-
-            /* Show only the invoice box and its contents */
-            .invoice-box,
-            .invoice-box *,
-            .invoice-box *::before,
-            .invoice-box *::after {
-                visibility: visible;
-            }
-
-            /* Position the invoice at the top of the page */
-            .invoice-box {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                margin: 0;
-                padding: 20px;
-                box-shadow: none;
-                border: none;
-                background: white;
-            }
-
-            /* Reset body margins for clean printing */
-            body {
-                margin: 0;
-                padding: 0;
-            }
-
-            /* Hide navigation buttons when printing */
-            .no-print {
-                display: none !important;
-            }
-
-            /* Ensure proper page breaks */
-            .invoice-box {
-                page-break-inside: avoid;
-            }
-
-            /* Optimize table for printing */
-            .table {
-                page-break-inside: auto;
-            }
-
-            .table tr {
-                page-break-inside: avoid;
-                page-break-after: auto;
-            }
+        :root {
+            --ink: #0B3D2E;
+            --red: #00A854;
+            --off: #F4F1EC;
+            --mid-gray: #6B6B6B;
+            --light-gray: #E5E1DA;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--off);
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            color: var(--ink);
+            padding: 40px 20px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
         .invoice-box {
             max-width: 900px;
-            margin: 20px auto;
+            margin: 0 auto;
             background: #fff;
-            padding: 20px;
-            border: 1px solid #eee;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            border: 2px solid var(--ink);
+            border-radius: 16px;
+            overflow: hidden;
         }
-        .table th, .table td { vertical-align: middle; }
+        .invoice-header {
+            background: var(--ink);
+            color: #fff;
+            padding: 28px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+        }
+        .brand {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 24px;
+            letter-spacing: -0.04em;
+            text-transform: uppercase;
+        }
+        .brand span { color: var(--red); }
+        .brand-sub { font-size: 11px; opacity: 0.7; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+        .invoice-title { text-align: right; }
+        .invoice-title h1 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 32px;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+        .invoice-title div { font-size: 13px; opacity: 0.8; margin-top: 6px; font-family: monospace; }
+        .invoice-body { padding: 40px; }
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .meta-block h6 {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--mid-gray);
+            margin-bottom: 10px;
+        }
+        .meta-block p { font-size: 13px; line-height: 1.7; color: var(--ink); }
+        .meta-block p strong { display: block; font-size: 15px; margin-bottom: 2px; }
+        table.inv-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+        .inv-table th {
+            background: var(--off);
+            padding: 12px 14px;
+            text-align: left;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--ink);
+            border-bottom: 2px solid var(--ink);
+        }
+        .inv-table th.num, .inv-table td.num { text-align: right; }
+        .inv-table th.center, .inv-table td.center { text-align: center; }
+        .inv-table td { padding: 14px; border-bottom: 1px solid var(--light-gray); font-size: 14px; }
+        .inv-table tbody tr:last-child td { border-bottom: 2px solid var(--ink); }
+        .inv-table tfoot td {
+            padding: 10px 14px;
+            font-size: 13px;
+            text-align: right;
+        }
+        .inv-table tfoot .grand-total td {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--red);
+            padding-top: 16px;
+            border-top: 2px solid var(--ink);
+            border-bottom: none;
+        }
+        .no-print {
+            margin-top: 32px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid var(--ink);
+            background: #fff;
+            color: var(--ink);
+            border-radius: 12px;
+            padding: 12px 22px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+        }
+        .btn-primary { background: var(--ink); color: #fff; }
+        .btn-primary:hover { background: var(--red); border-color: var(--red); }
+        .btn:hover { background: var(--ink); color: #fff; }
+        .invoice-footer {
+            padding: 20px 40px;
+            border-top: 1px solid var(--light-gray);
+            text-align: center;
+            font-size: 11px;
+            color: var(--mid-gray);
+        }
+        @media print {
+            body { background: #fff; padding: 0; }
+            .invoice-box { border: none; border-radius: 0; }
+            .invoice-header { background: var(--ink) !important; }
+            .no-print { display: none !important; }
+            .invoice-box { page-break-inside: avoid; }
+            .inv-table tr { page-break-inside: avoid; }
+        }
+        @media (max-width: 600px) {
+            .invoice-header { flex-direction: column; padding: 24px; }
+            .invoice-title { text-align: left; }
+            .invoice-body { padding: 24px; }
+            .meta-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 <div class="invoice-box">
-    <div class="d-flex justify-content-between align-items-start mb-3">
+    <div class="invoice-header">
         <div>
-            <h2 class="mb-1">Invoice</h2>
-            <div>Order #: <strong>#<?php echo str_pad($order_id, 6, '0', STR_PAD_LEFT); ?></strong></div>
-            <div>Date: <?php echo date('M j, Y g:i A', strtotime($order['order_date'])); ?></div>
+            <div class="brand"><?php echo htmlspecialchars($site_name); ?><span>.</span></div>
+            <?php if ($site_desc): ?>
+                <div class="brand-sub"><?php echo htmlspecialchars($site_desc); ?></div>
+            <?php endif; ?>
         </div>
-        <div class="text-end">
-            <h4 class="mb-1"><?php echo htmlspecialchars($store['name']); ?></h4>
-            <div class="small text-muted" style="white-space: pre-line;"><?php echo htmlspecialchars($store['address']); ?></div>
-            <div class="small">Email: <?php echo htmlspecialchars($store['email']); ?> | Phone: <?php echo htmlspecialchars($store['phone']); ?></div>
+        <div class="invoice-title">
+            <h1>Invoice</h1>
+            <div>#<?php echo htmlspecialchars($order_number); ?></div>
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <h6>Bill To</h6>
-            <div><strong><?php echo htmlspecialchars($order['customer_name']); ?></strong></div>
-            <div class="small">Email: <?php echo htmlspecialchars($order['customer_email']); ?></div>
-            <div class="small">Phone: <?php echo htmlspecialchars($order['customer_phone'] ?? ''); ?></div>
-            <div class="small mt-2" style="white-space: pre-line;">Billing Address:<br><?php echo htmlspecialchars($order['billing_address']); ?></div>
+    <div class="invoice-body">
+        <div class="meta-grid">
+            <div class="meta-block">
+                <h6>Bill To</h6>
+                <p>
+                    <strong><?php echo htmlspecialchars($order['customer_name']); ?></strong>
+                    <?php echo htmlspecialchars($order['customer_email']); ?><br>
+                    <?php echo htmlspecialchars($phoneDisplay ?: ($order['customer_phone'] ?? '')); ?><br>
+                    <br>
+                    <strong style="font-size:11px;color:var(--mid-gray);">Billing Address</strong><br>
+                    <?php echo nl2br(htmlspecialchars($order['billing_address'])); ?>
+                </p>
+            </div>
+            <div class="meta-block">
+                <h6>Ship To</h6>
+                <p>
+                    <strong style="font-size:11px;color:var(--mid-gray);">Shipping Address</strong><br>
+                    <?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?>
+                </p>
+                <p style="margin-top:12px;">
+                    Date: <?php echo date('M j, Y g:i A', strtotime($order_date)); ?><br>
+                    Payment: <?php echo htmlspecialchars($payment_method); ?><br>
+                    Status: <strong><?php echo htmlspecialchars($order_status); ?></strong>
+                </p>
+            </div>
         </div>
-        <div class="col-md-6">
-            <h6>Ship To</h6>
-            <div class="small" style="white-space: pre-line;">Shipping Address:<br><?php echo htmlspecialchars($order['shipping_address']); ?></div>
-            <div class="small mt-2">Payment Method: <?php echo htmlspecialchars(ucfirst(str_replace('_',' ', $order['payment_method']))); ?></div>
-            <div class="small">Status: <?php echo htmlspecialchars(ucfirst($order['order_status'] ?? 'pending')); ?></div>
-        </div>
-    </div>
-    <?php
-// Prefer dedicated phone column; fallback to extract from notes
-$phoneDisplay = $order['phone'] ?? '';
-if (empty($phoneDisplay) && !empty($order['notes'])) {
-    if (preg_match('/Phone:\s*(.+)/i', $order['notes'], $m)) {
-        $phoneDisplay = trim($m[1]);
-    }
-}
-?>
-<?php if (!empty($phoneDisplay)): ?>
-    <p><strong>Phone:</strong> <?php echo htmlspecialchars($phoneDisplay); ?></p>
-<?php endif; ?>
 
-    <div class="table-responsive">
-        <table class="table table-bordered">
-            <thead class="table-light">
+        <table class="inv-table">
+            <thead>
             <tr>
-                <th>#</th>
+                <th style="width:40px;">#</th>
                 <th>Item</th>
-                <th class="text-end">Price</th>
-                <th class="text-center">Qty</th>
-                <th class="text-end">Total</th>
+                <th class="num">Price</th>
+                <th class="center">Qty</th>
+                <th class="num">Total</th>
             </tr>
             </thead>
             <tbody>
-            <?php $i=1; $subtotal=0; foreach ($items as $it): $line = $it['price'] * $it['quantity']; $subtotal += $line; ?>
+            <?php $i = 1; foreach ($items as $it): $line = $it['price'] * $it['quantity']; ?>
                 <tr>
                     <td><?php echo $i++; ?></td>
-                    <td><?php echo htmlspecialchars($it['name']); ?></td>
-                    <td class="text-end"><?php echo formatCurrency($it['price']); ?></td>
-                    <td class="text-center"><?php echo (int)$it['quantity']; ?></td>
-                    <td class="text-end"><strong><?php echo formatCurrency($line); ?></strong></td>
+                    <td><strong><?php echo htmlspecialchars($it['name']); ?></strong></td>
+                    <td class="num"><?php echo formatCurrency($it['price']); ?></td>
+                    <td class="center"><?php echo (int)$it['quantity']; ?></td>
+                    <td class="num"><strong><?php echo formatCurrency($line); ?></strong></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
             <tfoot>
             <tr>
-                <th colspan="4" class="text-end">Subtotal</th>
-                <th class="text-end"><?php echo formatCurrency($subtotal); ?></th>
+                <td colspan="4" style="color:var(--mid-gray);">Subtotal</td>
+                <td class="num"><?php echo formatCurrency($subtotal); ?></td>
             </tr>
             <tr>
-                <th colspan="4" class="text-end">Shipping</th>
-                <th class="text-end"><?php echo formatCurrency(0); ?></th>
+                <td colspan="4" style="color:var(--mid-gray);">Shipping</td>
+                <td class="num"><?php echo formatCurrency($shipping); ?></td>
             </tr>
-            <tr>
-                <th colspan="4" class="text-end">Grand Total</th>
-                <th class="text-end"><?php echo formatCurrency($order['total_amount']); ?></th>
+            <tr class="grand-total">
+                <td colspan="4">Grand Total</td>
+                <td class="num"><?php echo formatCurrency($order['total_amount']); ?></td>
             </tr>
             </tfoot>
         </table>
+
+        <div class="no-print">
+            <a href="order_details.php?id=<?php echo $order_id; ?>" class="btn">← Back to Order</a>
+            <button class="btn btn-primary" onclick="window.print()">Print</button>
+        </div>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mt-3 no-print">
-        <a href="order_details.php?id=<?php echo $order_id; ?>" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Order</a>
-        <button class="btn btn-dark" onclick="window.print()"><i class="fas fa-print me-2"></i>Print</button>
+    <div class="invoice-footer">
+        <?php echo htmlspecialchars($site_name); ?> — Generated <?php echo date('M j, Y g:i A'); ?>
     </div>
 </div>
 </body>
 </html>
-

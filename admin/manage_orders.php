@@ -1,6 +1,6 @@
 <?php
 /**
- * Modern Order Management
+ * Order Management — Avazonia style
  */
 require_once '../includes/db.php';
 session_start();
@@ -10,7 +10,7 @@ $page_title = 'Manage Orders';
 $errors = [];
 $success = '';
 
-$valid_status = ['pending','processing','confirmed','shipped','delivered','cancelled'];
+$valid_status = ['pending', 'paid', 'processing', 'shipped', 'arrived', 'delivered', 'approved', 'paid-full', 'cancelled', 'refunded'];
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // Handle Status Update
@@ -78,51 +78,52 @@ try {
     $errors[] = 'Fetch failed: ' . $e->getMessage();
 }
 
-include 'includes/header-new.php';
+include 'includes/avazonia_header.php';
 ?>
 
-<div class="admin-card animate-up mb-4">
-    <div class="card-body p-3">
-        <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-5">
-                <label class="stat-label small mb-1">Search Orders</label>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-white border-end-0 rounded-start-3"><i class="fas fa-search text-muted"></i></span>
-                    <input type="text" name="search" class="form-control border-start-0 rounded-end-3" placeholder="Order #, Customer..." value="<?php echo htmlspecialchars($search); ?>">
-                </div>
+<div class="admin-header">
+    <h1><?php echo htmlspecialchars($page_title); ?></h1>
+    <div class="header-actions">
+        <a href="export_orders.php" class="btn-ink">Export CSV</a>
+    </div>
+</div>
+
+<?php if ($success): ?>
+    <div class="alert-box alert-success"><?php echo htmlspecialchars($success); ?></div>
+<?php endif; ?>
+<?php foreach ($errors as $err): ?>
+    <div class="alert-box alert-error"><?php echo htmlspecialchars($err); ?></div>
+<?php endforeach; ?>
+
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">Order History <span style="opacity: 0.4;">(<?php echo count($orders); ?>)</span></div>
+    </div>
+    <div style="padding: 24px; border-bottom: 1px solid var(--light-gray);">
+        <form method="GET" class="filter-bar" style="margin-bottom: 0;">
+            <div class="filter-group">
+                <span class="flabel">Search</span>
+                <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Order #, Customer..." style="width: 280px;">
             </div>
-            <div class="col-md-3">
-                <label class="stat-label small mb-1">Status Filter</label>
-                <select name="status_filter" class="form-select form-select-sm rounded-3">
+            <div class="filter-group">
+                <span class="flabel">Status</span>
+                <select name="status_filter">
                     <option value="">All Statuses</option>
                     <?php foreach($valid_status as $s): ?>
                         <option value="<?php echo $s; ?>" <?php echo $status_filter === $s ? 'selected' : ''; ?>><?php echo ucfirst($s); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-4 d-flex gap-2">
-                <button type="submit" class="btn-premium flex-grow-1 py-1 text-[12px]">Apply</button>
+            <div style="display: flex; gap: 8px;">
+                <button type="submit" class="btn-ink" style="height: 44px;">Apply</button>
                 <?php if($search || $status_filter): ?>
-                    <a href="manage_orders.php" class="btn-premium-outline py-1 px-3 text-decoration-none small">Clear</a>
+                    <a href="manage_orders.php" class="btn-ink" style="height: 44px; background: transparent; color: var(--ink); border: 1px solid var(--ink);">Clear</a>
                 <?php endif; ?>
             </div>
         </form>
     </div>
-</div>
-
-<?php if ($success): ?>
-    <div class="alert alert-success border-0 rounded-4 mb-4 small fw-bold animate-up">
-        <i class="fas fa-check-circle me-2"></i><?php echo $success; ?>
-    </div>
-<?php endif; ?>
-
-<div class="admin-card animate-up" style="animation-delay: 0.1s;">
-    <div class="admin-card-header">
-        <h5 class="admin-card-title mb-0">Order History <span class="badge bg-light text-dark ms-2 rounded-pill"><?php echo count($orders); ?></span></h5>
-        <a href="export_orders.php" class="btn-premium-outline small py-1 px-3 text-decoration-none"><i class="fas fa-file-csv me-2"></i>Export</a>
-    </div>
-    <div class="table-responsive">
-        <table class="table align-middle">
+    <div class="table-container" style="border: none; margin-bottom: 0; border-radius: 0;">
+        <table class="admin-table">
             <thead>
                 <tr>
                     <th>Order Details</th>
@@ -130,50 +131,51 @@ include 'includes/header-new.php';
                     <th>Items</th>
                     <th>Total</th>
                     <th>Status</th>
-                    <th class="text-end">Actions</th>
+                    <th style="text-align: right;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach($orders as $o): ?>
                 <tr>
                     <td>
-                        <div class="fw-black text-[13px]">#<?php echo $o['order_number'] ?: str_pad($o['order_id'], 6, '0', STR_PAD_LEFT); ?></div>
-                        <div class="small text-muted fw-bold uppercase tracking-widest text-[9px] mt-0.5"><?php echo date('M d, Y', strtotime($o['order_date'])); ?></div>
+                        <div style="font-weight: 800;"><?php echo htmlspecialchars($o['order_number'] ?: str_pad($o['order_id'], 6, '0', STR_PAD_LEFT)); ?></div>
+                        <div style="font-size: 11px; opacity: 0.5; font-family: var(--f-mono);"><?php echo date('M d, Y', strtotime($o['order_date'])); ?></div>
                     </td>
                     <td>
-                        <div class="fw-bold text-[13px]"><?php echo htmlspecialchars($o['customer_name']); ?></div>
-                        <div class="small text-muted text-[11px]"><?php echo htmlspecialchars($o['email'] ?? ''); ?></div>
+                        <div style="font-weight: 700;"><?php echo htmlspecialchars($o['customer_name']); ?></div>
+                        <div style="font-size: 11px; opacity: 0.5;"><?php echo htmlspecialchars($o['email'] ?? ''); ?></div>
                     </td>
                     <td>
-                        <span class="badge bg-light text-dark border rounded-pill px-2 py-1 small"><?php echo $o['item_count']; ?> Items</span>
+                        <span class="status-badge" style="background: var(--off); color: var(--ink);"><?php echo (int)$o['item_count']; ?> Items</span>
                     </td>
-                    <td class="fw-black text-[13px]"><?php echo formatCurrency($o['total_amount']); ?></td>
+                    <td style="font-weight: 800;"><?php echo formatCurrency($o['total_amount']); ?></td>
                     <td>
-                        <form method="POST" class="d-inline">
+                        <form method="POST" onchange="this.submit()">
                             <input type="hidden" name="action" value="update_status">
                             <input type="hidden" name="order_id" value="<?php echo $o['order_id']; ?>">
-                            <select name="status" class="form-select status-select rounded-pill fw-black px-3 py-1.5 status-<?php echo $o['order_status']; ?>" onchange="this.form.submit()">
+                            <select name="status" style="border: none; padding: 4px 10px; border-radius: 99px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; background: var(--off); color: var(--ink);">
                                 <?php foreach($valid_status as $s): ?>
                                     <option value="<?php echo $s; ?>" <?php echo $o['order_status'] === $s ? 'selected' : ''; ?>><?php echo ucfirst($s); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </form>
                     </td>
-                    <td class="text-end">
-                        <div class="d-flex justify-content-end gap-1">
-                            <a href="order_details.php?id=<?php echo $o['order_id']; ?>" class="btn-premium-outline px-2 py-1 text-decoration-none text-[12px]">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="invoice.php?order_id=<?php echo $o['order_id']; ?>" target="_blank" class="btn-premium-outline px-2 py-1 text-decoration-none text-[12px]">
-                                <i class="fas fa-file-invoice"></i>
-                            </a>
+                    <td style="text-align: right;">
+                        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                            <a href="order_details.php?id=<?php echo $o['order_id']; ?>" class="action-btn">View</a>
+                            <a href="invoice.php?order_id=<?php echo $o['order_id']; ?>" target="_blank" class="action-btn">Invoice</a>
                         </div>
                     </td>
                 </tr>
                 <?php endforeach; ?>
                 <?php if (empty($orders)): ?>
                 <tr>
-                    <td colspan="6" class="text-center py-5 text-muted fw-bold">No orders found matching your criteria.</td>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <div class="empty-icon">○</div>
+                            <p>No orders found matching your criteria.</p>
+                        </div>
+                    </td>
                 </tr>
                 <?php endif; ?>
             </tbody>
@@ -181,4 +183,4 @@ include 'includes/header-new.php';
     </div>
 </div>
 
-<?php include 'includes/footer-new.php'; ?>
+<?php include 'includes/avazonia_footer.php'; ?>

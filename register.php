@@ -1,8 +1,9 @@
 <?php
 /**
- * Storefront: Register
+ * Storefront: Register (Avazonia auth-split layout)
  */
 require_once 'includes/db.php';
+require_once 'includes/email_config.php';
 
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
@@ -72,16 +73,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         try {
             $hashed_password = hashPassword($password);
-            $stmt = $pdo->prepare("INSERT INTO users (name, email, password, phone, role) VALUES (?, ?, ?, ?, 'customer')");
-            $stmt->execute([$name, $email, $hashed_password, $phone]);
-            
+            $verification_token = bin2hex(random_bytes(32));
+            $token_expires = date('Y-m-d H:i:s', strtotime('+24 hours'));
+
+            $stmt = $pdo->prepare("INSERT INTO users (name, email, password, phone, role, email_verified, verification_token, verification_expires) VALUES (?, ?, ?, ?, 'customer', 0, ?, ?)");
+            $stmt->execute([$name, $email, $hashed_password, $phone, $verification_token, $token_expires]);
+
             $user_id = $pdo->lastInsertId();
-            $_SESSION['user_id'] = $user_id;
-            $_SESSION['user_name'] = $name;
-            $_SESSION['user_email'] = $email;
-            $_SESSION['user_role'] = 'customer';
-            
-            header('Location: index.php?registered=1');
+
+            sendVerificationEmail($email, $name, $verification_token);
+
+            header('Location: verify_email.php?email=' . urlencode($email));
             exit();
         } catch(PDOException $e) {
             error_log("Registration error: " . $e->getMessage());
@@ -93,141 +95,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 include 'includes/header.php';
 ?>
 
-<main class="min-h-screen flex relative overflow-hidden bg-[#F9F9F9]">
-    <!-- Splash Screen -->
-    <div id="splash-screen" class="fixed inset-0 bg-white flex flex-col items-center justify-center z-[9999] transition-all duration-500 ease-out">
-        <div class="flex flex-col items-center gap-6 animate-pulse">
-            <img src="assets/images/logo-rounded.png" alt="ASO Logo" class="w-16 h-16 object-contain" />
-            <div class="w-7 h-7 border-4 border-[#EEEEEE] border-t-primary rounded-full animate-spin"></div>
-        </div>
-    </div>
-
-    <!-- Desktop Side Panel -->
-    <div class="hidden lg:block lg:w-1/2 h-screen sticky top-0">
-        <img src="assets/images/login_side_panel.png" alt="Store Aesthetic" class="w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-primary/10"></div>
-        <div class="absolute inset-0 flex flex-col justify-end p-20 bg-gradient-to-t from-black/80 via-transparent to-transparent">
-            <h2 class="text-white text-[48px] font-black leading-tight mb-4 tracking-tighter">Join the <span class="text-white/60">Community.</span></h2>
-            <p class="text-white/70 text-[18px] font-medium max-w-sm">Create an account to unlock premium benefits and experience the future of shopping.</p>
-        </div>
-    </div>
-
+<div class="auth-split reverse">
     <!-- Form Side -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 z-10 relative">
-        <div class="w-full max-w-[390px] bg-white rounded-2xl p-6 sm:p-8 border border-[#EEEEEE] shadow-sm">
-            <div class="mb-6 sm:mb-7 text-center lg:text-left">
-                <h1 class="text-[24px] sm:text-[28px] font-black text-[#1A1A1A] mb-1 sm:mb-2 tracking-tight">Create Account.</h1>
-                <p class="text-[#888888] font-bold text-[10px] sm:text-[11px] uppercase tracking-widest">Start your journey with us</p>
-            </div>
+    <div class="auth-form-side">
+        <div style="max-width: 400px; width: 100%; margin: 0 auto;">
+
+            <h1 style="font-family: var(--f-display); font-weight: 900; font-size: 40px; text-transform: uppercase; margin-bottom: 8px; line-height: 1; letter-spacing: -0.04em;">Join the Drop</h1>
+            <p style="font-family: var(--f-body); font-size: 14px; color: var(--mid-gray); margin-bottom: 48px;">Create your account to access exclusive tech.</p>
 
             <?php if (!empty($errors)): ?>
-                <div class="bg-[#FEF2F2] border border-[#FEE2E2] rounded-xl p-4 mb-6">
-                    <ul class="flex flex-col gap-1">
-                        <?php foreach ($errors as $error): ?>
-                            <li class="text-[#EF4444] text-[13px] font-bold flex items-center gap-2">
-                                <span class="material-symbols-outlined text-[18px]">error</span>
-                                <?php echo htmlspecialchars($error); ?>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
+                <div style="background: #fffafa; border: 1px solid #feeaea; color: var(--red); padding: 16px; font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; border-radius: 4px; margin-bottom: 32px;">
+                    <?php foreach ($errors as $error): ?>
+                        [ERROR] <?php echo htmlspecialchars($error); ?><br>
+                    <?php endforeach; ?>
                 </div>
             <?php endif; ?>
 
-            <form action="" method="POST" class="space-y-4">
-                <!-- Full Name -->
-                <div class="space-y-1.5">
-                    <label for="name" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest ml-2">Full Name</label>
-                    <input type="text" id="name" name="name" value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>" required 
-                           class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
+            <form action="register.php" method="POST" style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="form-group">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Full Name</label>
+                    <input type="text" name="name" value="<?php echo htmlspecialchars($name); ?>" placeholder="KWAME MENSAH" required style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">
                 </div>
 
-                <!-- Email -->
-                <div class="space-y-1.5">
-                    <label for="email" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest ml-2">Email Address</label>
-                    <input type="email" id="email" name="email" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required 
-                           class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
+                <div class="form-group">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Email Address</label>
+                    <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>" placeholder="USER@DOMAIN.COM" required style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">
                 </div>
 
-                <!-- Phone -->
-                <div class="space-y-1.5">
-                    <label for="phone" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest ml-2">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>" required 
-                           class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
+                <div class="form-group">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Phone Number</label>
+                    <input type="tel" name="phone" value="<?php echo htmlspecialchars($phone); ?>" placeholder="024 000 0000" required style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">
                 </div>
 
-                <!-- Passwords -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-1.5">
-                        <label for="password" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest ml-2">Password</label>
-                        <div class="relative group">
-                            <input type="password" id="password" name="password" required 
-                                   class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
-                            <button type="button" class="password-toggle absolute right-4 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#1A1A1A] transition-colors" data-target="password">
-                                <span class="material-symbols-outlined text-[20px]">visibility</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="space-y-1.5">
-                        <label for="confirm_password" class="text-[10px] font-bold text-[#888888] uppercase tracking-widest ml-2">Confirm</label>
-                        <div class="relative group">
-                            <input type="password" id="confirm_password" name="confirm_password" required 
-                                   class="w-full px-4 py-2.5 sm:px-5 sm:py-3 bg-[#F9F9F9] border border-[#EEEEEE] rounded-xl focus:border-primary outline-none text-[13px] sm:text-[14px] transition-all" />
-                            <button type="button" class="password-toggle absolute right-4 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#1A1A1A] transition-colors" data-target="confirm_password">
-                                <span class="material-symbols-outlined text-[20px]">visibility</span>
-                            </button>
-                        </div>
+                <div class="form-group">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Password</label>
+                    <div class="password-wrapper" style="position: relative;">
+                        <input type="password" name="password" id="password-input" placeholder="••••••••" required style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 48px 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">
+                        <button type="button" id="toggle-password" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #BBB; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Terms -->
-                <div class="flex items-start gap-2.5 ml-2">
-                    <input type="checkbox" id="terms" name="terms" required class="mt-1 w-4 h-4 rounded border-[#EEEEEE] text-[#1A1A1A] focus:ring-[#1A1A1A]" />
-                    <label for="terms" class="text-[11px] sm:text-[12px] font-medium text-[#666666] leading-relaxed">
-                        I agree to the <a href="#" class="text-[#1A1A1A] font-bold hover:underline">Terms</a> and <a href="#" class="text-[#1A1A1A] font-bold hover:underline">Privacy Policy</a>.
-                    </label>
+                <div class="form-group">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Confirm Password</label>
+                    <input type="password" name="confirm_password" placeholder="••••••••" required style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">
                 </div>
 
-                <!-- Action Button -->
-                <button type="submit" class="w-full bg-primary text-white font-bold text-[14px] sm:text-[15px] py-3 rounded-xl mt-4 hover:bg-primary shadow-xl hover:shadow-primary/10 transition-all active:scale-[0.98]">
-                    Create Account <span class="material-symbols-outlined text-[20px] ml-2 align-middle">person_add</span>
-                </button>
+                <script>
+                document.getElementById('toggle-password').addEventListener('click', function() {
+                    const input = document.getElementById('password-input');
+                    const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                    input.setAttribute('type', type);
+                    this.querySelector('svg').style.color = type === 'text' ? 'var(--red)' : '#BBB';
+                });
+                </script>
+
+                <label style="display: flex; align-items: flex-start; gap: 8px; font-family: var(--f-body); font-size: 12px; color: var(--mid-gray); cursor: pointer;">
+                    <input type="checkbox" name="terms" required style="accent-color: var(--ink); margin-top: 2px;"> I agree to the <a href="legal/terms-conditions.php" style="color: var(--ink); font-weight: 600; text-decoration: underline;">Terms</a> and <a href="legal/privacy-policy.php" style="color: var(--ink); font-weight: 600; text-decoration: underline;">Privacy Policy</a>.
+                </label>
+
+                <button type="submit" class="btn-red" style="width: 100%; height: 48px; font-size: 11px; margin-top: 16px;">Create Account →</button>
+
+                <div style="margin-top: 32px; text-align: center;">
+                    <p style="font-family: var(--f-body); font-size: 13px; color: var(--mid-gray);">
+                        Already have an account? <a href="login.php" style="color: var(--red); font-weight: 700; margin-left:8px; border-bottom: 1px solid var(--red); text-decoration: none;">Login here</a>
+                    </p>
+                </div>
             </form>
-
-            <p class="mt-6 sm:mt-8 text-center text-[12px] sm:text-[13px] text-[#666666] font-medium">
-                Already have an account? <a href="login.php" class="text-[#1A1A1A] font-black hover:underline">Sign In</a>
-            </p>
         </div>
     </div>
-</main>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Hide Splash Screen
-    const splash = document.getElementById('splash-screen');
-    if (splash) {
-        setTimeout(() => {
-            splash.style.opacity = '0';
-            splash.style.visibility = 'hidden';
-            setTimeout(() => splash.remove(), 500);
-        }, 600);
-    }
-
-    document.querySelectorAll('.password-toggle').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const targetId = this.getAttribute('data-target');
-            const input = document.getElementById(targetId);
-            const icon = this.querySelector('.material-symbols-outlined');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.textContent = 'visibility_off';
-            } else {
-                input.type = 'password';
-                icon.textContent = 'visibility';
-            }
-        });
-    });
-});
-</script>
+    <!-- Graphic Side -->
+    <div class="auth-graphic-side">
+        <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.8)); z-index: 1;"></div>
+        <img src="assets/images/login_side_panel.png" alt="ASO Brand Photography" style="width: 100%; height: 100%; object-fit: cover;">
+        <div style="position: absolute; bottom: 80px; left: 80px; right: 80px; color: #fff; z-index: 2;">
+            <p style="font-family: var(--f-display); font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 24px; opacity: 0.8;">ASO Online Market</p>
+            <h2 style="font-family: var(--f-display); font-weight: 900; font-size: 48px; text-transform: uppercase; line-height: 1; letter-spacing: -0.04em;">JOIN THE<br>COMMUNITY.</h2>
+        </div>
+    </div>
+</div>
 
 <?php include 'includes/footer.php'; ?>

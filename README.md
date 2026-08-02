@@ -113,8 +113,7 @@ This document serves as the Developer Guide for ASO Online Market. It explains p
 ### 4. Access the Website
 1. Start XAMPP
 2. Open browser and go to: `http://localhost/my-shop-2-main/`
-3. **Run Diagnostics**: Visit `http://localhost/my-shop-2-main/diagnostics.php` to verify your setup.
-4. Register a new account or login with admin credentials:
+3. Register a new account or login with admin credentials:
    - Email: admin@shop.com
    - Password: admin123
 
@@ -146,8 +145,7 @@ My Shop/
 ├── contact.php               # Contact page
 ├── includes/
 │   ├── db.php               # Database connection + helpers (sanitize, currency format, etc.)
-│   ├── header.php           # HTML <head>, computes $base for nested paths, includes navbar
-│   ├── navbar.php           # Navigation bar (uses $base and $site_name)
+│   ├── header.php           # HTML <head>, computes $base for nested paths, includes nav
 │   └── footer.php           # Footer
 ├── admin/
 │   ├── dashboard.php            # Admin overview (stats, recent orders)
@@ -160,7 +158,7 @@ My Shop/
 │   └── export_orders.php        # CSV export of orders
 ├── assets/
 │   ├── css/
-│   │   └── style.css        # Custom CSS
+│   │   └── avazonia.css     # Custom CSS (Avazonia design system)
 │   ├── js/
 │   │   └── script.js        # Custom JavaScript
 │   └── images/              # Product images
@@ -186,9 +184,8 @@ My Shop/
 ## Technologies Used
 - **Backend:** PHP 8.x
 - **Database:** MySQL 5.7+
-- **Frontend:** HTML5, CSS3, Bootstrap 5.3
+- **Frontend:** HTML5, CSS3 (Avazonia design system)
 - **JavaScript:** Vanilla JS with Fetch API
-- **Icons:** Font Awesome 6.x
 
 ## Browser Support
 - Chrome (latest)
@@ -281,7 +278,7 @@ My Shop/
 
 ### Path Handling in Includes
 - `includes/header.php` computes `$base` by detecting if the current script runs under `/admin/` or `/user/`.
-- All links in `includes/navbar.php` use `<?php echo $base; ?>` so navigation works from nested folders.
+- Navigation links in `includes/header.php` use `<?php echo $base; ?>` so navigation works from nested folders.
 
 ## Security Considerations
 - All inputs are sanitized and validated

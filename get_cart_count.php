@@ -14,18 +14,8 @@ $response = [
 ];
 
 try {
-    // Check if user is logged in
-    if (isset($_SESSION['user_id'])) {
-        // Get cart count from database for logged-in users
-        $stmt = $pdo->prepare("SELECT SUM(quantity) as total FROM cart WHERE user_id = ?");
-        $stmt->execute([$_SESSION['user_id']]);
-        $result = $stmt->fetch();
-        $response['count'] = (int)($result['total'] ?? 0);
-    } else if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
-        // Get cart count from session for guests
-        $response['count'] = array_sum(array_column($_SESSION['cart'], 'quantity'));
-    }
-    
+    // Works for logged-in users (DB cart) and guests (session cart)
+    $response['count'] = asoCartCount($pdo);
     $response['success'] = true;
 } catch (Exception $e) {
     // Log error but don't expose it to the client

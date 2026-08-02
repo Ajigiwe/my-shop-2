@@ -72,114 +72,98 @@ try {
 } catch (PDOException $e) {}
 
 $page_title = 'Promo Popup Settings';
-include 'includes/header-new.php';
+include 'includes/avazonia_header.php';
 ?>
 
-<div class="row g-4">
-    <div class="col-lg-8">
-        <div class="admin-card animate-up">
-            <div class="admin-card-header d-flex justify-content-between align-items-center">
-                <h5 class="admin-card-title mb-0">Promo Popup Configuration</h5>
-                <div class="form-check form-switch fs-5">
-                    <input class="form-check-input" type="checkbox" role="switch" id="headerEnableToggle" <?php echo (isset($settings['promo_popup_enabled']) && $settings['promo_popup_enabled'] == '1') ? 'checked' : ''; ?> onchange="document.getElementById('realEnableToggle').checked = this.checked;">
-                    <label class="form-check-label small fw-bold text-muted" for="headerEnableToggle">Enable Popup</label>
+<?php if ($success_msg): ?>
+    <div class="alert-box alert-success"><?php echo htmlspecialchars($success_msg); ?></div>
+<?php endif; ?>
+<?php if ($error_msg): ?>
+    <div class="alert-box alert-error"><?php echo htmlspecialchars($error_msg); ?></div>
+<?php endif; ?>
+
+<div class="settings-grid">
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">Promo Popup Configuration</div>
+            <label class="check-row" style="padding-top: 0;">
+                <input type="checkbox" class="field-check" id="headerEnableToggle" <?php echo (isset($settings['promo_popup_enabled']) && $settings['promo_popup_enabled'] == '1') ? 'checked' : ''; ?> onchange="document.getElementById('realEnableToggle').checked = this.checked;">
+                <span class="field-label" style="margin: 0;">Enable Popup</span>
+            </label>
+        </div>
+        <div class="panel-body">
+            <form method="POST" enctype="multipart/form-data">
+                <input type="checkbox" name="promo_popup_enabled" id="realEnableToggle" class="d-none" <?php echo (isset($settings['promo_popup_enabled']) && $settings['promo_popup_enabled'] == '1') ? 'checked' : ''; ?>>
+
+                <div class="field-grid">
+                    <div class="field-group">
+                        <label class="field-label">Popup Title</label>
+                        <input type="text" name="promo_popup_title" value="<?php echo htmlspecialchars($settings['promo_popup_title'] ?? 'Welcome to Our Store!'); ?>" class="field-input" placeholder="e.g., Summer Sale is Here!">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Display Frequency</label>
+                        <select name="promo_popup_frequency" class="field-input">
+                            <option value="always" <?php echo (isset($settings['promo_popup_frequency']) && $settings['promo_popup_frequency'] == 'always') ? 'selected' : ''; ?>>Always (Every Visit)</option>
+                            <option value="session" <?php echo (!isset($settings['promo_popup_frequency']) || $settings['promo_popup_frequency'] == 'session') ? 'selected' : ''; ?>>Once Per Session (Browser Open)</option>
+                            <option value="daily" <?php echo (isset($settings['promo_popup_frequency']) && $settings['promo_popup_frequency'] == 'daily') ? 'selected' : ''; ?>>Once Per Day</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-            <div class="card-body p-4">
-                <?php if ($success_msg): ?>
-                    <div class="alert alert-success border-0 rounded-4 mb-4 small fw-bold">
-                        <i class="fas fa-check-circle me-2"></i><?php echo $success_msg; ?>
-                    </div>
-                <?php endif; ?>
-                <?php if ($error_msg): ?>
-                    <div class="alert alert-danger border-0 rounded-4 mb-4 small fw-bold">
-                        <i class="fas fa-exclamation-triangle me-2"></i><?php echo $error_msg; ?>
-                    </div>
-                <?php endif; ?>
 
-                <form method="POST" enctype="multipart/form-data" class="space-y-4">
-                    <!-- Hidden sync for toggle -->
-                    <input type="checkbox" name="promo_popup_enabled" id="realEnableToggle" class="d-none" <?php echo (isset($settings['promo_popup_enabled']) && $settings['promo_popup_enabled'] == '1') ? 'checked' : ''; ?>>
-                    
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="stat-label">Popup Title</label>
-                            <input type="text" name="promo_popup_title" value="<?php echo htmlspecialchars($settings['promo_popup_title'] ?? 'Welcome to Our Store!'); ?>" class="form-control rounded-3 py-2" placeholder="e.g., Summer Sale is Here!">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="stat-label">Display Frequency</label>
-                            <select name="promo_popup_frequency" class="form-select rounded-3 py-2 fw-bold text-[#1A1A1A]">
-                                <option value="always" <?php echo (isset($settings['promo_popup_frequency']) && $settings['promo_popup_frequency'] == 'always') ? 'selected' : ''; ?>>Always (Every Visit)</option>
-                                <option value="session" <?php echo (!isset($settings['promo_popup_frequency']) || $settings['promo_popup_frequency'] == 'session') ? 'selected' : ''; ?>>Once Per Session (Browser Open)</option>
-                                <option value="daily" <?php echo (isset($settings['promo_popup_frequency']) && $settings['promo_popup_frequency'] == 'daily') ? 'selected' : ''; ?>>Once Per Day</option>
-                            </select>
-                        </div>
-                    </div>
+                <div class="field-group">
+                    <label class="field-label">Popup Message Content</label>
+                    <textarea name="promo_popup_content" rows="3" class="field-input" placeholder="e.g., Get 20% off all summer items this weekend."><?php echo htmlspecialchars($settings['promo_popup_content'] ?? 'Discover our amazing collection.'); ?></textarea>
+                </div>
 
-                    <div class="mb-4">
-                        <label class="stat-label">Popup Message Content</label>
-                        <textarea name="promo_popup_content" rows="3" class="form-control rounded-3 py-2" placeholder="e.g., Get 20% off all summer items this weekend."><?php echo htmlspecialchars($settings['promo_popup_content'] ?? 'Discover our amazing collection.'); ?></textarea>
+                <div class="field-grid">
+                    <div class="field-group">
+                        <label class="field-label">Button Text</label>
+                        <input type="text" name="promo_popup_btn_text" value="<?php echo htmlspecialchars($settings['promo_popup_btn_text'] ?? 'Shop Now'); ?>" class="field-input" placeholder="e.g., Shop Collection">
                     </div>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="stat-label">Button Text</label>
-                            <input type="text" name="promo_popup_btn_text" value="<?php echo htmlspecialchars($settings['promo_popup_btn_text'] ?? 'Shop Now'); ?>" class="form-control rounded-3 py-2" placeholder="e.g., Shop Collection">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="stat-label">Button Link</label>
-                            <input type="text" name="promo_popup_btn_link" value="<?php echo htmlspecialchars($settings['promo_popup_btn_link'] ?? 'shop.php'); ?>" class="form-control rounded-3 py-2" placeholder="e.g., shop.php?category=sale">
-                        </div>
+                    <div class="field-group">
+                        <label class="field-label">Button Link</label>
+                        <input type="text" name="promo_popup_btn_link" value="<?php echo htmlspecialchars($settings['promo_popup_btn_link'] ?? 'shop.php'); ?>" class="field-input" placeholder="e.g., shop.php?category=sale">
                     </div>
+                </div>
 
-                    <div class="mb-4">
-                        <label class="stat-label">Featured Image</label>
-                        <div class="d-flex align-items-center gap-3">
-                            <?php if (!empty($settings['promo_popup_image'])): ?>
-                                <div class="bg-light p-2 rounded-3 border" style="width: 100px; height: 100px;">
-                                    <img src="../assets/images/<?php echo htmlspecialchars($settings['promo_popup_image']); ?>" class="w-100 h-100 object-fit-contain rounded-2" alt="Current Promo Image">
-                                </div>
-                            <?php else: ?>
-                                <div class="bg-light p-2 rounded-3 border d-flex justify-content-center align-items-center text-muted" style="width: 100px; height: 100px;">
-                                    <i class="fas fa-image fs-1 opacity-25"></i>
-                                </div>
-                            <?php endif; ?>
-                            <div class="flex-grow-1">
-                                <input type="file" name="promo_popup_image" class="form-control rounded-3 py-2" accept="image/*">
-                                <p class="text-[10px] text-muted fw-bold uppercase tracking-widest mt-2 mb-0">Recommended: Square or portrait image (e.g., 600x600px). Leave empty to keep current image.</p>
-                                <input type="hidden" name="current_image" value="<?php echo htmlspecialchars($settings['promo_popup_image'] ?? ''); ?>">
+                <div class="field-group" style="margin-bottom: 0;">
+                    <label class="field-label">Featured Image</label>
+                    <div class="d-flex align-items-center gap-3">
+                        <?php if (!empty($settings['promo_popup_image'])): ?>
+                            <div style="width: 100px; height: 100px; border: 1px solid var(--light-gray); display: flex; align-items: center; justify-content: center; background: var(--off);">
+                                <img src="../assets/images/<?php echo htmlspecialchars($settings['promo_popup_image']); ?>" style="max-width: 100%; max-height: 100%; object-fit: contain;" alt="Current Promo Image">
                             </div>
+                        <?php else: ?>
+                            <div style="width: 100px; height: 100px; border: 1px dashed var(--light-gray); display: flex; align-items: center; justify-content: center; color: var(--mid-gray); font-family: var(--f-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em;">No Image</div>
+                        <?php endif; ?>
+                        <div style="flex: 1;">
+                            <input type="file" name="promo_popup_image" class="field-input" accept="image/*">
+                            <span class="field-sub">Recommended: Square or portrait image (e.g., 600x600px). Leave empty to keep current image.</span>
+                            <input type="hidden" name="current_image" value="<?php echo htmlspecialchars($settings['promo_popup_image'] ?? ''); ?>">
                         </div>
                     </div>
+                </div>
 
-                    <div class="mt-5 pt-3 border-top">
-                        <button type="submit" class="btn-premium px-5 py-3 float-end">
-                            <i class="fas fa-save me-2"></i>Save Configuration
-                        </button>
-                        <div class="clearfix"></div>
-                    </div>
-                </form>
-            </div>
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--light-gray);">
+                    <button type="submit" class="btn-red">Save Configuration</button>
+                </div>
+            </form>
         </div>
     </div>
-    
-    <div class="col-lg-4">
-        <div class="admin-card animate-up" style="animation-delay: 0.1s;">
-            <div class="admin-card-header">
-                <h5 class="admin-card-title mb-0">Quick Tips</h5>
+
+    <div class="panel">
+        <div class="panel-header"><div class="panel-title">Quick Tips</div></div>
+        <div class="panel-body" style="font-size: 13px; color: var(--mid-gray);">
+            <div class="field-group">
+                <strong style="color: var(--ink); display: block; margin-bottom: 4px;">Dismissal Logic</strong>
+                The popup will automatically include a <span style="border: 1px solid var(--light-gray); padding: 1px 8px; font-family: var(--f-mono); font-size: 11px;">Don't show again</span> button. If a user clicks this, the popup will be permanently hidden for them on their current browser, overriding the frequency setting.
             </div>
-            <div class="card-body p-4 text-muted small">
-                <div class="mb-3">
-                    <strong class="text-dark d-block mb-1">Dismissal Logic</strong>
-                    The popup will automatically include a <span class="badge bg-light text-dark">Don't show again</span> button. If a user clicks this, the popup will be permanently hidden for them on their current browser, overriding the frequency setting.
-                </div>
-                <div class="mb-3">
-                    <strong class="text-dark d-block mb-1">Frequency Setting</strong>
-                    If the user just clicks the standard "X" to close, the popup will reappear based on your selected frequency.
-                </div>
+            <div class="field-group" style="margin-bottom: 0;">
+                <strong style="color: var(--ink); display: block; margin-bottom: 4px;">Frequency Setting</strong>
+                If the user just clicks the standard "X" to close, the popup will reappear based on your selected frequency.
             </div>
         </div>
     </div>
 </div>
 
-<?php include 'includes/footer-new.php'; ?>
+<?php include 'includes/avazonia_footer.php'; ?>

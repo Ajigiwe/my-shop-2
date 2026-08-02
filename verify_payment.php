@@ -42,7 +42,7 @@ try {
         error_log("Order lookup result: " . print_r($order, true));
         
         if ($order) {
-            // Update order status to confirmed
+            // Update order status to paid
             $stmt = $pdo->prepare("UPDATE orders SET order_status = 'confirmed', payment_status = 'completed' WHERE order_id = ?");
             $stmt->execute([$order['order_id']]);
             error_log("Order status updated to confirmed for order: " . $order['order_id']);
@@ -51,6 +51,30 @@ try {
             $stmt = $pdo->prepare("DELETE FROM cart WHERE user_id = ?");
             $stmt->execute([$order['user_id']]);
             error_log("Cart cleared for user: " . $order['user_id']);
+            
+            // Send order confirmation email now that payment succeeded
+            if (!isset($_SESSION['email_sent_for_order']) || $_SESSION['email_sent_for_order'] != $order['order_id']) {
+                try {
+                    $stmt = $pdo->prepare("SELECT oi.*, p.name as product_name, oi.price as product_price
+                                           FROM order_items oi
+                                           LEFT JOIN products p ON oi.product_id = p.product_id
+                                           WHERE oi.order_id = ?");
+                    $stmt->execute([$order['order_id']]);
+                    $email_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    $email_details = [
+                        'items' => $email_items,
+                        'shipping_address' => $order['shipping_address'],
+                        'payment_method' => 'paystack',
+                        'order_date' => $order['order_date'],
+                        'total' => $order['total_amount'],
+                    ];
+                    if (sendOrderConfirmationEmail($order['email'], $order['first_name'] ?? 'Customer', $order['order_number'] ?? $order['order_id'], $email_details)) {
+                        $_SESSION['email_sent_for_order'] = $order['order_id'];
+                    }
+                } catch (Exception $e) {
+                    error_log("Confirmation email failed on verify: " . $e->getMessage());
+                }
+            }
             
             // Redirect to success page
             $redirect_url = 'order_confirmation.php?order_id=' . $order['order_id'] . '&payment=success';

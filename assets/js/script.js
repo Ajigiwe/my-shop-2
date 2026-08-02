@@ -263,13 +263,18 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     if (data.action === 'added') {
+                        wishlistBtn.classList.add('active');
                         wishlistBtn.classList.remove('text-[#1A1A1A]');
                         wishlistBtn.classList.add('text-red-500');
                         if (icon) icon.classList.add('fill-1');
                     } else {
+                        wishlistBtn.classList.remove('active');
                         wishlistBtn.classList.remove('text-red-500');
                         wishlistBtn.classList.add('text-[#1A1A1A]');
                         if (icon) icon.classList.remove('fill-1');
+                    }
+                    if (typeof window.refreshWishlistBadge === 'function' && data.wishlist_count) {
+                        window.refreshWishlistBadge(data.wishlist_count);
                     }
                     showToast(data.message, 'success', 2000);
                 } else if (data.login_required) {

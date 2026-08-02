@@ -1,13 +1,16 @@
 <?php
-// Start session
+require_once 'includes/db.php';
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
-
-// Set page title
 $page_title = 'Contact Us';
 
-// Check if user is logged in
+$settings = loadSiteSettings($pdo);
+$whatsapp_number = $settings['social_whatsapp'] ?? $settings['whatsapp_number'] ?? '233240000000';
+$support_email = $settings['support_email'] ?? 'hello@asoonlinemarket.com.gh';
+$store_address = $settings['store_address'] ?? $settings['store_map_address'] ?? 'Spintex Road, Near Shell Signboard, Accra, Ghana';
+$support_hours = $settings['support_hours'] ?? 'Monday to Saturday - 9am - 7pm';
+
 $user_name = $_SESSION['user_name'] ?? '';
 $user_email = $_SESSION['user_email'] ?? '';
 $user_phone = $_SESSION['user_phone'] ?? '';
@@ -15,210 +18,157 @@ $user_phone = $_SESSION['user_phone'] ?? '';
 include 'includes/header.php';
 ?>
 
-<main class="bg-[#F9F9F9] min-h-screen">
-    <!-- Hero Section -->
-    <section class="relative py-20 overflow-hidden">
-        <div class="relative z-10 max-w-[1200px] mx-auto px-6 text-center">
-            <span class="inline-block bg-white border border-[#EEEEEE] text-[#1A1A1A] text-[12px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest mb-6 shadow-sm">
-                Get In Touch
-            </span>
-            <h1 class="text-[48px] md:text-[64px] font-black text-[#1A1A1A] leading-tight mb-4 tracking-tighter">
-                Contact <span class="text-[#888888]">Us.</span>
-            </h1>
-            <p class="max-w-xl mx-auto text-[16px] md:text-[18px] text-[#666666] font-medium leading-relaxed">
-                Have questions or need assistance? Our customer service team is here to help you experience the future of shopping.
-            </p>
-        </div>
-    </section>
+<style>
+    .contact-main { padding-top: 120px; padding-bottom: 100px; }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 80px; margin-top: 80px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 
-    <!-- Contact Content -->
-    <section class="max-w-[1200px] mx-auto px-6 pb-24">
-        <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
-            <!-- Contact Sidebar -->
-            <div class="w-full lg:w-[400px] space-y-6">
-                <!-- Location & Info -->
-                <div class="bg-white rounded-[2rem] p-8 border border-[#EEEEEE] shadow-sm">
-                    <h2 class="text-[20px] font-black text-[#1A1A1A] mb-8 flex items-center gap-3">
-                        <span class="material-symbols-outlined text-[24px]">map</span> Our Headquarters
-                    </h2>
-                    
-                    <div class="space-y-6">
-                        <div class="flex gap-4">
-                            <div class="w-10 h-10 rounded-full bg-[#F5F5F5] flex items-center justify-center text-[#1A1A1A] flex-shrink-0">
-                                <span class="material-symbols-outlined text-[20px]">location_on</span>
-                            </div>
-                            <div>
-                                <p class="text-[13px] font-bold text-[#888888] uppercase tracking-widest mb-1">Address</p>
-                                <p class="text-[15px] font-black text-[#1A1A1A]">123 Business District,<br>Accra, Ghana</p>
-                            </div>
-                        </div>
+    @media (max-width: 1024px) {
+        .contact-grid { grid-template-columns: 1fr; gap: 60px; margin-top: 40px; }
+        .contact-main { padding-top: 80px; padding-bottom: 80px; }
+    }
 
-                        <div class="flex gap-4">
-                            <div class="w-10 h-10 rounded-full bg-[#F5F5F5] flex items-center justify-center text-[#1A1A1A] flex-shrink-0">
-                                <span class="material-symbols-outlined text-[20px]">call</span>
-                            </div>
-                            <div>
-                                <p class="text-[13px] font-bold text-[#888888] uppercase tracking-widest mb-1">Phone</p>
-                                <p class="text-[15px] font-black text-[#1A1A1A]">+233 20 123 4567</p>
-                            </div>
-                        </div>
+    @media (max-width: 768px) {
+        .form-row { grid-template-columns: 1fr; }
+        .hero-heading { font-size: 42px !important; }
+        .contact-main { padding-top: 60px; }
+    }
+</style>
 
-                        <div class="flex gap-4">
-                            <div class="w-10 h-10 rounded-full bg-[#F5F5F5] flex items-center justify-center text-[#1A1A1A] flex-shrink-0">
-                                <span class="material-symbols-outlined text-[20px]">mail</span>
-                            </div>
-                            <div>
-                                <p class="text-[13px] font-bold text-[#888888] uppercase tracking-widest mb-1">Email</p>
-                                <p class="text-[15px] font-black text-[#1A1A1A]">info@asoonlinemarket.com</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-10 pt-8 border-t border-[#F5F5F5]">
-                        <h3 class="text-[16px] font-black text-[#1A1A1A] mb-4">Business Hours</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between text-[14px]">
-                                <span class="text-[#888888] font-bold">Mon - Fri</span>
-                                <span class="text-[#1A1A1A] font-black">8:00 AM - 6:00 PM</span>
-                            </div>
-                            <div class="flex justify-between text-[14px]">
-                                <span class="text-[#888888] font-bold">Saturday</span>
-                                <span class="text-[#1A1A1A] font-black">9:00 AM - 4:00 PM</span>
-                            </div>
-                            <div class="flex justify-between text-[14px]">
-                                <span class="text-[#888888] font-bold">Sunday</span>
-                                <span class="text-[#EF4444] font-black uppercase tracking-tighter">Closed</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Google Maps (Compact) -->
-                <div class="bg-white rounded-[2rem] p-4 border border-[#EEEEEE] shadow-sm h-[300px] overflow-hidden group">
-                    <iframe 
-                        class="w-full h-full rounded-[1.5rem] grayscale-[0.5] group-hover:grayscale-0 transition-all duration-700"
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3970.3589870469786!2d-0.1868594852308864!3d5.611744995937145!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNcKwMzYnNDIuMyJOIDDCsDExJzEyLjciVw!5e0!3m2!1sen!2sgh!4v1640995200000" 
-                        allowfullscreen="" 
-                        loading="lazy">
-                    </iframe>
-                </div>
+<main class="contact-main">
+    <div class="container">
+        <div class="sec-head reveal">
+            <div>
+                <div class="sec-over">Get in Touch</div>
+                <h1 class="hero-heading" style="color: var(--ink); font-size: clamp(48px, 10vw, 120px); margin-bottom: 0;">Contact Us.</h1>
             </div>
+        </div>
 
-            <!-- Contact Form -->
-            <div class="flex-1">
-                <div class="bg-white rounded-[2rem] p-8 md:p-12 border border-[#EEEEEE] shadow-sm">
-                    <h2 class="text-[28px] font-black text-[#1A1A1A] mb-10 flex items-center gap-3">
-                        <span class="material-symbols-outlined text-[32px]">send</span> Send us a Message
-                    </h2>
-
-                    <div id="formMessages" class="mb-8 hidden"></div>
-
-                    <form id="contactForm" class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="space-y-2">
-                                <label class="text-[12px] font-bold text-[#888888] uppercase tracking-widest ml-4">Full Name</label>
-                                <input type="text" name="name" required 
-                                    class="w-full bg-[#F9F9F9] border border-[#EEEEEE] rounded-full py-4 px-6 outline-none focus:border-primary transition-colors text-[15px]" 
-                                    value="<?php echo htmlspecialchars($user_name); ?>" />
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-[12px] font-bold text-[#888888] uppercase tracking-widest ml-4">Email Address</label>
-                                <input type="email" name="email" required 
-                                    class="w-full bg-[#F9F9F9] border border-[#EEEEEE] rounded-full py-4 px-6 outline-none focus:border-primary transition-colors text-[15px]" 
-                                    value="<?php echo htmlspecialchars($user_email); ?>" />
-                            </div>
+        <div class="reveal rd1">
+            <div class="contact-split-hero">
+                <!-- LEFT: THE FORM (RED) -->
+                <div class="contact-box-red">
+                    <div>
+                        <div class="help-icon-circle">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
                         </div>
+                        <h2 class="help-title">Need Any<br>Help?</h2>
+                        <p class="help-subtitle" style="margin-top: 12px;">We are here to help you with any question.</p>
+                    </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="space-y-2">
-                                <label class="text-[12px] font-bold text-[#888888] uppercase tracking-widest ml-4">Phone Number</label>
-                                <input type="tel" name="phone" 
-                                    class="w-full bg-[#F9F9F9] border border-[#EEEEEE] rounded-full py-4 px-6 outline-none focus:border-primary transition-colors text-[15px]" 
-                                    value="<?php echo htmlspecialchars($user_phone); ?>" />
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-[12px] font-bold text-[#888888] uppercase tracking-widest ml-4">Subject</label>
-                                <select name="subject" required 
-                                    class="w-full bg-[#F9F9F9] border border-[#EEEEEE] rounded-full py-4 px-6 outline-none focus:border-primary transition-colors text-[15px] appearance-none">
-                                    <option value="" disabled selected>Select a subject</option>
-                                    <option value="General Inquiry">General Inquiry</option>
-                                    <option value="Product Question">Product Question</option>
-                                    <option value="Order Status">Order Status</option>
-                                    <option value="Returns & Exchanges">Returns & Exchanges</option>
-                                    <option value="Wholesale Inquiries">Wholesale Inquiries</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
+                    <div id="contactFormMessages" style="display: none; padding: 16px 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; margin-bottom: 24px; font-size: 14px;"></div>
+
+                    <form id="contactForm" action="<?php echo $base; ?>process_contact.php" method="POST" style="display: flex; flex-direction: column; gap: 20px;">
+                        <div>
+                            <input type="text" name="name" placeholder="Name *" required class="contact-input-white" value="<?php echo htmlspecialchars($user_name); ?>">
                         </div>
-
-                        <div class="space-y-2">
-                            <label class="text-[12px] font-bold text-[#888888] uppercase tracking-widest ml-4">Your Message</label>
-                            <textarea name="message" required rows="6" 
-                                class="w-full bg-[#F9F9F9] border border-[#EEEEEE] rounded-[1.5rem] py-4 px-6 outline-none focus:border-primary transition-colors text-[15px] resize-none"
-                                placeholder="How can we help you today?"></textarea>
+                        <div>
+                            <input type="email" name="email" placeholder="E-mail *" required class="contact-input-white" value="<?php echo htmlspecialchars($user_email); ?>">
                         </div>
-
-                        <div class="flex items-center gap-3 ml-4">
-                            <input type="checkbox" name="newsletter" id="newsletter" checked 
-                                class="w-5 h-5 rounded border-[#EEEEEE] text-[#1A1A1A] focus:ring-[#1A1A1A]" />
-                            <label for="newsletter" class="text-[14px] font-medium text-[#666666]">Subscribe to our newsletter for updates</label>
+                        <div>
+                            <input type="text" name="subject" placeholder="Subject *" required class="contact-input-white">
                         </div>
-
-                        <button type="submit" id="submitBtn" class="w-full bg-primary text-white font-bold text-[16px] py-5 rounded-full flex items-center justify-center gap-3 hover:bg-primary shadow-xl hover:shadow-primary/10 transition-all active:scale-[0.98]">
-                            Send Message <span class="material-symbols-outlined text-[24px]">verified</span>
-                        </button>
+                        <div>
+                            <textarea name="message" placeholder="Message *" required class="contact-input-white contact-textarea-white"></textarea>
+                        </div>
+                        <button type="submit" id="contactSubmitBtn" class="contact-btn-dark">Submit</button>
                     </form>
                 </div>
+
+                <!-- RIGHT: THE INFO (WHITE) -->
+                <div class="contact-box-white">
+                    <div class="info-row">
+                        <div class="info-icon-sq">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        </div>
+                        <div>
+                            <div class="info-large-text">+<?php echo htmlspecialchars($whatsapp_number); ?></div>
+                            <a href="https://wa.me/<?php echo htmlspecialchars($whatsapp_number); ?>" target="_blank" class="info-btn-outline" style="margin-top: 16px;">
+                                Online Help
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p style="font-family: var(--f-semi); font-size: 13px; color: var(--mid-gray); margin-bottom: 8px;"><?php echo htmlspecialchars($support_hours); ?></p>
+                        <a href="<?php echo $base; ?>legal/faq.php" style="font-family: var(--f-display); font-weight: 800; font-size: 15px; color: var(--ink); text-decoration: underline;">Frequently Asked Questions</a>
+                    </div>
+
+                    <div>
+                        <div style="font-family: var(--f-mono); font-size: 10px; font-weight: 700; color: var(--mid-gray); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">STORE HUB</div>
+                        <div style="max-width: 320px;">
+                            <h3 style="font-family: var(--f-display); font-size: 22px; font-weight: 800; color: var(--ink); margin-bottom: 8px;">ASO Online Market Hub</h3>
+                            <div style="display: flex; gap: 12px; color: var(--mid-gray); font-size: 14px; line-height: 1.6;">
+                                <div style="width: 8px; height: 8px; background: var(--red); border-radius: 50%; margin-top: 6px; flex-shrink: 0;"></div>
+                                <div><?php echo htmlspecialchars($store_address); ?></div>
+                            </div>
+                            <a href="mailto:<?php echo htmlspecialchars($support_email); ?>" style="display: inline-block; margin-top: 16px; border-bottom: 2px solid var(--ink); font-weight: 800; font-size: 14px; color: var(--ink);"><?php echo htmlspecialchars($support_email); ?></a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </section>
+
+        <div class="reveal rd2" style="margin-top: 100px;">
+            <div class="contact-map-wrapper">
+                <iframe
+                    class="contact-map-frame"
+                    frameborder="0"
+                    scrolling="no"
+                    marginheight="0"
+                    marginwidth="0"
+                    src="https://maps.google.com/maps?q=<?php echo urlencode($store_address); ?>&t=&z=15&ie=UTF8&iwloc=&output=embed">
+                </iframe>
+            </div>
+        </div>
+    </div>
 </main>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const contactForm = document.getElementById('contactForm');
-    const formMessages = document.getElementById('formMessages');
-    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('contactForm');
+    const msgBox = document.getElementById('contactFormMessages');
+    const btn = document.getElementById('contactSubmitBtn');
+    if (!form) return;
 
-    if (contactForm) {
-        contactForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Loading state
-            const originalBtnContent = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[24px]">sync</span> Sending...';
-            submitBtn.disabled = true;
-            formMessages.classList.add('hidden');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const original = btn.innerHTML;
+        btn.innerHTML = 'SENDING...';
+        btn.disabled = true;
+        msgBox.style.display = 'none';
 
-            const formData = new FormData(contactForm);
-
-            fetch('process_contact.php', {
-                method: 'POST',
-                body: formData
-            })
+        const fd = new FormData(form);
+        fetch(form.action, { method: 'POST', body: fd })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = 'contact_success.php';
+                    msgBox.style.background = 'rgba(255,255,255,0.15)';
+                    msgBox.style.border = '1px solid rgba(255,255,255,0.3)';
+                    msgBox.innerHTML = '<strong>Message Sent.</strong> Our team will get back to you within 2 business hours.';
+                    msgBox.style.display = 'block';
+                    form.reset();
                 } else {
-                    formMessages.innerHTML = `
-                        <div class="bg-[#FEF2F2] border border-[#FEE2E2] rounded-2xl p-4 flex items-center gap-3 text-[#EF4444]">
-                            <span class="material-symbols-outlined">error</span>
-                            <span class="text-[14px] font-bold">${data.message || 'Please check the form for errors.'}</span>
-                        </div>
-                    `;
-                    formMessages.classList.remove('hidden');
-                    submitBtn.innerHTML = originalBtnContent;
-                    submitBtn.disabled = false;
+                    msgBox.style.background = 'rgba(255,255,255,0.1)';
+                    msgBox.style.border = '1px solid rgba(255,255,255,0.2)';
+                    msgBox.innerHTML = data.message || 'Please check the form for errors.';
+                    msgBox.style.display = 'block';
                 }
+                btn.innerHTML = original;
+                btn.disabled = false;
             })
-            .catch(error => {
-                console.error('Error:', error);
-                submitBtn.innerHTML = originalBtnContent;
-                submitBtn.disabled = false;
+            .catch(function() {
+                msgBox.innerHTML = 'Unable to send your message. Please try again.';
+                msgBox.style.display = 'block';
+                btn.innerHTML = original;
+                btn.disabled = false;
             });
-        });
-    }
+    });
 });
 </script>
 

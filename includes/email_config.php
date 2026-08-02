@@ -3,7 +3,8 @@
  * Email Configuration
  * - Settings for sending emails (invoices, notifications, etc.)
  * 
- * Uses PHPMailer with SMTP for reliable email delivery
+ * Uses PHPMailer with SMTP for reliable email delivery.
+ * Templates follow the Avazonia email design system (shared email_layout shell).
  */
 
 // Load Composer's autoloader
@@ -18,6 +19,20 @@ define('STORE_EMAIL', $_ENV['STORE_EMAIL'] ?? 'minatoflash82@gmail.com');
 define('STORE_NAME', $_ENV['STORE_NAME'] ?? 'ASO Online Market');
 if (!defined('SITE_URL')) {
     define('SITE_URL', rtrim($_ENV['SITE_URL'] ?? 'http://localhost/my-shop-2-main/', '/') . '/');
+}
+if (!defined('PRIMARY_COLOR')) {
+    // Use the site's configured brand color (from site_settings) so emails match the storefront.
+    $brand_color = '#E8002D';
+    if (isset($pdo) && $pdo instanceof PDO) {
+        try {
+            $stmt = $pdo->query("SELECT setting_value FROM site_settings WHERE setting_key = 'primary_color' LIMIT 1");
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row && !empty($row['setting_value'])) {
+                $brand_color = $row['setting_value'];
+            }
+        } catch (PDOException $e) {}
+    }
+    define('PRIMARY_COLOR', $brand_color);
 }
 
 // Development mode - Set to false in production to send real emails
@@ -80,6 +95,7 @@ function sendEmail($to, $subject, $message, $headers = '') {
         $mail->SMTPSecure = SMTP_SECURE;
         $mail->Port       = SMTP_PORT;
         $mail->CharSet    = 'UTF-8';
+        $mail->Timeout    = 20;
         
         // Enable verbose debug output in development
         if (defined('DEBUG_MODE') && DEBUG_MODE) {
@@ -150,338 +166,595 @@ function getEmailLog($lines = 10) {
     return $formatted_log;
 }
 
-// Function to send invoice email
-function sendInvoiceEmail($customer_email, $customer_name, $order_id, $order_details) {
-    $subject = "Invoice for Order #$order_id - " . STORE_NAME;
+/**
+ * Shared Avazonia email shell.
+ * Wrap every template body between the hero/body blocks with this layout.
+ *
+ * @param string $content  The email hero + body HTML
+ * @param string $preheader Hidden preview text
+ * @param string $toEmail   Recipient address (shown in footer)
+ * @return string Full HTML email
+ */
+function email_layout($content, $preheader = '', $toEmail = '') {
+    $appName   = STORE_NAME;
+    $appUrl    = SITE_URL;
+    $siteEmail = STORE_EMAIL;
+    $year      = date('Y');
+    $primaryColor = PRIMARY_COLOR;
+    $eAppName  = htmlspecialchars($appName);
+    $eSiteEmail = htmlspecialchars($siteEmail);
+    $eToEmail  = htmlspecialchars($toEmail);
 
-    // Create HTML email template
-    $message = "
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset='UTF-8'>
-        <title>Invoice #$order_id</title>
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .header { background: #f8f9fa; padding: 20px; text-align: center; border-bottom: 3px solid #007bff; }
-            .invoice-details { margin: 20px 0; }
-            .invoice-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            .invoice-table th, .invoice-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-            .invoice-table th { background-color: #f8f9fa; font-weight: bold; }
-            .total-row { background-color: #e9ecef; font-weight: bold; }
-            .footer { margin-top: 30px; padding: 20px; background: #f8f9fa; border-top: 1px solid #ddd; }
-        </style>
-    </head>
-    <body>
-        <div class='header'>
-            <h1>" . STORE_NAME . "</h1>
-            <h2>Invoice #$order_id</h2>
-        </div>
-
-        <div class='invoice-details'>
-            <p><strong>Customer:</strong> " . htmlspecialchars($customer_name) . "</p>
-            <p><strong>Order Date:</strong> " . date('F j, Y \a\t g:i A', strtotime($order_details['order_date'] ?? 'now')) . "</p>
-            <p><strong>Status:</strong> " . ucfirst($order_details['order_status'] ?? $order_details['status'] ?? 'processing') . "</p>
-            <p><strong>Payment Method:</strong> " . ucfirst(str_replace('_', ' ', $order_details['payment_method'] ?? 'not specified')) . "</p>
-        </div>
-
-        <table class='invoice-table'>
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>";
-
-    // Add order items
-    if (!empty($order_details['items']) && is_array($order_details['items'])) {
-        foreach ($order_details['items'] as $item) {
-            $itemTotal = ($item['price'] ?? 0) * ($item['quantity'] ?? 1);
-            $message .= "
-                <tr>
-                    <td>" . htmlspecialchars($item['product_name'] ?? 'Product') . "</td>
-                    <td>" . formatCurrency($item['product_price'] ?? $item['price'] ?? 0) . "</td>
-                    <td>" . ($item['quantity'] ?? 1) . "</td>
-                    <td>" . formatCurrency($itemTotal) . "</td>
-                </tr>";
-        }
-    } else {
-        $message .= "
-                <tr>
-                    <td colspan='4' class='text-center'>No items found in this order</td>
-                </tr>";
+    ob_start(); ?>
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title><?= $eAppName ?></title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #F4F4F5; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111; -webkit-font-smoothing: antialiased; }
+    .email-wrap { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,.05); border: 1px solid rgba(0,0,0,0.05); }
+    .email-header { background: #0A0A0A; padding: 32px 40px; text-align: center; }
+    .email-header a { color: #fff; text-decoration: none; font-size: 24px; font-weight: 900; letter-spacing: -0.04em; text-transform: uppercase; }
+    .email-header a span { color: <?= $primaryColor ?>; }
+    .email-hero { background: <?= $primaryColor ?>; padding: 48px 40px; color: #fff; text-align: center; }
+    .email-hero h1 { font-size: 32px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 12px; line-height: 1.2; }
+    .email-hero p { font-size: 16px; opacity: 0.95; line-height: 1.6; font-weight: 500; }
+    .email-body { padding: 48px 40px; }
+    .email-body p { font-size: 16px; line-height: 1.6; color: #444; margin-bottom: 20px; }
+    .email-body h2 { font-size: 20px; font-weight: 700; color: #111; margin: 32px 0 16px; letter-spacing: -0.02em; }
+    .btn-primary { display: inline-block; background: <?= $primaryColor ?>; color: #fff !important; text-decoration: none; padding: 16px 36px; border-radius: 50px; font-weight: 700; font-size: 15px; letter-spacing: 0.03em; margin: 24px 0; text-align: center; }
+    .btn-secondary { display: inline-block; background: #0A0A0A; color: #fff !important; text-decoration: none; padding: 16px 36px; border-radius: 50px; font-weight: 700; font-size: 15px; letter-spacing: 0.03em; margin: 8px 0; text-align: center; }
+    .order-table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+    .order-table th { background: #FAFAFA; padding: 14px 16px; text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; border-bottom: 1px solid #EAEAEA; }
+    .order-table td { padding: 16px; border-bottom: 1px solid #F0F0F0; font-size: 15px; color: #333; }
+    .order-table tr:last-child td { border-bottom: none; }
+    .status-badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+    .status-paid { background: #DCFCE7; color: #16A34A; }
+    .status-shipped { background: #DBEAFE; color: #1D4ED8; }
+    .status-cancelled { background: #FEE2E2; color: #DC2626; }
+    .status-refunded { background: #FEF3C7; color: #D97706; }
+    .divider { border: none; border-top: 1px solid #EAEAEA; margin: 32px 0; }
+    .info-block { background: #FAFAFA; border-left: 4px solid <?= $primaryColor ?>; padding: 20px 24px; border-radius: 0 12px 12px 0; margin: 24px 0; font-size: 15px; color: #444; line-height: 1.6; }
+    .notice { background: #FFFBEB; border: 1px solid #FDE68A; padding: 20px 24px; border-radius: 12px; margin: 24px 0; font-size: 14px; color: #92400E; line-height: 1.6; }
+    .email-footer { background: #FAFAFA; border-top: 1px solid #EAEAEA; padding: 32px 40px; text-align: center; }
+    .email-footer p { font-size: 13px; color: #888; line-height: 1.6; }
+    .email-footer a { color: <?= $primaryColor ?>; text-decoration: none; font-weight: 500; }
+    @media (max-width: 600px) {
+      .email-wrap { margin: 16px; border-radius: 12px; }
+      .email-hero, .email-body, .email-footer, .email-header { padding: 32px 24px; }
+      .email-hero h1 { font-size: 26px; }
+      .btn-primary, .btn-secondary { display: block; width: 100%; box-sizing: border-box; }
     }
-    $message .= "
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan='3' class='text-end'>Subtotal:</td>
-                    <td>" . formatCurrency($order_details['subtotal'] ?? $order_details['total_amount'] ?? 0) . "</td>
-                </tr>
-                <tr>
-                    <td colspan='3' class='text-end'>Shipping:</td>
-                    <td>" . formatCurrency($order_details['shipping'] ?? 0) . "</td>
-                </tr>
-                <tr class='total-row'>
-                    <td colspan='3' class='text-end'><strong>Total Amount:</strong></td>
-                    <td><strong>" . formatCurrency($order_details['total'] ?? $order_details['total_amount'] ?? 0) . "</strong></td>
-                </tr>
-            </tfoot>
-        </table>
+  </style>
+</head>
+<body>
+  <?php if ($preheader): ?>
+  <span style="display:none;max-height:0;overflow:hidden;"><?= htmlspecialchars($preheader) ?></span>
+  <?php endif; ?>
+  <div class="email-wrap">
+    <!-- Header -->
+    <div class="email-header">
+      <a href="<?= $appUrl ?>"><?= $eAppName ?><span>.</span></a>
+    </div>
 
-        <div class='footer'>
-            <p>Thank you for your business!</p>
-            <p>For questions about this order, please contact us at <a href='mailto:" . STORE_EMAIL . "'>" . STORE_EMAIL . "</a></p>
-            <p>This is an automated message. Please do not reply to this email.</p>
-        </div>
-    </body>
-    </html>";
+    <?= $content ?>
 
-    // Prepare a logfile path (same file used by sendEmail)
-    $log_file = dirname(__FILE__) . '/../logs/email_' . date('Y-m-d') . '.log';
-
-    // Log the attempt before sending (file-based)
-    $attempt_entry = "[" . date('Y-m-d H:i:s') . "] Status update email attempt: order={$order_number}, to={$customer_email}, status={$new_status} - sending...\n";
-    file_put_contents($log_file, $attempt_entry, FILE_APPEND);
-
-    // Attempt to send and log the result for debugging
-    $result = sendEmail($customer_email, $subject, $message);
-
-    $result_entry = "[" . date('Y-m-d H:i:s') . "] Status update email result: order={$order_number}, to={$customer_email}, status={$new_status}, result=" . ($result ? 'sent' : 'failed') . "\n";
-    file_put_contents($log_file, $result_entry, FILE_APPEND);
-
-    // Also log to PHP error log for immediate visibility
-    error_log("Status update email attempt: order={$order_number}, to={$customer_email}, status={$new_status}, result=" . ($result ? 'sent' : 'failed'));
-
-    return $result;
+    <!-- Footer -->
+    <div class="email-footer">
+      <p>
+        © <?= $year ?> <?= $eAppName ?> — Crafted in Takoradi, Ghana<br>
+        <a href="<?= $appUrl ?>">Shop</a> &nbsp;·&nbsp;
+        <a href="<?= $appUrl ?>user/orders.php">My Account</a> &nbsp;·&nbsp;
+        <a href="mailto:<?= $eSiteEmail ?>">Support</a>
+      </p>
+      <p style="margin-top:12px;">This email was sent to <strong><?= $eToEmail ?></strong>.
+      If you didn't request this, you can safely ignore it.</p>
+    </div>
+  </div>
+</body>
+</html>
+<?php
+    return ob_get_clean();
 }
 
 /**
- * Send order confirmation email to customer
- * 
+ * Send an account email verification link (24h expiry)
+ *
+ * @param string $user_email Recipient email
+ * @param string $user_name Recipient name
+ * @param string $token Verification token
+ * @return bool True if email was sent successfully
+ */
+function sendVerificationEmail($user_email, $user_name, $token) {
+    $verifyLink = SITE_URL . 'verify_email.php?token=' . urlencode($token);
+    $subject = "Verify Your Email - " . STORE_NAME;
+
+    ob_start(); ?>
+<div class="email-hero">
+  <h1>Welcome to <?= htmlspecialchars(STORE_NAME) ?> 👋</h1>
+  <p>You're almost in. Just verify your email to activate your account.</p>
+</div>
+<div class="email-body">
+  <p>Hi <strong><?= htmlspecialchars($user_name) ?></strong>,</p>
+  <p>Thanks for creating an account! We're excited to have you join our marketplace.</p>
+  <p>To get started, please verify your email address by clicking the button below:</p>
+
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="<?= htmlspecialchars($verifyLink) ?>" class="btn-primary">✉ Verify My Email</a>
+  </div>
+
+  <div class="notice">
+    ⏱ This link expires in <strong>24 hours</strong>. If you didn't create an account, please ignore this email.
+  </div>
+
+  <hr class="divider">
+
+  <p style="font-size: 13px; color: #999;">Or paste this URL in your browser:<br>
+    <a href="<?= htmlspecialchars($verifyLink) ?>" style="color: <?= PRIMARY_COLOR ?>; word-break: break-all;"><?= htmlspecialchars($verifyLink) ?></a>
+  </p>
+</div>
+<?php
+    $content = ob_get_clean();
+    return sendEmail($user_email, $subject, email_layout($content, 'Verify your email to activate your account', $user_email));
+}
+
+/**
+ * Build the shared order-table rows + totals block used by confirmation & invoice emails.
+ *
+ * @param array  $items    Order items
+ * @param float  $subtotal Computed subtotal
+ * @param float  $shipping Shipping fee
+ * @param float  $total    Grand total
+ * @return string HTML for order table
+ */
+function email_order_table($items, $subtotal, $shipping, $total) {
+    $rows = '';
+    foreach ($items as $item) {
+        $name  = $item['name'] ?? ($item['product_name'] ?? 'Product');
+        $price = (float)($item['price'] ?? ($item['product_price'] ?? 0));
+        $qty   = (int)($item['quantity'] ?? ($item['qty'] ?? 1));
+        $variant = $item['variant_label'] ?? '';
+        $variant_html = $variant ? '<br><span style="font-size:12px;color:#888;">' . htmlspecialchars($variant) . '</span>' : '';
+        $rows .= "
+        <tr>
+          <td><strong>" . htmlspecialchars($name) . "</strong>{$variant_html}</td>
+          <td style=\"text-align:right;\">" . $qty . "</td>
+          <td style=\"text-align:right;\">" . formatCurrency($price * $qty) . "</td>
+        </tr>";
+    }
+    if ($rows === '') {
+        $rows = '<tr><td colspan="3" style="text-align:center; color:#888;">No items found in this order.</td></tr>';
+    }
+    return "
+    <table class=\"order-table\">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th style=\"text-align:right;\">Qty</th>
+          <th style=\"text-align:right;\">Price</th>
+        </tr>
+      </thead>
+      <tbody>{$rows}</tbody>
+      <tfoot>
+        <tr>
+          <td colspan=\"2\" style=\"text-align:right; font-weight:600; font-size:13px; color:#888; padding-top:16px;\">Subtotal</td>
+          <td style=\"text-align:right; padding-top:16px;\">" . formatCurrency($subtotal) . "</td>
+        </tr>
+        <tr>
+          <td colspan=\"2\" style=\"text-align:right; font-weight:600; font-size:13px; color:#888;\">Shipping</td>
+          <td style=\"text-align:right;\">" . ($shipping > 0 ? formatCurrency($shipping) : 'FREE') . "</td>
+        </tr>
+        <tr>
+          <td colspan=\"2\" style=\"text-align:right; font-weight:700; font-size:15px;\">Total</td>
+          <td style=\"text-align:right; font-weight:700; font-size:15px; color: " . PRIMARY_COLOR . ";\">" . formatCurrency($total) . "</td>
+        </tr>
+      </tfoot>
+    </table>";
+}
+
+/**
+ * Send an order confirmation email to the customer
+ * (Avazonia "Order Placed" template)
+ *
  * @param string $customer_email Customer's email address
  * @param string $customer_name Customer's full name
- * @param int $order_id Order ID
- * @param array $order_details Order details (total, items, etc.)
+ * @param int $order_id Order number (e.g. NX-000123)
+ * @param array $order_details Order details (items, shipping_address, payment_method, total, order_date)
  * @return bool True if email was sent successfully, false otherwise
  */
 function sendOrderConfirmationEmail($customer_email, $customer_name, $order_id, $order_details) {
     $subject = "Order Confirmation #$order_id - " . STORE_NAME;
 
-    // Format order items for the email
-    $order_items_html = '';
     $subtotal = 0;
-    
-    if (!empty($order_details['items'])) {
-        foreach ($order_details['items'] as $item) {
-            $item_total = $item['price'] * $item['quantity'];
-            $subtotal += $item_total;
-            
-            $order_items_html .= "<tr>";
-            $order_items_html .= "<td>" . htmlspecialchars($item['name']) . "</td>";
-            $order_items_html .= "<td class='text-right'>" . formatCurrency($item['price']) . "</td>";
-            $order_items_html .= "<td class='text-center'>" . $item['quantity'] . "</td>";
-            $order_items_html .= "<td class='text-right'>" . formatCurrency($item_total) . "</td>";
-            $order_items_html .= "</tr>";
-        }
+    foreach (($order_details['items'] ?? []) as $item) {
+        $subtotal += (float)($item['price'] ?? ($item['product_price'] ?? 0)) * (int)($item['quantity'] ?? ($item['qty'] ?? 1));
     }
-    
-    // Calculate totals
-    $shipping = $order_details['shipping'] ?? 0;
-    $tax = $order_details['tax'] ?? 0;
-    $total = $subtotal + $shipping + $tax;
 
-    // Create HTML email template
-    $message = "
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset='UTF-8'>
-        <title>Order Confirmation #$order_id</title>
-        <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1A1A1A; margin: 0; padding: 20px; background-color: #F9F9F9; }
-            .container { max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-            .header { background: #0a4722; padding: 30px 20px; text-align: center; }
-            .logo { max-width: 180px; height: auto; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto; }
-            .header h2 { color: #FFFFFF; margin: 0; font-size: 24px; font-weight: 800; }
-            .content { padding: 30px; }
-            .content p { font-size: 15px; color: #444; }
-            .order-summary { background-color: #F8F9FA; border-radius: 8px; padding: 20px; margin: 25px 0; border: 1px solid #EEEEEE; }
-            .order-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-            .order-table th { padding: 12px 10px; border-bottom: 2px solid #DDDDDD; text-align: left; color: #888888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-            .order-table td { padding: 12px 10px; border-bottom: 1px solid #EEEEEE; font-size: 14px; }
-            .text-right { text-align: right; }
-            .text-center { text-align: center; }
-            .total-row td { padding-top: 15px; font-size: 16px; color: #1A1A1A; }
-            .address-box { padding: 15px; background: #FFFFFF; border: 1px solid #EEEEEE; border-radius: 6px; margin-top: 10px; font-size: 14px; }
-            .footer { padding: 20px; background: #F8F9FA; text-align: center; border-top: 1px solid #EEEEEE; }
-            .footer p { font-size: 12px; color: #888888; margin: 5px 0; }
-            .btn { display: inline-block; padding: 12px 24px; background-color: #0a4722; color: #FFFFFF !important; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; }
-        </style>
-    </head>
-    <body>
-        <div class='container'>
-            <div class='header'>
-                <img src='cid:store_logo' alt='" . htmlspecialchars(STORE_NAME) . "' class='logo'>
-                <h2>Order Confirmed!</h2>
-            </div>
+    $total = (float)($order_details['total'] ?? $order_details['total_amount'] ?? $subtotal);
+    $shipping = (float)($order_details['shipping'] ?? 0);
+    if ($shipping <= 0 && $total > $subtotal) {
+        $shipping = $total - $subtotal;
+    }
+    if ($shipping < 0) $shipping = 0;
 
-            <div class='content'>
-                <p>Hi <strong>" . htmlspecialchars($customer_name) . "</strong>,</p>
-                <p>Thank you for your purchase! We've received your order and it is currently being processed.</p>
-                
-                <div class='order-summary'>
-                    <h3 style='margin-top: 0; font-size: 18px; color: #1A1A1A;'>Order Details</h3>
-                    <p style='margin: 0 0 5px 0; font-size: 14px;'><strong>Order Number:</strong> #$order_id</p>
-                    <p style='margin: 0 0 15px 0; font-size: 14px;'><strong>Order Date:</strong> " . date('F j, Y \a\t g:i A') . "</p>
-                    
-                    <table class='order-table'>
-                        <thead>
-                            <tr>
-                                <th>Item</th>
-                                <th class='text-right'>Price</th>
-                                <th class='text-center'>Qty</th>
-                                <th class='text-right'>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            $order_items_html
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan='3' class='text-right' style='padding-top: 15px;'>Subtotal:</td>
-                                <td class='text-right' style='padding-top: 15px;'>" . formatCurrency($subtotal) . "</td>
-                            </tr>
-                            <tr>
-                                <td colspan='3' class='text-right'>Shipping:</td>
-                                <td class='text-right'>" . formatCurrency($shipping) . "</td>
-                            </tr>
-                            <tr>
-                                <td colspan='3' class='text-right'>Tax:</td>
-                                <td class='text-right'>" . formatCurrency($tax) . "</td>
-                            </tr>
-                            <tr class='total-row'>
-                                <td colspan='3' class='text-right'><strong>Total Amount:</strong></td>
-                                <td class='text-right'><strong>" . formatCurrency($total) . "</strong></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                
-                <table width='100%' cellpadding='0' cellspacing='0' border='0'>
-                    <tr>
-                        <td width='48%' valign='top'>
-                            <h4 style='margin: 0 0 10px 0; color: #1A1A1A;'>Shipping Address</h4>
-                            <div class='address-box'>
-                                " . nl2br(htmlspecialchars($order_details['shipping_address'] ?? 'Not specified')) . "
-                            </div>
-                        </td>
-                        <td width='4%'></td>
-                        <td width='48%' valign='top'>
-                            <h4 style='margin: 0 0 10px 0; color: #1A1A1A;'>Payment Method</h4>
-                            <div class='address-box'>
-                                " . ucwords(str_replace('_', ' ', $order_details['payment_method'] ?? 'Not specified')) . "
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-                
-                <div style='text-align: center; margin-top: 30px;'>
-                    <a href='" . SITE_URL . "user/orders.php' class='btn'>View Your Order</a>
-                </div>
-            </div>
+    $order_date = $order_details['order_date'] ?? date('Y-m-d H:i:s');
+    $shipping_address = $order_details['shipping_address'] ?? '';
+    $payment_method = ucwords(str_replace('_', ' ', $order_details['payment_method'] ?? 'Not specified'));
+    $order_number = $order_id;
 
-            <div class='footer'>
-                <p>Thank you for shopping with us!</p>
-                <p>If you have any questions, contact us at <a href='mailto:" . STORE_EMAIL . "' style='color: #0a4722;'>" . STORE_EMAIL . "</a>.</p>
-                <p>&copy; " . date('Y') . " " . htmlspecialchars(STORE_NAME) . ". All rights reserved.</p>
-            </div>
-        </div>
-    </body>
-    </html>";
+    ob_start(); ?>
+<div class="email-hero">
+  <h1>Order Confirmed! 🎉</h1>
+  <p>Your order <strong>#<?= htmlspecialchars($order_number) ?></strong> has been received and is being processed.</p>
+</div>
+<div class="email-body">
+  <p>Hi <strong><?= htmlspecialchars($customer_name) ?></strong>,</p>
+  <p>Thanks for shopping with <?= htmlspecialchars(STORE_NAME) ?>! We've received your order and will notify you as soon as it's processed.</p>
 
-    return sendEmail($customer_email, $subject, $message);
+  <h2>📦 Order Summary</h2>
+  <?= email_order_table($order_details['items'] ?? [], $subtotal, $shipping, $total) ?>
+
+  <h2>🚚 Delivery Details</h2>
+  <div class="info-block">
+    <?= nl2br(htmlspecialchars($shipping_address)) ?>
+  </div>
+
+  <p style="font-size:13px; color:#888;">Payment Method: <strong><?= htmlspecialchars($payment_method) ?></strong></p>
+
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="<?= SITE_URL ?>user/orders.php" class="btn-primary">View My Orders →</a>
+  </div>
+
+  <p style="font-size:13px; color:#999;">Order placed on <?= date('D, d M Y · H:i', strtotime($order_date)) ?></p>
+</div>
+<?php
+    $content = ob_get_clean();
+    return sendEmail($customer_email, $subject, email_layout($content, 'Your order #' . $order_number . ' is confirmed!', $customer_email));
 }
 
-// Send an order status update notification to the customer
-function sendStatusUpdateEmail($order_number, $new_status, $customer_email, $customer_name = 'Customer') {
-    $status_display = ucfirst($new_status);
-    $subject = "Order Status Update - {$status_display} (#{$order_number})";
+/**
+ * Send an invoice email to the customer
+ * (Avazonia order summary layout, invoice variant)
+ *
+ * @param string $customer_email Customer's email address
+ * @param string $customer_name Customer's full name
+ * @param int $order_id Order ID
+ * @param array $order_details Order details (items, subtotal, shipping, total, status, payment_method)
+ * @return bool True if email was sent successfully, false otherwise
+ */
+function sendInvoiceEmail($customer_email, $customer_name, $order_id, $order_details) {
+    $order_number = $order_details['order_number'] ?? $order_id;
+    $subject = "Invoice for Order #$order_number - " . STORE_NAME;
 
-    // Determine specific messaging based on status
-    $status_message = "Your order status has been updated to <strong>{$status_display}</strong>.";
-    $status_highlight = '#0a4722';
-    if ($new_status === 'shipped') {
-        $status_message = "Great news! Your order has been <strong>Shipped</strong> and is on its way to you.";
-        $status_highlight = '#1d6fbd';
-    } elseif ($new_status === 'delivered') {
-        $status_message = "Your order has been <strong>Delivered</strong>! We hope you enjoy your purchase.";
-        $status_highlight = '#15803d';
-    } elseif ($new_status === 'cancelled') {
-        $status_message = "Your order has been <strong>Cancelled</strong>. If you did not request this, please contact support immediately.";
-        $status_highlight = '#dc2626';
+    $subtotal = 0;
+    foreach (($order_details['items'] ?? []) as $item) {
+        $subtotal += (float)($item['price'] ?? ($item['product_price'] ?? 0)) * (int)($item['quantity'] ?? 1);
     }
 
-    $message = "
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset='UTF-8'>
-        <title>Order Status Update</title>
-        <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1A1A1A; margin: 0; padding: 0; background-color: #F4F6F8; }
-            .wrapper { width: 100%; padding: 20px 0; }
-            .container { max-width: 640px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08); }
-            .header { background: #0a4722; padding: 32px 24px; text-align: center; }
-            .logo { max-width: 160px; height: auto; margin: 0 auto 12px; display: block; }
-            .header h2 { color: #FFFFFF; margin: 0; font-size: 26px; letter-spacing: 0.03em; }
-            .hero { padding: 32px 28px 20px; }
-            .hero p { margin: 0 0 18px; font-size: 16px; color: #374151; }
-            .notice { background-color: #F8FAFC; border-left: 5px solid {$status_highlight}; padding: 22px 20px; border-radius: 12px; }
-            .notice p { margin: 0; color: #111827; font-size: 16px; }
-            .details { margin-top: 24px; }
-            .details .item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #E5E7EB; font-size: 14px; color: #4B5563; }
-            .details .item:last-child { border-bottom: none; }
-            .cta { text-align: center; margin-top: 28px; }
-            .btn { display: inline-block; padding: 14px 28px; background: #0a4722; color: #FFFFFF !important; text-decoration: none; border-radius: 999px; font-weight: 700; font-size: 14px; }
-            .footer { padding: 24px 28px 28px; background: #F8FAFC; color: #6B7280; font-size: 13px; text-align: center; }
-            .footer a { color: #0a4722; text-decoration: none; }
-        </style>
-    </head>
-    <body>
-        <div class='wrapper'>
-            <div class='container'>
-                <div class='header'>
-                    <img src='cid:store_logo' alt='" . htmlspecialchars(STORE_NAME) . "' class='logo'>
-                    <h2>Order Status Update</h2>
-                </div>
-                <div class='hero'>
-                    <p>Hi <strong>" . htmlspecialchars($customer_name) . "</strong>,</p>
-                    <p>We wanted to let you know that the status for your order <strong>#{$order_number}</strong> has changed.</p>
-                    <div class='notice'>
-                        <p>{$status_message}</p>
-                    </div>
-                    <div class='details'>
-                        <div class='item'><span>Order Number</span><strong>#{$order_number}</strong></div>
-                        <div class='item'><span>Current Status</span><strong>{$status_display}</strong></div>
-                    </div>
-                    <div class='cta'>
-                        <a href='" . SITE_URL . "user/orders.php' class='btn'>View Your Order</a>
-                    </div>
-                </div>
-                <div class='footer'>
-                    <p>Thank you for shopping with us! If you need help, reply to this email or contact us at <a href='mailto:" . STORE_EMAIL . "'>" . STORE_EMAIL . "</a>.</p>
-                    <p>&copy; " . date('Y') . " " . htmlspecialchars(STORE_NAME) . ". All rights reserved.</p>
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>";
+    $total = (float)($order_details['total'] ?? $order_details['total_amount'] ?? $subtotal);
+    $shipping = (float)($order_details['shipping'] ?? 0);
+    if ($shipping <= 0 && $total > $subtotal) {
+        $shipping = $total - $subtotal;
+    }
+    if ($shipping < 0) $shipping = 0;
 
-    return sendEmail($customer_email, $subject, $message);
+    $status = ucfirst($order_details['status'] ?? ($order_details['order_status'] ?? 'processing'));
+    $payment_method = ucwords(str_replace('_', ' ', $order_details['payment_method'] ?? 'not specified'));
+    $order_date = $order_details['order_date'] ?? date('Y-m-d H:i:s');
+
+    ob_start(); ?>
+<div class="email-hero">
+  <h1>Your Invoice 🧾</h1>
+  <p>Invoice <strong>#<?= htmlspecialchars($order_number) ?></strong> — <?= htmlspecialchars($status) ?></p>
+</div>
+<div class="email-body">
+  <p>Hi <strong><?= htmlspecialchars($customer_name) ?></strong>,</p>
+  <p>Thank you for your purchase! Please find the details of your order below.</p>
+
+  <div class="info-block">
+    <table style="width:100%; font-size:14px;">
+      <tr>
+        <td style="color:#888; padding-bottom:8px;">Order Ref</td>
+        <td style="font-weight:700; text-align:right;">#<?= htmlspecialchars($order_number) ?></td>
+      </tr>
+      <tr>
+        <td style="color:#888; padding-bottom:8px;">Order Date</td>
+        <td style="text-align:right;"><?= date('D, d M Y · H:i', strtotime($order_date)) ?></td>
+      </tr>
+      <tr>
+        <td style="color:#888; padding-bottom:8px;">Status</td>
+        <td style="text-align:right;"><strong><?= htmlspecialchars($status) ?></strong></td>
+      </tr>
+      <tr>
+        <td style="color:#888;">Payment Method</td>
+        <td style="text-align:right;"><?= htmlspecialchars($payment_method) ?></td>
+      </tr>
+    </table>
+  </div>
+
+  <h2>🧾 Order Summary</h2>
+  <?= email_order_table($order_details['items'] ?? [], $subtotal, $shipping, $total) ?>
+
+  <p>If you have any questions about this invoice, reply to this email or reach out via WhatsApp — we're always here to help.</p>
+
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="<?= SITE_URL ?>user/orders.php" class="btn-primary">View My Orders →</a>
+  </div>
+</div>
+<?php
+    $content = ob_get_clean();
+    return sendEmail($customer_email, $subject, email_layout($content, 'Invoice #' . $order_number, $customer_email));
+}
+
+/**
+ * Send an order status update notification to the customer
+ * (Avazonia "Order Status Update" template)
+ *
+ * @param string $order_number Order number
+ * @param string $new_status New order status
+ * @param string $customer_email Recipient email
+ * @param string $customer_name Recipient name
+ * @return bool True if email was sent successfully, false otherwise
+ */
+function sendStatusUpdateEmail($order_number, $new_status, $customer_email, $customer_name = 'Customer') {
+    $status_labels = [
+        'pending'     => ['label' => 'Pending',     'color' => '#6B7280', 'icon' => '⏳', 'msg' => 'Your order has been received and is awaiting confirmation.'],
+        'processing'  => ['label' => 'Processing',  'color' => '#FA8C16', 'icon' => '⚙️', 'msg' => 'Your order is now being processed and prepared for dispatch.'],
+        'confirmed'   => ['label' => 'Confirmed',   'color' => '#00A854', 'icon' => '✅', 'msg' => 'Great news! Your order has been approved and confirmed.'],
+        'approved'    => ['label' => 'Approved',    'color' => '#00A854', 'icon' => '✅', 'msg' => 'Great news! Your order has been approved and confirmed.'],
+        'paid'        => ['label' => 'Paid',        'color' => '#16A34A', 'icon' => '💳', 'msg' => 'Your payment has been received. Your order is now being prepared.'],
+        'paid-full'   => ['label' => 'Paid In Full','color' => '#16A34A', 'icon' => '💳', 'msg' => 'Your payment has been received in full. Your order is now being prepared.'],
+        'shipped'     => ['label' => 'Shipped',     'color' => '#1D4ED8', 'icon' => '🚚', 'msg' => 'Exciting news — your order has been shipped and is on its way to you.'],
+        'arrived'     => ['label' => 'Arrived',     'color' => '#111111', 'icon' => '📦', 'msg' => 'Your pre-ordered item has arrived at our warehouse and is ready for final delivery.'],
+        'delivered'   => ['label' => 'Delivered',   'color' => '#00A854', 'icon' => '🏁', 'msg' => 'Your order has been marked as delivered. We hope you enjoy your purchase!'],
+        'cancelled'   => ['label' => 'Cancelled',   'color' => '#DC2626', 'icon' => '❌', 'msg' => 'Your order has been cancelled. If you did not request this, please contact support immediately.'],
+        'refunded'    => ['label' => 'Refunded',    'color' => '#D97706', 'icon' => '💰', 'msg' => 'A refund has been processed for your order.'],
+    ];
+
+    $cur = $status_labels[strtolower($new_status)] ?? ['label' => ucfirst($new_status), 'color' => '#333333', 'icon' => 'ℹ️', 'msg' => 'The status of your order has been updated.'];
+    $subject = "Order Status Update - {$cur['label']} (#{$order_number})";
+
+    ob_start(); ?>
+<div class="email-hero" style="background: linear-gradient(135deg, <?= $cur['color'] ?> 0%, #333 100%);">
+  <h1>Order Status Update <?= $cur['icon'] ?></h1>
+  <p>Order <strong>#<?= htmlspecialchars($order_number) ?></strong> is now <strong><?= strtoupper($cur['label']) ?></strong>.</p>
+</div>
+<div class="email-body">
+  <p>Hi <strong><?= htmlspecialchars($customer_name) ?></strong>,</p>
+  <p><?= $cur['msg'] ?></p>
+
+  <div class="info-block">
+    <table style="width:100%; font-size:14px;">
+      <tr>
+        <td style="color:#888; padding-bottom:8px;">Order Ref</td>
+        <td style="font-weight:700; text-align:right;">#<?= htmlspecialchars($order_number) ?></td>
+      </tr>
+      <tr>
+        <td style="color:#888; padding-bottom:8px;">New Status</td>
+        <td style="text-align:right;">
+          <span style="padding:4px 10px; border-radius:4px; background:<?= $cur['color'] ?>; color:#fff; font-size:10px; font-weight:700; text-transform:uppercase;">
+            <?= $cur['label'] ?>
+          </span>
+        </td>
+      </tr>
+      <tr>
+        <td style="color:#888;">Update Time</td>
+        <td style="text-align:right;"><?= date('M d, Y H:i') ?></td>
+      </tr>
+    </table>
+  </div>
+
+  <p>You can track your order progress and view more details in your account dashboard.</p>
+
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="<?= SITE_URL ?>user/orders.php" class="btn-primary">View My Orders →</a>
+  </div>
+
+  <p>If you have any questions, feel free to reply to this email or reach out via WhatsApp.</p>
+</div>
+<?php
+    $content = ob_get_clean();
+    return sendEmail($customer_email, $subject, email_layout($content, 'Order Update — #' . $order_number, $customer_email));
+}
+
+/**
+ * Send a password reset email (1h expiry)
+ *
+ * @param string $email Recipient email
+ * @param string $name Recipient name
+ * @param string $resetLink Reset URL
+ * @return bool True if email was sent successfully
+ */
+function sendPasswordResetEmail($email, $name, $resetLink) {
+    $subject = "Password Reset Request - " . STORE_NAME;
+
+    ob_start(); ?>
+<div class="email-hero" style="background: linear-gradient(135deg, #0A0A0A 0%, #333 100%);">
+  <h1>Reset Your Password 🔐</h1>
+  <p>We received a request to reset your <?= htmlspecialchars(STORE_NAME) ?> account password.</p>
+</div>
+<div class="email-body">
+  <p>Hi <strong><?= htmlspecialchars($name ?: 'there') ?></strong>,</p>
+  <p>Someone (hopefully you!) requested a password reset for the account associated with <strong><?= htmlspecialchars($email) ?></strong>.</p>
+  <p>Click the button below to choose a new password:</p>
+
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="<?= htmlspecialchars($resetLink) ?>" class="btn-secondary">🔑 Reset My Password</a>
+  </div>
+
+  <div class="notice">
+    ⏱ This link expires in <strong>1 hour</strong>. After that, you'll need to request a new reset link.
+  </div>
+
+  <hr class="divider">
+
+  <p>If you didn't request a password reset, no action is needed — your account is safe.</p>
+
+  <p style="font-size: 13px; color: #999; margin-top: 24px;">Or paste this URL in your browser:<br>
+    <a href="<?= htmlspecialchars($resetLink) ?>" style="color: <?= PRIMARY_COLOR ?>; word-break: break-all;"><?= htmlspecialchars($resetLink) ?></a>
+  </p>
+</div>
+<?php
+    $content = ob_get_clean();
+    return sendEmail($email, $subject, email_layout($content, 'Reset your ' . STORE_NAME . ' password — link expires in 1 hour', $email));
+}
+
+/**
+ * Send a "password updated" confirmation email
+ *
+ * @param string $email Recipient email
+ * @param string $name Recipient name
+ * @return bool True if email was sent successfully
+ */
+function sendPasswordChangedEmail($email, $name = '') {
+    $subject = "Password Updated - " . STORE_NAME;
+
+    ob_start(); ?>
+<div class="email-hero" style="background: linear-gradient(135deg, #00A854 0%, #22C55E 100%);">
+  <h1>Password Updated ✅</h1>
+  <p>Your account password was successfully changed.</p>
+</div>
+<div class="email-body">
+  <p>Hi <strong><?= htmlspecialchars($name ?: 'there') ?></strong>,</p>
+  <p>This is a confirmation that the password for your <?= htmlspecialchars(STORE_NAME) ?> account has been updated successfully.</p>
+  <p>If you did not make this change, please <a href="mailto:<?= htmlspecialchars(STORE_EMAIL) ?>" style="color: <?= PRIMARY_COLOR ?>; font-weight: 600;">contact support</a> immediately.</p>
+
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="<?= SITE_URL ?>login.php" class="btn-primary">Sign In →</a>
+  </div>
+</div>
+<?php
+    $content = ob_get_clean();
+    return sendEmail($email, $subject, email_layout($content, 'Your password has been updated', $email));
+}
+
+/**
+ * Notify the admin of a new contact form submission
+ * (Avazonia "Contact Admin Notify" template)
+ *
+ * @param string $customerName Customer name
+ * @param string $customerEmail Customer email
+ * @param string $subjectLine Subject line
+ * @param string $messageBody Message body
+ * @param string $customerPhone Customer phone (optional)
+ * @return bool True if email was sent successfully
+ */
+function sendContactAdminNotifyEmail($customerName, $customerEmail, $subjectLine, $messageBody, $customerPhone = '') {
+    $subject = "New Contact Form Submission: " . $subjectLine;
+
+    ob_start(); ?>
+<div class="email-hero" style="background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);">
+  <h1>New Support Request 📩</h1>
+  <p>A customer has submitted a message via the Contact Form.</p>
+</div>
+<div class="email-body">
+  <p>Hey Admin,</p>
+  <p>You have received a new message from the <strong><?= htmlspecialchars(STORE_NAME) ?></strong> contact form. Please review the details below:</p>
+
+  <div class="info-block">
+    👤 <strong>Name:</strong> <?= htmlspecialchars($customerName) ?><br>
+    📧 <strong>Email:</strong> <?= htmlspecialchars($customerEmail) ?><?php if ($customerPhone !== ''): ?><br>
+    📞 <strong>Phone:</strong> <?= htmlspecialchars($customerPhone) ?><?php endif; ?><br>
+    📅 <strong>Date:</strong> <?= date('D, d M Y · H:i T') ?>
+  </div>
+
+  <h2>📝 Message Details</h2>
+  <div style="background: #FAFAFA; border: 1px solid #EAEAEA; padding: 24px; border-radius: 12px; margin: 20px 0;">
+    <p style="margin-bottom: 12px;"><strong>Subject:</strong> <?= htmlspecialchars($subjectLine) ?></p>
+    <p style="margin-bottom: 0; white-space: pre-wrap; font-size: 15px; color: #333; line-height: 1.6;"><?= htmlspecialchars($messageBody) ?></p>
+  </div>
+
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="mailto:<?= htmlspecialchars($customerEmail) ?>?subject=Re: <?= urlencode($subjectLine) ?>" class="btn-primary">Reply to Customer →</a>
+  </div>
+
+  <p style="font-size: 13px; color: #999;">This is an automated notification from your website's contact form.</p>
+</div>
+<?php
+    $content = ob_get_clean();
+    return sendEmail(STORE_EMAIL, $subject, email_layout($content, "New Contact Form Submission: {$subjectLine}", STORE_EMAIL));
+}
+
+/**
+ * Send a welcome email to a new newsletter subscriber
+ * (Avazonia "Newsletter Welcome" template)
+ *
+ * @param string $toEmail Subscriber email
+ * @return bool True if email was sent successfully
+ */
+function sendNewsletterWelcomeEmail($toEmail) {
+    $subject = "Welcome to " . STORE_NAME . " — You're In!";
+
+    ob_start(); ?>
+<div class="email-hero" style="background: linear-gradient(135deg, #0A0A0A 0%, #1a1a2e 100%);">
+  <h1>Welcome to the Family! 🎉</h1>
+  <p>You're officially on the <?= htmlspecialchars(STORE_NAME) ?> insider list.</p>
+</div>
+<div class="email-body">
+  <p>Hi there,</p>
+  <p>Thanks for subscribing to the <strong><?= htmlspecialchars(STORE_NAME) ?></strong> newsletter! You'll now be the first to know about:</p>
+
+  <div class="info-block">
+    🔥 <strong>Exclusive Drops</strong> — New arrivals before anyone else<br>
+    🏷️ <strong>Members-Only Deals</strong> — Special discounts just for subscribers<br>
+    📦 <strong>Restock Alerts</strong> — Never miss your favorite items<br>
+    🎁 <strong>Seasonal Promos</strong> — Holiday sales, flash deals &amp; more
+  </div>
+
+  <p>We keep it short, relevant, and spam-free. Expect updates only when it matters.</p>
+
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="<?= SITE_URL ?>shop.php" class="btn-primary">Start Shopping →</a>
+  </div>
+
+  <p style="font-size: 13px; color: #999;">You subscribed with <strong><?= htmlspecialchars($toEmail) ?></strong> on <?= date('D, d M Y · H:i') ?>.</p>
+</div>
+<?php
+    $content = ob_get_clean();
+    return sendEmail($toEmail, $subject, email_layout($content, "Welcome to " . STORE_NAME . " — you're in!", $toEmail));
+}
+
+/**
+ * Notify the admin of a new newsletter subscriber
+ * (Avazonia "Newsletter Admin Notify" template)
+ *
+ * @param string $subscriberEmail Subscriber email
+ * @return bool True if email was sent successfully
+ */
+function sendNewsletterAdminNotifyEmail($subscriberEmail) {
+    $subject = "New Subscriber: " . $subscriberEmail;
+
+    ob_start(); ?>
+<div class="email-hero" style="background: linear-gradient(135deg, #16A34A 0%, #22D3EE 100%);">
+  <h1>New Subscriber! 📬</h1>
+  <p>Someone just joined the <?= htmlspecialchars(STORE_NAME) ?> mailing list.</p>
+</div>
+<div class="email-body">
+  <p>Hey Admin,</p>
+  <p>A new visitor has subscribed to your newsletter. Here are the details:</p>
+
+  <div class="info-block">
+    📧 <strong>Email:</strong> <?= htmlspecialchars($subscriberEmail) ?><br>
+    📅 <strong>Date:</strong> <?= date('D, d M Y · H:i T') ?><br>
+    🌐 <strong>Source:</strong> Website newsletter
+  </div>
+
+  <p>Your mailing list is growing! You can view and manage all subscribers from your admin dashboard.</p>
+
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="<?= SITE_URL ?>admin/newsletter.php" class="btn-primary">View Subscribers →</a>
+  </div>
+
+  <p style="font-size: 13px; color: #999;">This is an automated notification from <?= htmlspecialchars(STORE_NAME) ?>.</p>
+</div>
+<?php
+    $content = ob_get_clean();
+    return sendEmail(STORE_EMAIL, $subject, email_layout($content, "New newsletter subscriber: {$subscriberEmail}", STORE_EMAIL));
 }
 
 // Utility function to check if email functionality is working

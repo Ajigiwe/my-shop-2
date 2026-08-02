@@ -42,10 +42,18 @@ CREATE TABLE IF NOT EXISTS products (
     category_id INT NOT NULL,
     subcategory_id INT NULL,
     name VARCHAR(255) NOT NULL,
+    sku VARCHAR(100) NULL UNIQUE,
     description TEXT,
+    features TEXT,
     price DECIMAL(10, 2) NOT NULL,
+    original_price DECIMAL(10, 2) NULL,
     stock_quantity INT NOT NULL DEFAULT 0,
+    low_stock_threshold INT NULL,
+    status ENUM('draft','published') NOT NULL DEFAULT 'published',
+    is_featured TINYINT(1) NOT NULL DEFAULT 0,
     image VARCHAR(255),
+    has_multiple_images TINYINT(1) DEFAULT 0,
+    main_image_id INT NULL,
     average_rating DECIMAL(3,2) DEFAULT 0.00,
     review_count INT DEFAULT 0,
     view_count INT DEFAULT 0,
@@ -53,6 +61,17 @@ CREATE TABLE IF NOT EXISTS products (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE,
     FOREIGN KEY (subcategory_id) REFERENCES subcategories(subcategory_id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 5b. Product images gallery
+CREATE TABLE IF NOT EXISTS product_images (
+    image_id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    image_path VARCHAR(255) NOT NULL,
+    is_primary TINYINT(1) DEFAULT 0,
+    display_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 6. Cart table

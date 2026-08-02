@@ -3,74 +3,65 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 $page_title = 'Shipping Policy';
+require_once '../includes/db.php';
+$settings = loadSiteSettings($pdo);
+$f1 = number_format((float)($settings['shipping_accra'] ?? 15), 0);
+$f2 = number_format((float)($settings['shipping_kumasi'] ?? 25), 0);
+$f3 = number_format((float)($settings['shipping_others'] ?? 40), 0);
+$f4 = (float)($settings['shipping_pickup'] ?? 0);
+$f4_str = $f4 > 0 ? 'GH₵' . number_format($f4, 0) : 'FREE';
+$threshold = number_format((float)($settings['free_shipping_threshold'] ?? 500), 0);
 include '../includes/header.php';
 ?>
 
-<main class="bg-[#F9F9F9] min-h-screen pt-6 pb-16">
-    <div class="max-w-[1000px] mx-auto px-6">
-        <div class="text-center mb-16">
-            <span class="inline-block bg-white border border-[#EEEEEE] text-[#1A1A1A] text-[12px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest mb-6 shadow-sm">
-                Logistics
-            </span>
-            <h1 class="text-[48px] font-black text-[#1A1A1A] tracking-tighter mb-4">Shipping <span class="text-[#888888]">Policy.</span></h1>
-            <p class="text-[#888888] font-medium">Fast, reliable, and transparent delivery. Last Updated: <?php echo date('F d, Y'); ?></p>
-        </div>
+<style>
+    .policy-body { max-width: 800px; margin: 0 auto; color: var(--mid-gray); line-height: 1.8; font-size: 15px; }
+    .policy-body h2 { color: var(--ink); font-family: var(--f-display); font-size: 24px; font-weight: 800; margin-bottom: 24px; }
+    .policy-body p { margin-bottom: 32px; }
+    .policy-body ul { margin-bottom: 32px; padding-left: 20px; }
+    .policy-body li { margin-bottom: 12px; }
+    .zone-row { display: flex; justify-content: space-between; border-bottom: 1px solid var(--light-gray); padding: 14px 0; font-size: 15px; }
+    .zone-row span:last-child { font-weight: 800; color: var(--ink); }
+    .free-banner { background: rgba(229,0,26,0.05); border: 1px solid var(--red); padding: 24px; border-radius: 4px; margin-bottom: 32px; }
+</style>
 
-        <div class="bg-white rounded-[2rem] p-10 md:p-16 border border-[#EEEEEE] shadow-sm space-y-12">
-            <section>
-                <h2 class="text-[24px] font-black text-[#1A1A1A] mb-6 flex items-center gap-3">
-                    <span class="w-8 h-8 rounded-lg bg-[#F9F9F9] flex items-center justify-center text-[14px]">01</span>
-                    Processing Time
-                </h2>
-                <div class="text-[16px] text-[#666666] leading-relaxed space-y-4">
-                    <p>All orders are processed within 1-2 business days. Orders are not shipped or delivered on weekends or holidays.</p>
-                    <p>If we are experiencing a high volume of orders, shipments may be delayed by a few days. Please allow additional days in transit for delivery.</p>
-                </div>
-            </section>
+<section class="page-hero" style="background: var(--ink); padding: 100px 0 60px; text-align: center; color: #fff;">
+    <div class="container">
+        <h1 style="font-family: var(--f-display); font-size: 56px; font-weight: 900; margin-bottom: 16px;">SHIPPING POLICY</h1>
+        <p style="font-family: var(--f-mono); font-size: 13px; font-weight: 700; opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase;">Fast, Reliable & Transparent. Last Updated: <?php echo date('F d, Y'); ?></p>
+    </div>
+</section>
 
-            <section>
-                <h2 class="text-[24px] font-black text-[#1A1A1A] mb-6 flex items-center gap-3">
-                    <span class="w-8 h-8 rounded-lg bg-[#F9F9F9] flex items-center justify-center text-[14px]">02</span>
-                    Shipping Rates & Estimates
-                </h2>
-                <div class="text-[16px] text-[#666666] leading-relaxed space-y-4">
-                    <p>Shipping charges for your order will be calculated and displayed at checkout. We offer several delivery options depending on your location:</p>
-                    <ul class="list-disc pl-6 space-y-2">
-                        <li><strong>Standard Delivery:</strong> 3-5 business days</li>
-                        <li><strong>Express Delivery:</strong> 1-2 business days</li>
-                        <li><strong>Store Pickup:</strong> Same day (where available)</li>
-                    </ul>
-                </div>
-            </section>
+<section class="page-content" style="padding: 80px 0;">
+    <div class="container">
+        <div class="policy-body">
+            <div class="free-banner">
+                <p style="font-size: 16px; font-weight: 800; color: var(--red); margin-bottom: 4px;">FREE delivery on all orders above GH₵<?php echo $threshold; ?></p>
+            </div>
 
-            <section>
-                <h2 class="text-[24px] font-black text-[#1A1A1A] mb-6 flex items-center gap-3">
-                    <span class="w-8 h-8 rounded-lg bg-[#F9F9F9] flex items-center justify-center text-[14px]">03</span>
-                    Shipment Confirmation & Tracking
-                </h2>
-                <div class="text-[16px] text-[#666666] leading-relaxed space-y-4">
-                    <p>You will receive a Shipment Confirmation email once your order has shipped containing your tracking number(s). The tracking number will be active within 24 hours.</p>
-                </div>
-            </section>
+            <h2>1. Processing Time</h2>
+            <p>All orders are processed and fulfilled within 1-2 business days (Monday to Friday). Orders are not shipped or delivered on weekends or holidays. If we are experiencing a high volume of orders, shipments may be delayed by a few days.</p>
 
-            <section>
-                <h2 class="text-[24px] font-black text-[#1A1A1A] mb-6 flex items-center gap-3">
-                    <span class="w-8 h-8 rounded-lg bg-[#F9F9F9] flex items-center justify-center text-[14px]">04</span>
-                    Damages & Returns
-                </h2>
-                <div class="text-[16px] text-[#666666] leading-relaxed space-y-4">
-                    <p>ASO Online Market is not liable for any products damaged or lost during shipping. If you received your order damaged, please contact the shipment carrier to file a claim.</p>
-                    <p>Please save all packaging materials and damaged goods before filing a claim.</p>
-                </div>
-            </section>
-        </div>
+            <h2>2. Delivery Zones & Fees</h2>
+            <p>For orders below GH₵<?php echo $threshold; ?>, delivery fees apply based on your region:</p>
+            <div>
+                <div class="zone-row"><span>📍 Accra & Greater Accra (1–2 days)</span><span>GH₵<?php echo $f1; ?></span></div>
+                <div class="zone-row"><span>📍 Kumasi / Takoradi (2–3 days)</span><span>GH₵<?php echo $f2; ?></span></div>
+                <div class="zone-row"><span>📍 All Other Regions (3–5 days)</span><span>GH₵<?php echo $f3; ?></span></div>
+                <div class="zone-row"><span>🏪 Store Pickup</span><span><?php echo $f4_str; ?></span></div>
+            </div>
 
-        <div class="mt-12 text-center">
-            <a href="../user/orders.php" class="inline-flex items-center gap-2 text-[14px] font-bold text-[#1A1A1A] hover:gap-4 transition-all">
-                Track Your Order <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-            </a>
+            <h2>3. Shipment Confirmation & Tracking</h2>
+            <p>You will receive a Shipment Confirmation email once your order has shipped containing your tracking number(s). The tracking number will be active within 24 hours. You can also <a href="../track-order.php" style="color: var(--red); font-weight: 700;">track your order</a> any time using your Order ID and email or phone.</p>
+
+            <h2>4. Important Information</h2>
+            <ul>
+                <li>All orders are delivered through trusted courier services.</li>
+                <li>Delivery is strictly door-to-door (no P.O. Box addresses allowed).</li>
+                <li>Please save all packaging materials and damaged goods before filing a claim.</li>
+            </ul>
         </div>
     </div>
-</main>
+</section>
 
 <?php include '../includes/footer.php'; ?>

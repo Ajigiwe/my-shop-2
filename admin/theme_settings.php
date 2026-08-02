@@ -39,87 +39,74 @@ try {
 } catch (PDOException $e) {}
 
 $page_title = 'Brand Settings';
-include 'includes/header-new.php';
+include 'includes/avazonia_header.php';
 ?>
 
-<div class="row g-4">
-    <!-- Config Column -->
-    <div class="col-lg-6">
-        <div class="admin-card animate-up">
-            <div class="admin-card-header">
-                <h5 class="admin-card-title mb-0">Core Branding</h5>
-            </div>
-            <div class="card-body p-4">
-                <?php if ($success_msg): ?>
-                    <div class="alert alert-success border-0 rounded-4 mb-4 small fw-bold">
-                        <i class="fas fa-check-circle me-2"></i><?php echo $success_msg; ?>
-                    </div>
-                <?php endif; ?>
+<?php if ($success_msg): ?>
+    <div class="alert-box alert-success"><?php echo htmlspecialchars($success_msg); ?></div>
+<?php endif; ?>
+<?php if ($error_msg): ?>
+    <div class="alert-box alert-error"><?php echo htmlspecialchars($error_msg); ?></div>
+<?php endif; ?>
 
-                <form method="POST" class="space-y-4">
-                    <div class="mb-3">
-                        <label class="stat-label">Marketplace Identity</label>
-                        <input type="text" name="site_name" required value="<?php echo htmlspecialchars($settings['site_name'] ?? 'ASO Online Market'); ?>" class="form-control rounded-3 py-2" placeholder="Site Name">
-                    </div>
+<div class="settings-grid">
+    <div class="panel">
+        <div class="panel-header"><div class="panel-title">Core Branding</div></div>
+        <div class="panel-body">
+            <form method="POST">
+                <div class="field-group">
+                    <label class="field-label">Marketplace Identity</label>
+                    <input type="text" name="site_name" required value="<?php echo htmlspecialchars($settings['site_name'] ?? 'ASO Online Market'); ?>" class="field-input" placeholder="Site Name">
+                </div>
 
-                    <div class="mb-3">
-                        <label class="stat-label">Primary Brand Color</label>
-                        <div class="d-flex gap-2">
-                            <input type="color" name="primary_color" value="<?php echo htmlspecialchars($settings['primary_color'] ?? '#1A1A1A'); ?>" class="form-control form-control-color border-0 p-0 rounded-3 shadow-sm" style="width: 50px; height: 50px;">
-                            <input type="text" id="colorText" value="<?php echo htmlspecialchars($settings['primary_color'] ?? '#1A1A1A'); ?>" class="form-control rounded-3 flex-grow-1 font-monospace" readonly>
-                        </div>
-                        <p class="text-[10px] text-muted fw-bold uppercase tracking-widest mt-2">Used for buttons, accent bars, and primary UI highlights.</p>
+                <div class="field-group">
+                    <label class="field-label">Primary Brand Color</label>
+                    <div class="field-grid">
+                        <input type="color" name="primary_color" value="<?php echo htmlspecialchars($settings['primary_color'] ?? '#1A1A1A'); ?>" class="color-input">
+                        <input type="text" id="colorText" value="<?php echo htmlspecialchars($settings['primary_color'] ?? '#1A1A1A'); ?>" class="field-input" style="font-family: var(--f-mono);" readonly>
                     </div>
+                    <span class="field-sub">Used for buttons, accent bars, and primary UI highlights.</span>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="stat-label">Product Grid Layout</label>
-                        <select name="products_per_row" class="form-select rounded-3 py-2 fw-bold">
-                            <?php for($i=2; $i<=6; $i++): ?>
-                                <option value="<?php echo $i; ?>" <?php echo (isset($settings['products_per_row']) && $settings['products_per_row'] == $i) ? 'selected' : ''; ?>>
-                                    <?php echo $i; ?> Cards Per Row
-                                </option>
-                            <?php endfor; ?>
-                        </select>
-                        <p class="text-[10px] text-muted fw-bold uppercase tracking-widest mt-2">Controls how many products appear side-by-side on large screens.</p>
-                    </div>
+                <div class="field-group">
+                    <label class="field-label">Product Grid Layout</label>
+                    <select name="products_per_row" class="field-input">
+                        <?php for($i=2; $i<=6; $i++): ?>
+                            <option value="<?php echo $i; ?>" <?php echo (isset($settings['products_per_row']) && $settings['products_per_row'] == $i) ? 'selected' : ''; ?>>
+                                <?php echo $i; ?> Cards Per Row
+                            </option>
+                        <?php endfor; ?>
+                    </select>
+                    <span class="field-sub">Controls how many products appear side-by-side on large screens.</span>
+                </div>
 
-                    <div class="mt-4 pt-2">
-                        <button type="submit" class="btn-premium w-100 py-3">
-                            <i class="fas fa-save me-2"></i>Deploy Settings
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <button type="submit" class="btn-red w-100" style="justify-content: center;">Deploy Settings</button>
+            </form>
         </div>
     </div>
 
-    <!-- Preview Column -->
-    <div class="col-lg-6">
-        <div class="admin-card animate-up" style="animation-delay: 0.2s;">
-            <div class="admin-card-header">
-                <h5 class="admin-card-title mb-0">Interface Preview</h5>
-            </div>
-            <div class="card-body p-4">
-                <div class="p-4 rounded-4 border bg-light">
-                    <div class="d-flex align-items-center gap-3 mb-4">
-                        <div class="bg-primary-preview p-3 rounded-4 shadow-sm">
-                            <i class="fas fa-shopping-bag text-white fs-4"></i>
-                        </div>
-                        <div>
-                            <div class="fw-black text-[#1A1A1A]-preview fs-5">Premium Experience</div>
-                            <div class="small text-muted fw-bold">Live Component Simulation</div>
-                        </div>
+    <div class="panel">
+        <div class="panel-header"><div class="panel-title">Interface Preview</div></div>
+        <div class="panel-body">
+            <div class="p-4" style="border: 1px solid var(--light-gray); background: var(--off);">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="p-3" style="background-color: var(--primary-preview);">
+                        <span style="color: #fff; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px;">ASO</span>
                     </div>
+                    <div>
+                        <div class="fw-black" style="font-size: 18px;">Premium Experience</div>
+                        <div class="small" style="color: var(--mid-gray); font-weight: 700;">Live Component Simulation</div>
+                    </div>
+                </div>
 
-                    <div class="d-flex gap-2 mb-4">
-                        <button class="btn btn-primary-preview px-4 py-2 rounded-pill fw-bold small text-white border-0 shadow-sm" style="background-color: var(--primary-preview) !important;">Primary Action</button>
-                        <button class="btn px-4 py-2 rounded-pill fw-bold small border-2" style="border-color: var(--primary-preview) !important; color: var(--primary-preview) !important;">Secondary</button>
-                    </div>
+                <div class="d-flex gap-2 mb-4">
+                    <button class="btn-red" style="background-color: var(--primary-preview); border-color: var(--primary-preview);">Primary Action</button>
+                    <button class="btn-ink" style="color: var(--primary-preview); border-color: var(--primary-preview); background: transparent;">Secondary</button>
+                </div>
 
-                    <div class="p-3 bg-white rounded-3 border">
-                        <div class="small text-muted fw-bold mb-2">Typography & Links</div>
-                        <p class="small mb-0">Your brand color will be applied to <a href="#" class="text-[#1A1A1A]-preview fw-bold" style="color: var(--primary-preview) !important;">hyperlinks</a> and active states.</p>
-                    </div>
+                <div class="p-3" style="border: 1px solid var(--light-gray); background: #fff;">
+                    <div class="small fw-bold" style="color: var(--mid-gray); margin-bottom: 8px;">Typography &amp; Links</div>
+                    <p class="small" style="margin: 0;">Your brand color will be applied to <a href="#" style="color: var(--primary-preview) !important; font-weight: 800;">hyperlinks</a> and active states.</p>
                 </div>
             </div>
         </div>
@@ -130,8 +117,6 @@ include 'includes/header-new.php';
     :root {
         --primary-preview: <?php echo htmlspecialchars($settings['primary_color'] ?? '#1A1A1A'); ?>;
     }
-    .text-[#1A1A1A]-preview { color: var(--primary-preview) !important; }
-    .bg-primary-preview { background-color: var(--primary-preview) !important; }
 </style>
 
 <script>
@@ -142,4 +127,4 @@ document.querySelector('input[type="color"]').addEventListener('input', function
 });
 </script>
 
-<?php include 'includes/footer-new.php'; ?>
+<?php include 'includes/avazonia_footer.php'; ?>

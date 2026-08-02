@@ -1,132 +1,90 @@
 <?php
-// Start session
+require_once 'includes/db.php';
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
-
-// Set page title
 $page_title = 'About Us';
-
 include 'includes/header.php';
 ?>
 
-<main class="bg-[#F9F9F9] min-h-screen">
-    <!-- Hero Section -->
-    <section class="relative py-24 overflow-hidden">
-        <div class="absolute inset-0 z-0">
-            <div class="absolute inset-0 bg-[#F9F9F9]"></div>
-            <div class="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-[#EEEEEE] rounded-full blur-[100px] opacity-50"></div>
-            <div class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-[#EEEEEE] rounded-full blur-[100px] opacity-50"></div>
-        </div>
-        
-        <div class="relative z-10 max-w-[1200px] mx-auto px-6 text-center">
-            <span class="inline-block bg-white border border-[#EEEEEE] text-[#1A1A1A] text-[12px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest mb-6 shadow-sm">
-                Our Story
-            </span>
-            <h1 class="text-[48px] md:text-[64px] font-black text-[#1A1A1A] leading-tight mb-6 tracking-tighter">
-                ASO Online <span class="text-[#888888]">Market.</span>
+<style>
+    .about-main { padding-top: 120px; padding-bottom: 120px; }
+    .about-header { margin-bottom: 100px; max-width: 700px; }
+    .about-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 80px; align-items: start; }
+
+    @media (max-width: 1024px) {
+        .about-grid { grid-template-columns: 1fr; gap: 60px; }
+        .about-main { padding-top: 80px; padding-bottom: 80px; }
+        .about-header { margin-bottom: 60px; }
+    }
+
+    @media (max-width: 768px) {
+        .about-header h1 { font-size: 48px !important; }
+        .about-main { padding-top: 60px; }
+    }
+</style>
+
+<main class="about-main">
+    <div class="container" style="max-width: 1100px;">
+        <!-- Editorial Header -->
+        <header class="about-header">
+            <div class="sec-over" style="margin-bottom: 16px;">ESTABLISHED <?php echo date('Y') - 1; ?></div>
+            <h1 style="font-family: var(--f-display); font-size: clamp(64px, 10vw, 100px); font-weight: 900; line-height: 0.85; letter-spacing: -0.04em; color: var(--ink); text-transform: uppercase; margin-bottom: 40px;">
+                CRAFTING the<br>
+                <span class="outline" style="-webkit-text-stroke: 1.5px var(--ink); color: transparent;">DIGITAL</span><br>
+                FUTURE
             </h1>
-            <p class="max-w-2xl mx-auto text-[18px] md:text-[20px] text-[#666666] font-medium leading-relaxed">
-                Your trusted partner in quality online shopping. We're on a mission to democratize access to premium products with speed and reliability.
+            <p style="font-family: var(--f-body); font-size: 20px; line-height: 1.4; color: var(--mid-gray); font-weight: 500;">
+                ASO Online Market is a modern online store dedicated to making quality products and accessories accessible and affordable for everyone in Ghana.
             </p>
-        </div>
-    </section>
+        </header>
 
-    <!-- Content Sections -->
-    <section class="max-w-[1200px] mx-auto px-6 pb-24 space-y-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Our Story -->
-            <div class="bg-white rounded-[2rem] p-10 md:p-12 border border-[#EEEEEE] shadow-sm">
-                <h2 class="text-[28px] font-black text-[#1A1A1A] mb-6 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-[32px]">history_edu</span> Our Story
-                </h2>
-                <div class="space-y-6 text-[16px] text-[#666666] leading-relaxed">
-                    <p>
-                        ASO Online Market was founded with a simple mission: to provide customers with high-quality products
-                        at competitive prices while delivering exceptional customer service. Since our inception, we've grown
-                        from a small startup to become one of the leading e-commerce platforms in the region.
-                    </p>
-                    <p>
-                        We believe that online shopping should be convenient, reliable, and enjoyable. That's why we've built
-                        our platform with cutting-edge technology and a customer-first approach that puts your needs at the center
-                        of everything we do.
+        <!-- Dynamic Grid Content -->
+        <div class="about-grid">
+            <!-- Left Side: Vision & Mission -->
+            <div style="display: flex; flex-direction: column; gap: 60px;">
+                <div class="reveal">
+                    <h3 style="font-family: var(--f-display); font-size: 11px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 24px;">The Mission</h3>
+                    <p style="font-size: 18px; line-height: 1.6; color: var(--ink);">
+                        We specialize in sourcing and delivering a wide range of reliable products — including tech gadgets, accessories, chargers, and everyday essentials. Our goal is simple: to connect customers with the latest and most useful products without the high prices often associated with modern shopping.
                     </p>
                 </div>
+
+                <div class="reveal rd1">
+                    <h3 style="font-family: var(--f-display); font-size: 11px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 24px;">Our Vision</h3>
+                    <p style="font-size: 18px; line-height: 1.6; color: var(--ink);">
+                        Our vision is to become one of Ghana's most trusted and recognized online stores — a go-to destination for affordable products and digital accessories.
+                    </p>
+                </div>
+
+                <div style="padding: 40px; background: var(--off); border-left: 4px solid var(--red);">
+                    <p style="font-family: var(--f-display); font-size: 20px; font-weight: 800; line-height: 1.3; color: var(--ink);">
+                        "Technology is no longer a luxury; it is an essential component of modern productivity. We bridge the gap between innovation and affordability."
+                    </p>
+                </div>
             </div>
 
-            <!-- Our Mission -->
-            <div class="bg-white rounded-[2rem] p-10 md:p-12 border border-[#EEEEEE] shadow-sm">
-                <h2 class="text-[28px] font-black text-[#1A1A1A] mb-6 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-[32px]">rocket_launch</span> Our Mission
-                </h2>
-                <p class="text-[16px] text-[#666666] leading-relaxed mb-8">
-                    To democratize access to quality products by providing a seamless online shopping experience that
-                    combines convenience, reliability, and value.
-                </p>
-                <div class="grid grid-cols-1 gap-4">
-                    <?php 
-                    $commitments = [
-                        ['check_circle', 'Fair pricing for high-quality goods'],
-                        ['check_circle', 'Exceptional customer support'],
-                        ['check_circle', 'Secure and reliable transactions'],
-                        ['check_circle', 'Supporting local communities'],
-                    ];
-                    foreach ($commitments as $item): ?>
-                        <div class="flex items-center gap-3 p-4 bg-[#F9F9F9] rounded-2xl border border-[#EEEEEE]">
-                            <span class="material-symbols-outlined text-[#1A1A1A]"><?php echo $item[0]; ?></span>
-                            <span class="text-[14px] font-bold text-[#1A1A1A]"><?php echo $item[1]; ?></span>
-                        </div>
-                    <?php endforeach; ?>
+            <!-- Right Side: Philosophy & Convenience -->
+            <div style="display: flex; flex-direction: column; gap: 40px;">
+                <div class="reveal rd2">
+                    <div style="margin-bottom: 32px; overflow: hidden; border-radius: 4px;">
+                        <img src="<?php echo $base; ?>assets/images/logo-v3.png" alt="ASO Online Market" style="width: 100%; max-height: 350px; object-fit: contain; background: var(--off);">
+                    </div>
+                    <h2 style="font-family: var(--f-display); font-size: 32px; font-weight: 800; line-height: 1.1; color: var(--ink); margin-bottom: 24px; text-transform: uppercase;">A Commitment<br>to Convenience</h2>
+                    <p style="font-size: 16px; line-height: 1.8; color: var(--mid-gray); margin-bottom: 24px;">
+                        What sets us apart is our commitment to convenience and trust. We offer a seamless online shopping experience, flexible payment options, and reliable delivery services across Ghana. Whether you're shopping from Accra or anywhere else in the country, ASO ensures your order gets to you safely and on time.
+                    </p>
+                    <p style="font-size: 16px; line-height: 1.8; color: var(--mid-gray);">
+                        We also work with a growing network of partners and resellers, creating opportunities for individuals and businesses to earn by selling products without the burden of holding stock.
+                    </p>
+                </div>
+
+                <div style="margin-top: 40px;">
+                    <a href="<?php echo $base; ?>shop.php" class="btn-ink" style="width: fit-content; padding: 0 40px; height: 56px;">EXPLORE THE COLLECTION →</a>
                 </div>
             </div>
         </div>
-
-        <!-- Values Section -->
-        <div class="bg-white rounded-[2rem] p-10 md:p-16 border border-[#EEEEEE] shadow-sm">
-            <div class="text-center mb-16">
-                <h2 class="text-[32px] font-black text-[#1A1A1A] mb-4">Our Core Values</h2>
-                <p class="text-[#888888] font-medium">The principles that guide every decision we make.</p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <div class="text-center group">
-                    <div class="w-20 h-20 mx-auto bg-[#F9F9F9] rounded-3xl flex items-center justify-center text-[#1A1A1A] mb-6 group-hover:bg-primary group-hover:text-white transition-all duration-500">
-                        <span class="material-symbols-outlined text-[40px]">favorite</span>
-                    </div>
-                    <h4 class="text-[20px] font-black text-[#1A1A1A] mb-4">Customer First</h4>
-                    <p class="text-[14px] text-[#666666] leading-relaxed">We prioritize our customers' needs and satisfaction above all else. Every decision is guided by what's best for you.</p>
-                </div>
-
-                <div class="text-center group">
-                    <div class="w-20 h-20 mx-auto bg-[#F9F9F9] rounded-3xl flex items-center justify-center text-[#1A1A1A] mb-6 group-hover:bg-primary group-hover:text-white transition-all duration-500">
-                        <span class="material-symbols-outlined text-[40px]">shield</span>
-                    </div>
-                    <h4 class="text-[20px] font-black text-[#1A1A1A] mb-4">Trust & Security</h4>
-                    <p class="text-[14px] text-[#666666] leading-relaxed">We maintain the highest standards of security and privacy protection. Your trust is our most valuable asset.</p>
-                </div>
-
-                <div class="text-center group">
-                    <div class="w-20 h-20 mx-auto bg-[#F9F9F9] rounded-3xl flex items-center justify-center text-[#1A1A1A] mb-6 group-hover:bg-primary group-hover:text-white transition-all duration-500">
-                        <span class="material-symbols-outlined text-[40px]">award_star</span>
-                    </div>
-                    <h4 class="text-[20px] font-black text-[#1A1A1A] mb-4">Quality Excellence</h4>
-                    <p class="text-[14px] text-[#666666] leading-relaxed">We partner with trusted suppliers and manufacturers to ensure every product meets our strict standards.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- CTA Section -->
-        <div class="bg-primary rounded-[2rem] p-12 md:p-16 text-center relative overflow-hidden">
-            <div class="absolute top-[-50%] left-[-10%] w-[300px] h-[300px] bg-white/5 rounded-full blur-[80px]"></div>
-            <div class="relative z-10">
-                <h2 class="text-[32px] md:text-[48px] font-black text-white mb-6 tracking-tighter">Ready to experience the future?</h2>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="shop.php" class="bg-white text-[#1A1A1A] font-bold px-10 py-4 rounded-full hover:scale-105 transition-transform">Start Shopping</a>
-                    <a href="contact.php" class="bg-transparent border-2 border-white/20 text-white font-bold px-10 py-4 rounded-full hover:bg-white/10 transition-colors">Contact Us</a>
-                </div>
-            </div>
-        </div>
-    </section>
+    </div>
 </main>
 
 <?php include 'includes/footer.php'; ?>

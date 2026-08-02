@@ -1,6 +1,6 @@
 <?php
 /**
- * Storefront: Forgot Password
+ * Storefront: Forgot Password (Avazonia auth-split layout)
  */
 require_once 'includes/db.php';
 require_once 'includes/email_config.php';
@@ -49,18 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$email, $token, $expires]);
                 
                 $resetLink = SITE_URL . "reset_password.php?token=" . urlencode($token) . "&email=" . urlencode($email);
-                $subject = "Password Reset Request - " . STORE_NAME;
-                $message = "
-                    <p>Hello " . htmlspecialchars($user['name']) . ",</p>
-                    <p>You requested a password reset. Click the link below to reset your password:</p>
-                    <p><a href='$resetLink' style='padding: 10px 15px; background: #0d6efd; color: white; text-decoration: none; border-radius: 4px;'>Reset Password</a></p>
-                    <p>Or copy and paste this link in your browser:<br>
-                    <code>$resetLink</code></p>
-                    <p>This link will expire in 1 hour.</p>
-                    <p>If you didn't request this, please ignore this email.</p>
-                ";
                 
-                if (sendEmail($email, $subject, $message)) {
+                if (sendPasswordResetEmail($email, $user['name'], $resetLink)) {
                     $success = 'A reset link has been sent to your email. It will expire in 1 hour.';
                     $email = '';
                 } else {
@@ -79,68 +69,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 include 'includes/header.php';
 ?>
 
-<main class="min-h-screen flex relative overflow-hidden bg-[#F9F9F9]">
-    <!-- Desktop Side Panel -->
-    <div class="hidden lg:block lg:w-1/2 h-screen sticky top-0">
-        <img src="assets/images/login_side_panel.png" alt="Store Aesthetic" class="w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-primary/10"></div>
-        <div class="absolute inset-0 flex flex-col justify-end p-20 bg-gradient-to-t from-black/80 via-transparent to-transparent">
-            <h2 class="text-white text-[48px] font-black leading-tight mb-4 tracking-tighter">Secure <span class="text-white/60">Access.</span></h2>
-            <p class="text-white/70 text-[18px] font-medium max-w-sm">Don't worry, we'll help you get back into your account in no time.</p>
+<div class="auth-split">
+  <!-- Form Side -->
+  <div class="auth-form-side">
+    <div style="max-width: 400px; width: 100%; margin: 0 auto;">
+
+      <a href="login.php" style="display:inline-flex;align-items:center;gap:8px;font-family:var(--f-semi);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mid-gray);text-decoration:none;margin-bottom:40px;">
+        ← Back to Login
+      </a>
+
+      <h1 style="font-family: var(--f-display); font-weight: 900; font-size: 38px; text-transform: uppercase; margin-bottom: 8px; line-height: 1; letter-spacing: -0.04em;">Forgot Password</h1>
+      <p style="font-family: var(--f-body); font-size: 14px; color: var(--mid-gray); margin-bottom: 48px;">Enter the email on your account and we'll send you a reset link.</p>
+
+      <?php if ($success): ?>
+        <div style="background: #F0FDF4; border: 1px solid #BBF7D0; color: #16A34A; padding: 20px 24px; border-radius: 12px; margin-bottom: 32px; font-family: var(--f-body); font-size: 14px; line-height: 1.6;">
+          <strong>📬 Email Sent!</strong><br>
+          <?php echo htmlspecialchars($success); ?>
         </div>
-    </div>
-
-    <!-- Form Side -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 z-10 relative">
-        <div class="w-full max-w-[420px] bg-white rounded-[2.5rem] p-10 md:p-14 border border-[#EEEEEE] shadow-sm">
-            <div class="mb-10 text-center lg:text-left">
-                <h1 class="text-[32px] font-black text-[#1A1A1A] mb-2 tracking-tight">Recover Account.</h1>
-                <p class="text-[#888888] font-bold text-[14px] uppercase tracking-widest">Reset your password</p>
-            </div>
-
-            <?php if (!empty($errors)): ?>
-                <div class="bg-[#FEF2F2] border border-[#FEE2E2] rounded-2xl p-4 mb-8">
-                    <ul class="flex flex-col gap-1">
-                        <?php foreach ($errors as $error): ?>
-                            <li class="text-[#EF4444] text-[13px] font-bold flex items-center gap-2">
-                                <span class="material-symbols-outlined text-[18px]">error</span>
-                                <?php echo htmlspecialchars($error); ?>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($success): ?>
-                <div class="bg-[#F0FDF4] border border-[#DCFCE7] rounded-2xl p-6 mb-8 flex flex-col items-center text-center gap-4">
-                    <span class="material-symbols-outlined text-[#22C55E] text-[48px]">check_circle</span>
-                    <p class="text-[#1A1A1A] text-[15px] font-bold leading-relaxed"><?php echo htmlspecialchars($success); ?></p>
-                </div>
-                <a href="login.php" class="w-full bg-primary text-white font-bold text-[16px] py-5 rounded-full flex items-center justify-center gap-3 hover:bg-primary shadow-xl hover:shadow-primary/10 transition-all active:scale-[0.98]">
-                    Return to Login <span class="material-symbols-outlined text-[20px]">login</span>
-                </a>
-            <?php else: ?>
-                <form method="POST" class="space-y-8">
-                    <div class="space-y-2">
-                        <label for="email" class="text-[12px] font-bold text-[#888888] uppercase tracking-widest ml-4">Email Address</label>
-                        <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required 
-                               class="w-full px-6 py-4 bg-[#F9F9F9] border border-[#EEEEEE] rounded-full focus:border-primary outline-none text-[15px] transition-all" 
-                               placeholder="name@example.com" />
-                    </div>
-
-                    <button type="submit" class="w-full bg-primary text-white font-bold text-[16px] py-5 rounded-full hover:bg-primary shadow-xl hover:shadow-primary/10 transition-all active:scale-[0.98]">
-                        Send Reset Link <span class="material-symbols-outlined text-[20px] ml-2">mail</span>
-                    </button>
-                </form>
-
-                <div class="mt-10 text-center">
-                    <a href="login.php" class="inline-flex items-center gap-2 text-[14px] font-black text-[#1A1A1A] hover:underline">
-                        <span class="material-symbols-outlined text-[20px]">arrow_back</span> Back to Login
-                    </a>
-                </div>
-            <?php endif; ?>
+        <div style="text-align:center; margin-top:12px;">
+          <a href="login.php" class="btn-ink" style="display:inline-block;padding:14px 32px;font-size:11px;text-decoration:none;border-radius:12px;">Back to Login</a>
         </div>
+      <?php else: ?>
+
+        <?php if (!empty($errors)): ?>
+          <div style="background: #fffafa; border: 1px solid #feeaea; color: var(--red); padding: 16px; font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; border-radius: 4px; margin-bottom: 32px;">
+            <?php foreach ($errors as $error): ?>
+              [ERROR] <?php echo htmlspecialchars($error); ?><br>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+
+        <form action="forgot_password.php" method="POST" style="display:flex;flex-direction:column;gap:24px;">
+          <div class="form-group">
+            <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">Email Address</label>
+            <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>" placeholder="USER@DOMAIN.COM" required
+              style="width:100%;height:48px;background:#fff;border:1px solid var(--light-gray);border-radius:12px;padding:0 16px;font-family:var(--f-mono);font-size:12px;color:var(--ink);outline:none;">
+          </div>
+          <button type="submit" class="btn-red" style="width:100%;height:48px;font-size:11px;margin-top:8px;">Send Reset Link →</button>
+        </form>
+
+      <?php endif; ?>
     </div>
-</main>
+  </div>
+
+  <!-- Graphic Side -->
+  <div class="auth-graphic-side">
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.8));z-index:1;"></div>
+    <img src="assets/images/login_side_panel.png" alt="" style="width:100%;height:100%;object-fit:cover;">
+    <div style="position:absolute;bottom:80px;left:80px;right:80px;color:#fff;z-index:2;">
+      <p style="font-family:var(--f-display);font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:0.2em;margin-bottom:24px;opacity:0.8;">Account Recovery</p>
+      <h2 style="font-family:var(--f-display);font-weight:900;font-size:48px;text-transform:uppercase;line-height:1;letter-spacing:-0.04em;">WE'VE GOT<br>YOUR BACK.</h2>
+    </div>
+  </div>
+</div>
 
 <?php include 'includes/footer.php'; ?>

@@ -29,13 +29,18 @@ $user_id = $_SESSION['user_id'];
 $product_id = (int)$_POST['product_id'];
 
 try {
-    // Check if product exists
-    $stmt = $pdo->prepare("SELECT product_id, name FROM products WHERE product_id = ?");
+    // Check if product exists and is published
+    $stmt = $pdo->prepare("SELECT product_id, name, status FROM products WHERE product_id = ?");
     $stmt->execute([$product_id]);
     $product = $stmt->fetch();
     
     if (!$product) {
         echo json_encode(['success' => false, 'message' => 'Product not found']);
+        exit();
+    }
+    
+    if ($product['status'] !== 'published') {
+        echo json_encode(['success' => false, 'message' => 'Product is not available']);
         exit();
     }
     

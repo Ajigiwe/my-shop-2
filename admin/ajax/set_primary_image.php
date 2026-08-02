@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * AJAX handler for setting a product's primary image
  */
@@ -10,7 +10,7 @@ header('Content-Type: application/json');
 
 // Check if user is logged in and is admin
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;

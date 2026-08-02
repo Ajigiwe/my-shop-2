@@ -4,18 +4,14 @@
  * - Public page to list all categories with product counts
  * - Links to category detail pages
  */
-// Include database connection
 require_once 'includes/db.php';
 
-// Start session
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Set page title
 $page_title = 'Categories';
 
-// Fetch all categories with product counts
 $categories = [];
 try {
     $stmt = $pdo->query("SELECT c.*, COUNT(p.product_id) AS product_count
@@ -27,42 +23,43 @@ try {
 } catch (PDOException $e) {
     error_log('Error fetching categories: ' . $e->getMessage());
 }
+
 ?>
 
 <?php include 'includes/header.php'; ?>
 
-<div class="container py-4">
-
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Browse Categories</h2>
-        <a href="shop.php" class="btn btn-outline-primary"><i class="fas fa-store me-2"></i>Go to Shop</a>
-    </div>
-
-    <?php if (empty($categories)): ?>
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>No categories found.
-        </div>
-    <?php else: ?>
-        <div class="row">
-            <?php foreach ($categories as $cat): ?>
-                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-                    <a href="category.php?id=<?php echo $cat['category_id']; ?>" class="text-decoration-none">
-                        <div class="card h-100 product-card">
-                            <img src="assets/images/category_<?php echo $cat['category_id']; ?>.jpg" 
-                                 class="card-img-top product-image" 
-                                 onerror="this.src='https://via.placeholder.com/600x400/e9ecef/6c757d?text=<?php echo urlencode($cat['category_name']); ?>'"
-                                 alt="<?php echo htmlspecialchars($cat['category_name']); ?>">
-                            <div class="card-body text-center">
-                                <h5 class="product-title mb-1"><?php echo htmlspecialchars($cat['category_name']); ?></h5>
-                                <p class="text-muted mb-0"><?php echo (int)$cat['product_count']; ?> products</p>
-                            </div>
-                        </div>
-                    </a>
+<main>
+    <section class="shop-content" style="padding: 120px 0 80px;">
+        <div class="container">
+            <div class="sec-head reveal" style="margin-bottom: 48px;">
+                <div>
+                    <div class="sec-over">THE DROPS</div>
+                    <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 8px; line-height: 0.85;">BROWSE CATEGORIES</h2>
+                    <p style="font-family: var(--f-body); font-size: 14px; color: var(--mid-gray); margin-top: 12px;">Everything we drop, organised by category. Find your new favourite gear.</p>
                 </div>
-            <?php endforeach; ?>
+            </div>
+
+            <?php if (empty($categories)): ?>
+                <div style="text-align: center; padding: 60px 0; font-family: var(--f-body); color: var(--mid-gray);">
+                    <h3 style="font-family: var(--f-display); font-weight: 900; font-size: 24px; color: var(--ink); text-transform: uppercase; margin-bottom: 12px;">No categories found</h3>
+                    <p style="margin-bottom: 24px;">Categories will appear here once they are created.</p>
+                    <a href="shop.php" class="btn-red">Go to shop</a>
+                </div>
+            <?php else: ?>
+                <div class="category-grid">
+                    <?php foreach ($categories as $i => $cat):
+                        $is_hero = ($i === 0);
+                        $image_path = !empty($cat['image']) ? 'assets/images/categories/' . $cat['image'] : null;
+                        $bg = ($image_path && file_exists($image_path)) ? "url('" . $image_path . "')" : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
+                    ?>
+                        <a href="category.php?id=<?php echo $cat['category_id']; ?>" class="cat-tile <?php echo $is_hero ? 'cat-hero' : ''; ?>" style="background-image: <?php echo $bg; ?>;">
+                            <span class="cat-label"><?php echo htmlspecialchars($cat['category_name']); ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </div>
-    <?php endif; ?>
-</div>
+    </section>
+</main>
 
 <?php include 'includes/footer.php'; ?>

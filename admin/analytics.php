@@ -56,119 +56,109 @@ try {
     error_log("Analytics error: " . $e->getMessage());
 }
 
-include 'includes/header-new.php';
+include 'includes/avazonia_header.php';
 ?>
 
-<div class="row g-4 mb-5">
-    <div class="col-xl-3 col-md-6">
-        <div class="stat-card">
-            <div class="stat-label">Net Revenue</div>
-            <div class="stat-value"><?php echo formatCurrency($stats['total_revenue']); ?></div>
-            <div class="small text-success mt-2 fw-bold">+12% from last month</div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="stat-card">
-            <div class="stat-label">Avg. Order Value</div>
-            <div class="stat-value"><?php echo formatCurrency($stats['avg_order']); ?></div>
-            <div class="small text-muted mt-2 fw-bold">Per transaction</div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="stat-card">
-            <div class="stat-label">Total Transactions</div>
-            <div class="stat-value"><?php echo number_format($stats['total_orders']); ?></div>
-            <div class="small text-[#1A1A1A] mt-2 fw-bold">Live orders</div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="stat-card">
-            <div class="stat-label">Customer Base</div>
-            <div class="stat-value"><?php echo number_format($stats['active_customers']); ?></div>
-            <div class="small text-muted mt-2 fw-bold">Registered accounts</div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4">
-    <!-- Main Revenue Chart -->
-    <div class="col-12">
-        <div class="admin-card">
-            <div class="admin-card-header">
-                <h5 class="admin-card-title mb-0">Revenue Growth</h5>
-                <div class="badge bg-light text-dark rounded-pill px-3">Last 6 Months</div>
-            </div>
-            <div class="card-body p-4">
-                <div style="position: relative; height: 350px; width: 100%;">
-                    <canvas id="revenueGrowthChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Best Selling Products -->
-    <div class="col-xl-4">
-        <div class="admin-card">
-            <div class="admin-card-header">
-                <h5 class="admin-card-title mb-0">Best Selling Products</h5>
-            </div>
-            <div class="card-body p-4">
-                <div style="position: relative; height: 250px; width: 100%;">
-                    <canvas id="bestSellersPieChart"></canvas>
-                </div>
-                <div class="mt-4 pt-2">
-                    <?php foreach($chart_data['product_labels'] as $i => $label): ?>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="small fw-bold text-muted text-truncate pe-2" title="<?php echo htmlspecialchars($label); ?>">
-                                <?php echo htmlspecialchars($label); ?>
-                            </div>
-                            <span class="fw-black flex-shrink-0"><?php echo $chart_data['product_counts'][$i]; ?> units</span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bestsellers Table -->
-    <div class="col-xl-8">
-        <div class="admin-card">
-            <div class="admin-card-header">
-                <h5 class="admin-card-title mb-0">Bestselling Products</h5>
-            </div>
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Product Name</th>
-                            <th>Units Sold</th>
-                            <th>Market Share</th>
-                            <th class="text-end">Growth</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach($chart_data['top_products'] as $prod): ?>
-                        <tr>
-                            <td class="fw-bold text-truncate" style="max-width: 200px;" title="<?php echo htmlspecialchars($prod['name']); ?>"><?php echo htmlspecialchars($prod['name']); ?></td>
-                            <td class="fw-black"><?php echo $prod['total_sold']; ?> units</td>
-                            <td>
-                                <div class="progress rounded-pill" style="height: 6px; width: 150px;">
-                                    <div class="progress-bar bg-dark" style="width: <?php echo min(100, $prod['total_sold'] * 2); ?>%"></div>
-                                </div>
-                            </td>
-                            <td class="text-end text-success fw-bold">+4.2%</td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="analytics-grid">
+    <div class="stat-card-bold">
+        <span class="label">Net Revenue</span>
+        <span class="value"><?php echo formatCurrency($stats['total_revenue']); ?></span>
+        <div class="trend-indicator trend-up">▲ 12.0% <span style="opacity: 0.5; color: var(--ink);">vs last month</span></div>
+    </div>
+    <div class="stat-card-bold">
+        <span class="label">Avg. Order Value</span>
+        <span class="value"><?php echo formatCurrency($stats['avg_order']); ?></span>
+        <div style="font-family: var(--f-mono); font-size: 10px; color: var(--mid-gray);">PER TRANSACTION</div>
+    </div>
+    <div class="stat-card-bold">
+        <span class="label">Total Transactions</span>
+        <span class="value"><?php echo number_format($stats['total_orders']); ?></span>
+        <div style="font-family: var(--f-mono); font-size: 10px; color: var(--mid-gray);">LIVE ORDERS</div>
+    </div>
+    <div class="stat-card-bold">
+        <span class="label">Customer Base</span>
+        <span class="value"><?php echo number_format($stats['active_customers']); ?></span>
+        <div style="font-family: var(--f-mono); font-size: 10px; color: var(--mid-gray);">REGISTERED ACCOUNTS</div>
+    </div>
+</div>
+
+<div style="margin-bottom: 40px;">
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">Revenue Growth <span style="opacity: 0.4;">(Last 6 Months)</span></div>
+        </div>
+        <div style="padding: 32px; height: 350px;">
+            <canvas id="revenueGrowthChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-layout">
+    <div class="panel" style="margin-bottom: 0;">
+        <div class="panel-header"><div class="panel-title">Best Selling Products</div></div>
+        <div style="padding: 40px; display: flex; justify-content: center; align-items: center; min-height: 250px;">
+            <div style="width: 100%; max-width: 280px;">
+                <canvas id="bestSellersPieChart"></canvas>
+            </div>
+        </div>
+        <div style="padding: 0 32px 32px;">
+            <?php foreach($chart_data['product_labels'] as $i => $label): ?>
+                <div class="d-flex justify-content-between align-items-center" style="margin-bottom: 8px;">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--mid-gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px;" title="<?php echo htmlspecialchars($label); ?>">
+                        <?php echo htmlspecialchars($label); ?>
+                    </div>
+                    <span style="font-weight: 900; flex-shrink: 0;"><?php echo $chart_data['product_counts'][$i]; ?> units</span>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-bottom: 0;">
+        <div class="panel-header"><div class="panel-title">Bestselling Products</div></div>
+        <div class="table-container" style="border: none; margin-bottom: 0; border-radius: 0;">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Units Sold</th>
+                        <th>Market Share</th>
+                        <th style="text-align: right;">Growth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach($chart_data['top_products'] as $prod): ?>
+                    <tr>
+                        <td style="font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" title="<?php echo htmlspecialchars($prod['name']); ?>"><?php echo htmlspecialchars($prod['name']); ?></td>
+                        <td style="font-weight: 900;"><?php echo $prod['total_sold']; ?> units</td>
+                        <td>
+                            <div style="width: 150px; height: 6px; background: var(--light-gray); border-radius: 0;">
+                                <div style="width: <?php echo min(100, $prod['total_sold'] * 2); ?>%; height: 100%; background: var(--ink);"></div>
+                            </div>
+                        </td>
+                        <td style="text-align: right; font-weight: 700; color: #00a854;">+4.2%</td>
+                    </tr>
+                    <?php endforeach; ?>
+                    <?php if (empty($chart_data['top_products'])): ?>
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 48px; color: var(--mid-gray);">No sales data yet.</td>
+                    </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<?php include 'includes/avazonia_footer.php'; ?>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const fontStack = "'Inter', system-ui, -apple-system, sans-serif";
+
     // Revenue Chart
     const revCtx = document.getElementById('revenueGrowthChart').getContext('2d');
     new Chart(revCtx, {
@@ -178,13 +168,13 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets: [{
                 label: 'Revenue',
                 data: <?php echo json_encode($chart_data['revenues']); ?>,
-                borderColor: '#1A1A1A',
-                backgroundColor: 'rgba(26, 26, 26, 0.05)',
-                borderWidth: 4,
+                borderColor: '#0B3D2E',
+                backgroundColor: 'rgba(11,61,46,0.06)',
+                borderWidth: 3,
                 fill: true,
                 tension: 0.4,
-                pointRadius: 6,
-                pointBackgroundColor: '#1A1A1A',
+                pointRadius: 4,
+                pointBackgroundColor: '#0B3D2E',
                 pointBorderColor: '#FFFFFF',
                 pointBorderWidth: 2
             }]
@@ -194,8 +184,8 @@ document.addEventListener('DOMContentLoaded', function() {
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-                y: { grid: { borderDash: [5, 5] }, ticks: { font: { weight: 'bold' } } },
-                x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } }
+                y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { family: fontStack, size: 10, weight: '700' } } },
+                x: { grid: { display: false }, ticks: { font: { family: fontStack, size: 10, weight: '700' } } }
             }
         }
     });
@@ -203,12 +193,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Best Sellers Pie Chart
     const pieCtx = document.getElementById('bestSellersPieChart').getContext('2d');
     new Chart(pieCtx, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: <?php echo json_encode($chart_data['product_labels']); ?>,
             datasets: [{
                 data: <?php echo json_encode($chart_data['product_counts']); ?>,
-                backgroundColor: ['#1A1A1A', '#333333', '#666666', '#999999', '#CCCCCC'],
+                backgroundColor: ['#0B3D2E', '#00A854', '#4CAF50', '#8BC34A', '#C5E1A5'],
                 borderWidth: 0,
                 hoverOffset: 10
             }]
@@ -216,10 +206,11 @@ document.addEventListener('DOMContentLoaded', function() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } }
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { family: fontStack, size: 10, weight: '700' }, boxWidth: 12, padding: 20 } }
+            },
+            cutout: '70%'
         }
     });
 });
 </script>
-
-<?php include 'includes/footer-new.php'; ?>

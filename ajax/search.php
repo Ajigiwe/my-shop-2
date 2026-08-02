@@ -43,6 +43,7 @@ try {
             JOIN categories c ON p.category_id = c.category_id
             WHERE (LOWER(p.name) LIKE LOWER(?) OR LOWER(c.category_name) LIKE LOWER(?))
             AND p.stock_quantity > 0
+            AND p.status = 'published'
             ORDER BY
                 CASE
                     WHEN LOWER(p.name) = LOWER(?) THEN 1
@@ -77,6 +78,7 @@ try {
             JOIN categories c ON p.category_id = c.category_id
             WHERE (p.name LIKE ? OR p.description LIKE ? OR c.category_name LIKE ?)
             AND p.stock_quantity > 0
+            AND p.status = 'published'
             ORDER BY
                 CASE
                     WHEN p.name LIKE ? THEN 1

@@ -1,14 +1,11 @@
 <?php
 /**
- * User: Order Details
- * - Rebuilt to be significantly less bulky.
- * - Minimalist, information-dense, and refined.
+ * User: Order Details (Avazonia standalone order page)
  */
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
 session_start();
 
-// Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../login.php');
     exit();
@@ -20,15 +17,20 @@ if ($order_id <= 0) {
     exit();
 }
 
-// Get order details
+$user_id = $_SESSION['user_id'];
+
 try {
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    $user = $stmt->fetch();
+
     $stmt = $pdo->prepare("
-        SELECT o.*, u.name, u.email, u.phone 
+        SELECT o.*, u.name, u.email, u.phone AS user_phone
         FROM orders o 
         JOIN users u ON u.user_id = o.user_id 
         WHERE o.order_id = ? AND o.user_id = ?
     ");
-    $stmt->execute([$order_id, $_SESSION['user_id']]);
+    $stmt->execute([$order_id, $user_id]);
     $order = $stmt->fetch();
 
     if (!$order) {
@@ -36,7 +38,6 @@ try {
         exit();
     }
 
-    // Get items
     $stmt = $pdo->prepare("
         SELECT oi.*, p.name, p.image 
         FROM order_items oi 
@@ -52,145 +53,159 @@ try {
     exit();
 }
 
+$statusColors = [
+    'pending'    => ['#9ca3af', 'Pending'],
+    'processing' => ['#f59e0b', 'Processing'],
+    'confirmed'  => ['#0ea5e9', 'Confirmed'],
+    'shipped'    => ['#8b5cf6', 'Shipped'],
+    'delivered'  => ['#16a34a', 'Delivered'],
+    'cancelled'  => ['#ef4444', 'Cancelled']
+];
+
+$currStatus = strtolower($order['order_status'] ?? 'pending');
+$sColor = $statusColors[$currStatus][0] ?? '#111';
+$sText  = $statusColors[$currStatus][1] ?? ucfirst($currStatus);
+
+$subtotal = 0;
+foreach ($items as $item) {
+    $subtotal += (float)$item['price'] * (float)$item['quantity'];
+}
+$shipping = max(0, (float)$order['total_amount'] - $subtotal);
+$payLabel = ($order['payment_method'] === 'paystack') ? 'Online / Card' : (($order['payment_method'] === 'pod') ? 'Pay on Delivery' : 'Bank Transfer');
+
 $page_title = 'Order Details';
 include '../includes/header.php';
 ?>
 
-<div class="flex-1 bg-[#F9F9F9] min-h-screen">
-    <div class="max-w-[1200px] mx-auto px-6 py-8">
-        
-        <!-- Header -->
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 bg-white border border-[#EEEEEE] p-6 rounded-xl shadow-sm">
-            <div>
-                <nav class="flex items-center gap-1.5 text-[9px] font-black text-[#888888] uppercase tracking-widest mb-3">
-                    <a href="dashboard.php" class="hover:text-[#1A1A1A]">Dashboard</a>
-                    <span class="material-symbols-outlined text-[12px]">chevron_right</span>
-                    <a href="orders.php" class="hover:text-[#1A1A1A]">Orders</a>
-                    <span class="material-symbols-outlined text-[12px]">chevron_right</span>
-                    <span class="text-[#1A1A1A]">#<?php echo str_pad($order_id, 6, '0', STR_PAD_LEFT); ?></span>
-                </nav>
-                <h1 class="text-[24px] font-black text-[#1A1A1A] tracking-tighter mb-1">Order Summary</h1>
-                <p class="text-[12px] text-[#666666] font-medium">Placed on <?php echo date('F j, Y', strtotime($order['order_date'])); ?></p>
+<style>
+    .order-page { padding-top: 100px; padding-bottom: 80px; background: #fff; min-height: 80vh; }
+    .order-header { border-bottom: 1px solid var(--light-gray); padding-bottom: 32px; margin-bottom: 40px; }
+    .order-title { font-family: var(--f-display); font-size: clamp(28px, 6vw, 40px); font-weight: 900; letter-spacing: -.03em; margin-bottom: 16px; word-break: break-word; line-height: 1.1; }
+    .order-meta { display: flex; flex-wrap: wrap; gap: 20px 40px; }
+    .meta-item { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+    .meta-label { font-family: var(--f-mono); font-size: 10px; color: var(--mid-gray); text-transform: uppercase; letter-spacing: .1em; }
+    .meta-val { font-family: var(--f-display); font-weight: 700; font-size: 14px; }
+
+    .order-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 40px; }
+    .order-items { display: flex; flex-direction: column; gap: 24px; }
+    .item-card { display: flex; gap: 16px; align-items: start; border-bottom: 1px solid #f0f0f0; padding-bottom: 24px; }
+    .item-img { width: 80px; height: 80px; background: var(--off); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+    .item-img img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { font-family: var(--f-display); font-weight: 800; font-size: 15px; margin-bottom: 4px; line-height: 1.3; }
+    .item-ref { font-family: var(--f-mono); font-size: 9px; color: var(--mid-gray); text-transform: uppercase; margin-bottom: 12px; }
+    .item-price-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .item-qty { font-family: var(--f-body); font-size: 12px; color: var(--mid-gray); }
+    .item-total { font-family: var(--f-display); font-weight: 900; font-size: 15px; }
+
+    .order-summary-card { background: var(--off); padding: 32px; border-radius: 8px; position: sticky; top: 120px; }
+    .sum-title { font-family: var(--f-display); font-weight: 900; font-size: 18px; text-transform: uppercase; margin-bottom: 20px; }
+    .sum-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    .sum-row.total { border-bottom: none; padding-top: 20px; margin-top: 12px; border-top: 2px solid var(--ink); }
+    .sum-label { font-family: var(--f-body); font-size: 13px; color: var(--mid-gray); }
+    .sum-val { font-family: var(--f-display); font-weight: 700; font-size: 14px; }
+    .sum-total-val { font-family: var(--f-display); font-weight: 900; font-size: 24px; }
+
+    .shipping-box { margin-top: 24px; padding: 24px; background: #fdfdfd; border-radius: 8px; border: 1px solid #f0f0f0; }
+    .box-title { font-family: var(--f-mono); font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--ink); border-bottom: 1px solid var(--light-gray); padding-bottom: 8px; margin-bottom: 12px; }
+    .box-content { font-family: var(--f-body); font-size: 14px; line-height: 1.6; color: var(--mid-gray); }
+
+    @media (max-width: 900px) {
+        .order-page { padding-top: 60px; padding-bottom: 60px; }
+        .order-grid { grid-template-columns: 1fr; gap: 40px; }
+        .order-summary-card { position: static; padding: 24px; }
+        .order-header { margin-bottom: 40px; }
+        .item-img { width: 64px; height: 64px; }
+    }
+</style>
+
+<div class="order-page">
+    <div class="container">
+        <div class="order-header">
+            <div style="margin-bottom: 20px;">
+                <a href="orders.php" style="font-family:var(--f-mono); font-size:10px; color:var(--mid-gray); text-transform:uppercase; text-decoration:none;">← Back to Orders</a>
             </div>
-            <div class="flex items-center gap-3">
-                <?php
-                $status = strtolower($order['order_status']);
-                $status_classes = match($status) {
-                    'pending' => 'bg-amber-100 text-amber-700 border-amber-200',
-                    'processing' => 'bg-blue-100 text-blue-700 border-blue-200',
-                    'shipped' => 'bg-purple-100 text-purple-700 border-purple-200',
-                    'delivered' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                    'cancelled' => 'bg-rose-100 text-rose-700 border-rose-200',
-                    default => 'bg-gray-100 text-gray-700 border-gray-200'
-                };
-                ?>
-                <span class="px-4 py-2 rounded-lg border <?php echo $status_classes; ?> text-[10px] font-black uppercase tracking-widest">
-                    Status: <?php echo $order['order_status']; ?>
-                </span>
-                <a href="invoice.php?order_id=<?php echo $order_id; ?>" target="_blank" class="h-10 px-6 rounded-lg border border-primary text-[#1A1A1A] font-black text-[11px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[16px]">receipt_long</span> Invoice
-                </a>
+            <h1 class="order-title">Order <span style="color:var(--red);">#<?php echo htmlspecialchars($order['order_number'] ?? str_pad($order_id, 6, '0', STR_PAD_LEFT)); ?></span></h1>
+
+            <div class="order-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Date Placed</span>
+                    <span class="meta-val"><?php echo date('F j, Y', strtotime($order['order_date'])); ?></span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Status</span>
+                    <span class="meta-val" style="color:<?php echo $sColor; ?>;"><?php echo $sText; ?></span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Customer</span>
+                    <span class="meta-val"><?php echo htmlspecialchars($user['name'] ?? 'Customer'); ?></span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Reference</span>
+                    <span class="meta-val" style="font-family: var(--f-mono); font-size: 12px;"><?php echo htmlspecialchars($order['payment_reference'] ?? '—'); ?></span>
+                </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Left: Items -->
-            <div class="lg:col-span-8 space-y-6">
-                <div class="bg-white border border-[#EEEEEE] rounded-xl shadow-sm overflow-hidden">
-                    <div class="px-5 py-4 border-b border-[#EEEEEE] bg-[#FBFBFB] flex items-center justify-between">
-                        <h3 class="text-[12px] font-black text-[#1A1A1A] uppercase tracking-widest">Purchased Items (<?php echo count($items); ?>)</h3>
+        <div class="order-grid">
+            <div>
+                <div class="order-summary-card">
+                    <h2 class="sum-title">Payment Summary</h2>
+                    <div class="sum-row">
+                        <span class="sum-label">Subtotal</span>
+                        <span class="sum-val"><?php echo formatCurrency($subtotal); ?></span>
                     </div>
-                    <div class="divide-y divide-[#EEEEEE]">
-                        <?php foreach ($items as $item): ?>
-                            <div class="p-5 flex items-center justify-between gap-5 hover:bg-[#F9F9F9] transition-colors">
-                                <div class="flex items-center gap-5">
-                                    <div class="w-12 h-12 rounded-lg border border-[#EEEEEE] bg-[#F9F9F9] p-2 flex items-center justify-center flex-shrink-0">
-                                        <img src="../assets/images/<?php echo htmlspecialchars($item['image'] ?? 'placeholder.jpg'); ?>" class="max-w-full max-h-full object-contain">
-                                    </div>
-                                    <div>
-                                        <h4 class="text-[13px] font-black text-[#1A1A1A] leading-tight mb-1"><?php echo htmlspecialchars($item['name']); ?></h4>
-                                        <p class="text-[11px] font-bold text-[#888888]">Qty: <?php echo $item['quantity']; ?> × GH₵<?php echo number_format($item['price'], 2); ?></p>
-                                    </div>
-                                </div>
-                                <div class="text-[14px] font-black text-[#1A1A1A]">GH₵<?php echo number_format($item['price'] * $item['quantity'], 2); ?></div>
-                            </div>
-                        <?php endforeach; ?>
+                    <div class="sum-row">
+                        <span class="sum-label">Delivery</span>
+                        <span class="sum-val"><?php echo $shipping > 0 ? formatCurrency($shipping) : 'FREE'; ?></span>
                     </div>
-                    <!-- Totals -->
-                    <div class="p-6 border-t border-[#EEEEEE] bg-[#FBFBFB]">
-                        <div class="max-w-[200px] ml-auto space-y-2">
-                            <div class="flex justify-between text-[11px] font-medium text-[#666666]">
-                                <span>Subtotal</span>
-                                <span>GH₵<?php echo number_format($order['total_amount'], 2); ?></span>
-                            </div>
-                            <div class="flex justify-between text-[11px] font-medium text-[#666666]">
-                                <span>Shipping</span>
-                                <span class="text-green-600 font-black">FREE</span>
-                            </div>
-                            <div class="h-[1px] bg-[#EEEEEE] my-2"></div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-[13px] font-black text-[#1A1A1A]">Total</span>
-                                <span class="text-[18px] font-black text-[#1A1A1A] tracking-tighter">GH₵<?php echo number_format($order['total_amount'], 2); ?></span>
-                            </div>
-                        </div>
+                    <div class="sum-row">
+                        <span class="sum-label">Payment Method</span>
+                        <span class="sum-val"><?php echo $payLabel; ?></span>
                     </div>
-                </div>
+                    <div class="sum-row total">
+                        <span class="sum-label" style="color:var(--ink); font-weight:900; font-size:14px;">Total</span>
+                        <span class="sum-total-val"><?php echo formatCurrency($order['total_amount']); ?></span>
+                    </div>
 
-                <!-- Simple Tracker -->
-                <div class="bg-white border border-[#EEEEEE] rounded-xl p-6 shadow-sm">
-                    <h3 class="text-[11px] font-black text-[#888888] uppercase tracking-widest mb-6">Delivery Progress</h3>
-                    <div class="flex items-center justify-between relative px-4">
-                        <?php
-                        $status_steps = ['pending', 'processing', 'shipped', 'delivered'];
-                        $current_status = strtolower($order['order_status']);
-                        $status_map = ['pending' => 0, 'processing' => 1, 'shipped' => 2, 'delivered' => 3];
-                        $current_idx = $status_map[$current_status] ?? 0;
-                        ?>
-                        <div class="absolute top-4 left-8 right-8 h-1 bg-[#F5F5F5] rounded-full z-0">
-                            <div class="h-full bg-primary transition-all duration-1000" style="width: <?php echo ($current_idx / 3) * 100; ?>%"></div>
+                    <?php if (strtolower($order['order_status']) === 'pending' && $order['payment_method'] !== 'bank_transfer'): ?>
+                        <div style="margin-top:24px; padding:20px; background: #fff; border-radius:8px; text-align:center;">
+                            <p style="font-size:12px; margin-bottom:12px; color:var(--mid-gray);">This order is awaiting payment.</p>
+                            <a href="<?php echo $base; ?>checkout_paystack.php?order_id=<?php echo (int)$order['order_id']; ?>" style="display:inline-block; width:100%; padding:14px 20px; background: var(--red); color: #fff; text-align:center; border-radius: 8px; font-family: var(--f-display); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none; box-sizing: border-box;">Complete Payment</a>
                         </div>
-                        <?php foreach ($status_steps as $idx => $step): ?>
-                            <div class="flex flex-col items-center gap-3 relative z-10">
-                                <div class="w-8 h-8 rounded-lg flex items-center justify-center border-2 transition-all <?php echo $idx <= $current_idx ? 'bg-primary border-primary text-white shadow-md' : 'bg-white border-[#EEEEEE] text-[#DDDDDD]'; ?>">
-                                    <span class="material-symbols-outlined text-[16px]">
-                                        <?php echo match($step) { 'pending' => 'receipt', 'processing' => 'package_2', 'shipped' => 'local_shipping', 'delivered' => 'verified' }; ?>
-                                    </span>
-                                </div>
-                                <span class="text-[9px] font-black uppercase tracking-widest <?php echo $idx <= $current_idx ? 'text-[#1A1A1A]' : 'text-[#DDDDDD]'; ?>"><?php echo $step; ?></span>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
+                    <?php elseif (strtolower($order['order_status']) === 'pending' && $order['payment_method'] === 'bank_transfer'): ?>
+                        <div style="margin-top:24px; padding:20px; background: #fff; border-radius:8px; text-align:center;">
+                            <p style="font-size:12px; margin-bottom:12px; color:var(--mid-gray);">This order is awaiting bank transfer confirmation.</p>
+                            <a href="invoice.php?order_id=<?php echo (int)$order['order_id']; ?>" target="_blank" style="display:inline-block; width:100%; padding:14px 20px; background: var(--ink); color: #fff; text-align:center; border-radius: 8px; font-family: var(--f-display); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none; box-sizing: border-box;">View Invoice</a>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
-            <!-- Right: Details -->
-            <div class="lg:col-span-4 space-y-6">
-                <!-- Shipping Info -->
-                <div class="bg-white border border-[#EEEEEE] rounded-xl p-6 shadow-sm">
-                    <h3 class="text-[11px] font-black text-[#888888] uppercase tracking-widest mb-5">Shipping Information</h3>
-                    <div class="bg-[#FBFBFB] rounded-lg p-4 mb-5 border border-[#F5F5F5]">
-                        <p class="text-[13px] font-black text-[#1A1A1A] mb-1"><?php echo htmlspecialchars($order['name']); ?></p>
-                        <p class="text-[12px] text-[#666666] font-medium leading-relaxed"><?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?></p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-[#F9F9F9] border border-[#EEEEEE] flex items-center justify-center text-[#1A1A1A]">
-                            <span class="material-symbols-outlined text-[16px]">call</span>
+            <div class="order-items">
+                <h2 class="box-title">Order Items</h2>
+                <?php foreach ($items as $item): ?>
+                    <div class="item-card">
+                        <div class="item-img">
+                            <img src="<?php echo $base . getProductImage($item['image'] ?? 'placeholder.jpg'); ?>" onerror="this.src='<?php echo $base; ?>assets/images/placeholder.jpg'; this.onerror=null;" alt="<?php echo htmlspecialchars($item['name'] ?? 'Product'); ?>">
                         </div>
-                        <div class="text-[13px] font-black text-[#1A1A1A]"><?php echo htmlspecialchars($order['phone'] ?? 'N/A'); ?></div>
+                        <div class="item-info">
+                            <h3 class="item-name"><?php echo htmlspecialchars($item['name'] ?? 'Product'); ?></h3>
+                            <div class="item-ref">QTY: <?php echo (int)$item['quantity']; ?></div>
+                            <div class="item-price-row">
+                                <span class="item-qty">Unit Price: <?php echo formatCurrency($item['price']); ?></span>
+                                <span class="item-total"><?php echo formatCurrency((float)$item['price'] * (float)$item['quantity']); ?></span>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                <?php endforeach; ?>
 
-                <!-- Payment Info -->
-                <div class="bg-white border border-[#EEEEEE] rounded-xl p-6 shadow-sm">
-                    <h3 class="text-[11px] font-black text-[#888888] uppercase tracking-widest mb-5">Payment Details</h3>
-                    <div class="flex items-center gap-4 p-4 rounded-lg bg-[#F9F9F9] border border-[#EEEEEE]">
-                        <div class="w-8 h-6 rounded bg-white border border-[#EEEEEE] flex items-center justify-center text-[#1A1A1A]">
-                            <span class="material-symbols-outlined text-[16px]">payments</span>
-                        </div>
-                        <div>
-                            <p class="text-[12px] font-black text-[#1A1A1A] uppercase tracking-tighter"><?php echo str_replace('_', ' ', $order['payment_method']); ?></p>
-                            <p class="text-[9px] font-bold text-[#888888]">REF: #<?php echo $order['order_id']; ?></p>
-                        </div>
+                <div class="shipping-box">
+                    <h2 class="box-title">Shipping &amp; Delivery</h2>
+                    <div class="box-content">
+                        <strong><?php echo htmlspecialchars($user['name'] ?? ''); ?></strong><br>
+                        <?php echo nl2br(htmlspecialchars($order['shipping_address'] ?? '')); ?><br>
+                        <?php echo htmlspecialchars($order['phone'] ?? $order['user_phone'] ?? ''); ?>
                     </div>
                 </div>
             </div>

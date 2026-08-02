@@ -21,8 +21,9 @@ if (!empty($query)) {
         // Prepare search query with positional parameters
         $sql = "SELECT product_id as id, name, price, image 
                 FROM products 
-                WHERE name LIKE ? 
-                OR description LIKE ?
+                WHERE status = 'published'
+                  AND (name LIKE ? 
+                  OR description LIKE ?)
                 ORDER BY name
                 LIMIT 10";
         

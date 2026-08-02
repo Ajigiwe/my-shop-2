@@ -9,7 +9,7 @@ if (session_status() == PHP_SESSION_NONE) {
 
 // Include database and mailer
 require_once 'includes/db.php';
-require_once 'includes/mailer.php';
+require_once 'includes/email_config.php';
 
 // Set content type to JSON
 header('Content-Type: application/json');
@@ -45,6 +45,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Insert subscriber
             $ins_stmt = $pdo->prepare("INSERT INTO newsletter_subscribers (email, is_active) VALUES (?, 1)");
             $ins_stmt->execute([$email]);
+            
+            sendNewsletterWelcomeEmail($email);
+            sendNewsletterAdminNotifyEmail($email);
+            createAdminNotification('newsletter', "New newsletter subscriber: {$email}", '../admin/newsletter.php');
             
             echo json_encode(['success' => true, 'message' => 'Thank you for subscribing! Check your email for deals.']);
             exit;
@@ -125,39 +129,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $emailData['user_agent']
             ]);
             
-            // Send email
-            $mailer = new Mailer();
-            $mailSent = $mailer->sendContactForm([
-                'name' => $emailData['name'],
-                'email' => $emailData['email'],
-                'phone' => $emailData['phone'],
-                'subject' => $emailData['subject'],
-                'message' => $emailData['message']
-            ]);
-            
-            if ($mailSent === true) {
-                // Set success flag in session
-                $_SESSION['form_submitted'] = true;
-                
-                // Clear any previous output
-                if (ob_get_length()) ob_clean();
-            
-                // Send success response
-                header('Content-Type: application/json');
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Message sent successfully!'
-                ]);
-                exit;
-            } else {
-                header('Content-Type: application/json');
-                http_response_code(500);
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Message could not be sent. Please try again later.'
-                ]);
-                exit;
+            // Send email via shared mailer (Avazonia contact-admin template)
+            try {
+                sendContactAdminNotifyEmail($emailData['name'], $emailData['email'], $emailData['subject'], $emailData['message'], $emailData['phone']);
+            } catch (Exception $e) {
+                error_log("Contact email send failed: " . $e->getMessage());
             }
+
+            createAdminNotification('contact', "New contact message from {$emailData['name']}", '../admin/manage_users.php');
+
+            // Set success flag in session
+            $_SESSION['form_submitted'] = true;
+
+            // Clear any previous output
+            if (ob_get_length()) ob_clean();
+
+            // Send success response (message is saved regardless of email delivery)
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'message' => 'Message sent successfully!'
+            ]);
+            exit;
             
         } catch (PDOException $e) {
             error_log('Database error: ' . $e->getMessage());

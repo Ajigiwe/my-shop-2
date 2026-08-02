@@ -3,59 +3,106 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Offline - ASO Online Market</title>
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              primary: '#004225',
-              secondary: '#0D5C34',
-            }
-          }
+    <title>You're Offline - ASO Online Market</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+            --ink: #0D0D0D;
+            --red: #E8002D;
+            --off: #F4F1EC;
+            --mid-gray: #6B6B6B;
+            --light-gray: #E5E1DA;
         }
-      }
-    </script>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background: var(--off);
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            color: var(--ink);
+        }
+        .offline-card {
+            max-width: 420px;
+            width: 100%;
+            background: #fff;
+            border: 2px solid var(--ink);
+            border-radius: 16px;
+            padding: 48px 40px;
+            text-align: center;
+        }
+        .brand {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 22px;
+            letter-spacing: -0.04em;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+        }
+        .brand span { color: var(--red); }
+        .status-dot {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--ink);
+            margin: 0 auto 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: #fff;
+        }
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 32px;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
+            line-height: 1;
+            margin-bottom: 16px;
+        }
+        p {
+            font-size: 14px;
+            color: var(--mid-gray);
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+        .retry-btn {
+            display: block;
+            width: 100%;
+            background: var(--ink);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: background .2s;
+        }
+        .retry-btn:hover { background: var(--red); }
+        .footnote {
+            margin-top: 24px;
+            font-size: 11px;
+            color: var(--mid-gray);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans min-h-screen flex flex-col items-center justify-center p-6">
-    <div class="max-w-md w-full text-center bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/50 shadow-2xl p-8 md:p-10 transition-all hover:scale-[1.01]">
-        <!-- Brand Logo -->
-        <div class="flex justify-center mb-8">
-            <img src="assets/images/logo-rounded.png" alt="Logo" class="h-16 w-16 object-contain rounded-full shadow-lg" />
-        </div>
-        
-        <!-- Offline Icon -->
-        <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary">
-            <span class="material-symbols-outlined text-[40px] animate-pulse">wifi_off</span>
-        </div>
-        
-        <!-- Heading -->
-        <h1 class="text-3xl font-black tracking-tight text-slate-900 mb-3" style="font-family: 'Outfit', sans-serif;">
-            You are Offline
-        </h1>
-        
-        <!-- Description -->
-        <p class="text-[14px] text-slate-500 font-medium leading-relaxed mb-8">
-            It looks like your internet connection is unavailable. Please check your network settings and try again to continue shopping.
-        </p>
-        
-        <!-- Retry Button -->
-        <button onclick="window.location.reload();" class="w-full bg-primary hover:bg-black text-white font-bold py-3.5 px-6 rounded-2xl transition-all duration-300 shadow-lg shadow-primary/10 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]">
-            <span class="material-symbols-outlined text-[20px]">refresh</span>
-            Try Again
-        </button>
-        
-        <!-- Footer -->
-        <p class="text-[11px] text-slate-400 font-medium mt-6">
-            ASO Online Market - Fast, Secure & Premium
-        </p>
+<body>
+    <div class="offline-card">
+        <div class="brand">ASO Online Market<span>.</span></div>
+        <div class="status-dot">&#128263;</div>
+        <h1>You're<br>Offline</h1>
+        <p>Your internet connection is unavailable. Check your network and try again to keep shopping.</p>
+        <button class="retry-btn" onclick="window.location.reload();">Try Again</button>
+        <p class="footnote">ASO Online Market &mdash; Fast, Secure &amp; Premium</p>
     </div>
 </body>
 </html>

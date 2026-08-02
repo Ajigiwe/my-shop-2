@@ -172,212 +172,182 @@ if (is_dir($icon_dir)) {
 
 <?php
 $page_title = 'Category Management';
-include 'includes/header-new.php';
+include 'includes/avazonia_header.php';
 ?>
 
-<div class="row">
-    <div class="col-12">
-        <?php if ($success): ?>
-            <div class="alert alert-success border-0 rounded-4 mb-4 small fw-bold animate-up">
-                <i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($success); ?>
-            </div>
-        <?php endif; ?>
-        <?php if (!empty($errors)): ?>
-            <div class="alert alert-danger border-0 rounded-4 mb-4 small fw-bold animate-up">
-                <ul class="mb-0">
-                    <?php foreach ($errors as $e): ?><li><?php echo htmlspecialchars($e); ?></li><?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
+<style>
+.cat-thumb { width: 40px; height: 40px; border: 1px solid var(--light-gray); object-fit: cover; background: var(--off); border-radius: 4px; }
+.icon-option { padding: 8px; border: 1px solid var(--light-gray); background: #fff; text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+.icon-option:hover, .icon-option.selected { border-color: var(--ink); background: var(--off); }
+.icon-option img { max-height: 40px; object-fit: contain; width: 100%; }
+.icon-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-height: 200px; overflow-y: auto; padding: 12px; background: var(--off); border: 1px solid var(--light-gray); border-radius: 4px; }
+.file-input {
+    width: 100%; padding: 12px 14px; border: 1px dashed var(--light-gray); border-radius: 4px;
+    box-sizing: border-box; font-size: 13px; background: #fff; font-family: inherit;
+}
+</style>
 
-        <div class="admin-card animate-up">
-            <div class="admin-card-header d-flex justify-content-between align-items-center">
-                <h5 class="admin-card-title mb-0">Existing Categories <span class="badge bg-light text-dark ms-2 rounded-pill"><?php echo count($categories); ?></span></h5>
-                <button type="button" class="btn-premium py-1 px-3 small" data-bs-toggle="modal" data-bs-target="#categoryModal">
-                    <i class="fas fa-plus me-2"></i>Add Category
-                </button>
-            </div>
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Image</th>
-                            <th>Category Info</th>
-                            <th>Description</th>
-                            <th class="text-center">Products</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($categories as $c): ?>
-                        <tr>
-                            <td style="width: 50px;">
-                                <?php if (!empty($c['image'])): ?>
-                                    <img src="../assets/images/categories/<?php echo htmlspecialchars($c['image']); ?>" width="36" height="36" class="rounded-2 shadow-sm object-fit-cover" alt="img">
-                                <?php else: ?>
-                                    <div class="w-[36px] h-[36px] bg-light rounded-2 flex items-center justify-center text-muted">
-                                        <i class="fas fa-image" style="font-size: 12px;"></i>
-                                    </div>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <div class="fw-black text-[13px]"><?php echo htmlspecialchars($c['category_name']); ?></div>
-                                <div class="small text-muted fw-bold uppercase tracking-widest text-[9px] mt-0.5">ID: #<?php echo $c['category_id']; ?></div>
-                            </td>
-                            <td>
-                                <div class="text-muted small" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    <?php echo htmlspecialchars($c['description']); ?>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <span class="badge bg-dark rounded-pill px-2 py-1 small"><?php echo (int)$c['product_count']; ?> Items</span>
-                            </td>
-                            <td class="text-end">
-                                <div class="d-flex justify-content-end gap-1">
-                                    <a class="btn-premium-outline px-2 py-1 text-decoration-none text-[12px]" href="manage_categories.php?action=edit&id=<?php echo $c['category_id']; ?>">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form method="POST" action="" class="d-inline" onsubmit="return confirmAction(event, 'Delete this category?');">
-                                        <input type="hidden" name="action" value="delete">
-                                        <input type="hidden" name="category_id" value="<?php echo $c['category_id']; ?>">
-                                        <button class="btn-premium-outline px-2 py-1 text-danger border-danger/20 text-[12px]" type="submit">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+<div class="admin-header">
+    <h1>Category Management</h1>
+    <button class="btn-red" onclick="openModal('categoryModal')">+ Add Category</button>
+</div>
+
+<?php if ($success): ?>
+    <div class="alert-box alert-success"><?php echo htmlspecialchars($success); ?></div>
+<?php endif; ?>
+<?php if (!empty($errors)): ?>
+    <div class="alert-box alert-error">
+        <ul style="margin: 0; padding-left: 20px;">
+            <?php foreach ($errors as $e): ?><li><?php echo htmlspecialchars($e); ?></li><?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
+
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">Existing Categories <span style="opacity: 0.4;">(<?php echo count($categories); ?>)</span></div>
+    </div>
+    <div class="table-container" style="border: none; margin-bottom: 0; border-radius: 0;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th style="width: 70px;">Image</th>
+                    <th>Category Info</th>
+                    <th>Description</th>
+                    <th style="text-align: center;">Products</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($categories as $c): ?>
+                <tr>
+                    <td>
+                        <?php if (!empty($c['image'])): ?>
+                            <img src="../assets/images/categories/<?php echo htmlspecialchars($c['image']); ?>" class="cat-thumb" alt="img">
+                        <?php else: ?>
+                            <div class="cat-thumb" style="display: flex; align-items: center; justify-content: center; opacity: 0.3;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            </div>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <div style="font-weight: 800;"><?php echo htmlspecialchars($c['category_name']); ?></div>
+                        <div style="font-size: 10px; opacity: 0.5; font-family: var(--f-mono); margin-top: 2px;">ID: #<?php echo $c['category_id']; ?></div>
+                    </td>
+                    <td>
+                        <div style="color: var(--mid-gray); font-size: 12px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <?php echo htmlspecialchars($c['description']); ?>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <span class="status-badge" style="background: var(--off); color: var(--ink);"><?php echo (int)$c['product_count']; ?> Items</span>
+                    </td>
+                    <td style="text-align: right;">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a class="action-btn" href="manage_categories.php?action=edit&id=<?php echo $c['category_id']; ?>">Edit</a>
+                            <form method="POST" action="" class="d-inline" onsubmit="return confirmAction(event, 'Delete this category?');">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="category_id" value="<?php echo $c['category_id']; ?>">
+                                <button class="action-btn danger" type="submit">Del</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <!-- Category Modal -->
-<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 bg-dark text-white p-4">
-                <h5 class="modal-title fw-bold">
-                    <i class="fas <?php echo $edit ? 'fa-edit' : 'fa-plus-circle'; ?> me-2"></i>
-                    <?php echo $edit ? 'Edit Category' : 'Add New Category'; ?>
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="modal-overlay" id="categoryModal">
+    <div class="modal-content">
+        <button type="button" class="modal-close" onclick="closeModal('categoryModal')">×</button>
+        <div class="modal-title"><?php echo $edit ? 'Edit Category' : 'Add New Category'; ?></div>
+        <form method="POST" action="" enctype="multipart/form-data">
+            <?php if ($edit): ?>
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="category_id" value="<?php echo $edit['category_id']; ?>">
+            <?php else: ?>
+                <input type="hidden" name="action" value="create">
+            <?php endif; ?>
+
+            <div class="field-group">
+                <label class="field-label">Category Name</label>
+                <input type="text" class="field-input" name="category_name" value="<?php echo htmlspecialchars($edit['category_name'] ?? ''); ?>" required placeholder="e.g. Laptops">
             </div>
-            <div class="modal-body p-4">
-                <form method="POST" action="" enctype="multipart/form-data">
-                    <?php if ($edit): ?>
-                        <input type="hidden" name="action" value="update">
-                        <input type="hidden" name="category_id" value="<?php echo $edit['category_id']; ?>">
-                    <?php else: ?>
-                        <input type="hidden" name="action" value="create">
-                    <?php endif; ?>
 
-                    <div class="mb-3">
-                        <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Category Name</label>
-                        <input type="text" class="form-control rounded-3" name="category_name" value="<?php echo htmlspecialchars($edit['category_name'] ?? ''); ?>" required placeholder="e.g. Laptops">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Description</label>
-                        <textarea class="form-control rounded-3" name="description" rows="3" placeholder="Briefly describe this category..."><?php echo htmlspecialchars($edit['description'] ?? ''); ?></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Category Image</label>
-                        <div class="d-flex gap-2 mb-2">
-                            <button type="button" class="btn btn-light btn-sm rounded-3 border fw-bold text-[11px] px-3 py-2" onclick="toggleLibrary()">
-                                <i class="fas fa-th-large me-2"></i>Choose from Library
-                            </button>
-                            <span class="text-muted small align-self-center">or upload custom</span>
-                        </div>
-                        
-                        <input type="file" class="form-control rounded-3" name="image" id="category_image_input" accept="image/*">
-                        <input type="hidden" name="library_icon" id="library_icon_input">
-
-                        <div id="iconLibrary" class="mt-3 p-3 bg-light rounded-4 border" style="display: none;">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0 fw-bold small uppercase tracking-wider">Icon Library</h6>
-                                <button type="button" class="btn-close small" onclick="toggleLibrary()" style="font-size: 10px;"></button>
-                            </div>
-                            <div class="row g-2 overflow-auto" style="max-height: 200px;">
-                                <?php foreach ($library_icons as $icon): ?>
-                                    <div class="col-3">
-                                        <div class="icon-option p-2 rounded-3 border bg-white text-center cursor-pointer hover:border-dark transition-all" 
-                                             onclick="selectIcon('<?php echo $icon; ?>', this)">
-                                            <img src="../assets/images/category-icons/<?php echo $icon; ?>" class="w-100 h-auto object-contain" style="max-height: 40px;">
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-
-                        <div id="iconPreview" class="mt-3 p-2 bg-light rounded-3 d-flex align-items-center gap-3" <?php echo ($edit && !empty($edit['image'])) ? '' : 'style="display: none;"'; ?>>
-                            <img id="currentIconImg" src="<?php echo ($edit && !empty($edit['image'])) ? '../assets/images/categories/'.htmlspecialchars($edit['image']) : ''; ?>" 
-                                 class="rounded-2 shadow-sm" style="width: 60px; height: 60px; object-fit: contain; background: white;">
-                            <div class="small text-muted fw-bold" id="iconPreviewText">
-                                <?php echo ($edit && !empty($edit['image'])) ? 'Current Category Visual' : 'Selected Icon'; ?>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <button class="btn-premium w-100 py-3 rounded-3 shadow-sm" type="submit">
-                            <i class="fas fa-save me-2"></i><?php echo $edit ? 'Save Changes' : 'Create Category'; ?>
-                        </button>
-                    </div>
-                </form>
+            <div class="field-group">
+                <label class="field-label">Description</label>
+                <textarea class="field-input" name="description" rows="3" placeholder="Briefly describe this category..."><?php echo htmlspecialchars($edit['description'] ?? ''); ?></textarea>
             </div>
-        </div>
+
+            <div class="field-group">
+                <label class="field-label">Category Image</label>
+                <div class="d-flex gap-2" style="margin-bottom: 10px; align-items: center;">
+                    <button type="button" class="btn-ink" style="height: 36px; padding: 0 14px; font-size: 10px;" onclick="toggleLibrary()">Choose from Library</button>
+                    <span class="field-sub" style="margin: 0;">or upload custom</span>
+                </div>
+
+                <input type="file" class="file-input" name="image" id="category_image_input" accept="image/*">
+                <input type="hidden" name="library_icon" id="library_icon_input">
+
+                <div id="iconLibrary" class="icon-grid" style="display: none; margin-top: 12px;">
+                    <?php foreach ($library_icons as $icon): ?>
+                        <div class="icon-option" onclick="selectIcon('<?php echo $icon; ?>', this)">
+                            <img src="../assets/images/category-icons/<?php echo $icon; ?>" alt="icon">
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div id="iconPreview" class="d-flex align-items-center gap-2" style="margin-top: 12px; <?php echo ($edit && !empty($edit['image'])) ? '' : 'display: none;'; ?>">
+                    <img id="currentIconImg" src="<?php echo ($edit && !empty($edit['image'])) ? '../assets/images/categories/'.htmlspecialchars($edit['image']) : ''; ?>" style="width: 48px; height: 48px; object-fit: contain; background: var(--off); border: 1px solid var(--light-gray); border-radius: 4px;">
+                    <div class="field-sub" style="margin: 0;" id="iconPreviewText">
+                        <?php echo ($edit && !empty($edit['image'])) ? 'Current Category Visual' : 'Selected Icon'; ?>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-btn-row">
+                <button type="button" class="btn-ink" style="flex: 1; justify-content: center;" onclick="closeModal('categoryModal')">Cancel</button>
+                <button class="btn-red" style="flex: 1; justify-content: center;" type="submit"><?php echo $edit ? 'Save Changes' : 'Create Category'; ?></button>
+            </div>
+        </form>
     </div>
 </div>
 
 <script>
 function toggleLibrary() {
     const lib = document.getElementById('iconLibrary');
-    lib.style.display = lib.style.display === 'none' ? 'block' : 'none';
+    lib.style.display = lib.style.display === 'none' ? 'grid' : 'none';
 }
 
 function selectIcon(filename, element) {
-    // Remove selected class from others
-    document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('border-dark', 'bg-dark-subtle'));
-    
-    // Add to current
-    element.classList.add('border-dark', 'bg-dark-subtle');
-    
-    // Set hidden input
+    document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
     document.getElementById('library_icon_input').value = filename;
-    
-    // Clear file input
     document.getElementById('category_image_input').value = '';
-    
-    // Show preview
     const preview = document.getElementById('iconPreview');
     const img = document.getElementById('currentIconImg');
     const text = document.getElementById('iconPreviewText');
-    
     preview.style.display = 'flex';
     img.src = '../assets/images/category-icons/' + filename;
-    img.style.objectFit = 'contain';
     text.innerText = 'Selected Library Icon: ' + filename;
 }
 
 document.getElementById('category_image_input').addEventListener('change', function() {
     if (this.value) {
         document.getElementById('library_icon_input').value = '';
-        document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('border-dark', 'bg-dark-subtle'));
+        document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
         document.getElementById('iconPreviewText').innerText = 'Custom Image Selected';
     }
 });
 
 document.addEventListener('DOMContentLoaded', function() {
     <?php if ($edit || !empty($errors)): ?>
-    var myModal = new bootstrap.Modal(document.getElementById('categoryModal'));
-    myModal.show();
+    openModal('categoryModal');
     <?php endif; ?>
 });
 </script>
 
-<?php include 'includes/footer-new.php'; ?>
+<?php include 'includes/avazonia_footer.php'; ?>

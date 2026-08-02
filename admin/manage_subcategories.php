@@ -94,142 +94,123 @@ try {
 
 <?php
 $page_title = 'Subcategory Management';
-include 'includes/header-new.php';
+include 'includes/avazonia_header.php';
 ?>
 
-<div class="row">
-    <div class="col-12">
-        <?php if ($success): ?>
-            <div class="alert alert-success border-0 rounded-4 mb-4 small fw-bold animate-up">
-                <i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($success); ?>
-            </div>
-        <?php endif; ?>
-        <?php if (!empty($errors)): ?>
-            <div class="alert alert-danger border-0 rounded-4 mb-4 small fw-bold animate-up">
-                <ul class="mb-0">
-                    <?php foreach ($errors as $e): ?><li><?php echo htmlspecialchars($e); ?></li><?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
+<div class="admin-header">
+    <h1>Subcategory Management</h1>
+    <button class="btn-red" onclick="openModal('subcategoryModal')">+ Add Subcategory</button>
+</div>
 
-        <div class="admin-card animate-up">
-            <div class="admin-card-header d-flex justify-content-between align-items-center">
-                <h5 class="admin-card-title mb-0">Existing Subcategories <span class="badge bg-light text-dark ms-2 rounded-pill"><?php echo count($subcategories); ?></span></h5>
-                <button type="button" class="btn-premium py-1 px-3 small" data-bs-toggle="modal" data-bs-target="#subcategoryModal">
-                    <i class="fas fa-plus me-2"></i>Add Subcategory
-                </button>
-            </div>
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Subcategory</th>
-                            <th>Parent Category</th>
-                            <th>Description</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($subcategories as $s): ?>
-                        <tr>
-                            <td>
-                                <div class="fw-black text-[13px]"><?php echo htmlspecialchars($s['subcategory_name']); ?></div>
-                                <div class="small text-muted fw-bold uppercase tracking-widest text-[9px] mt-0.5">ID: #<?php echo $s['subcategory_id']; ?></div>
-                            </td>
-                            <td>
-                                <span class="badge bg-dark rounded-pill px-2 py-1 small"><?php echo htmlspecialchars($s['category_name']); ?></span>
-                            </td>
-                            <td>
-                                <div class="text-muted small" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    <?php echo htmlspecialchars($s['description']); ?>
-                                </div>
-                            </td>
-                            <td class="text-end">
-                                <div class="d-flex justify-content-end gap-1">
-                                    <a class="btn-premium-outline px-2 py-1 text-decoration-none text-[12px]" href="manage_subcategories.php?action=edit&id=<?php echo $s['subcategory_id']; ?>">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form method="POST" action="" class="d-inline" onsubmit="return confirmAction(event, 'Delete this subcategory?');">
-                                        <input type="hidden" name="action" value="delete">
-                                        <input type="hidden" name="subcategory_id" value="<?php echo $s['subcategory_id']; ?>">
-                                        <button class="btn-premium-outline px-2 py-1 text-danger border-danger/20 text-[12px]" type="submit">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+<?php if ($success): ?>
+    <div class="alert-box alert-success"><?php echo htmlspecialchars($success); ?></div>
+<?php endif; ?>
+<?php if (!empty($errors)): ?>
+    <div class="alert-box alert-error">
+        <ul style="margin: 0; padding-left: 20px;">
+            <?php foreach ($errors as $e): ?><li><?php echo htmlspecialchars($e); ?></li><?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
+
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">Existing Subcategories <span style="opacity: 0.4;">(<?php echo count($subcategories); ?>)</span></div>
+    </div>
+    <div class="table-container" style="border: none; margin-bottom: 0; border-radius: 0;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Subcategory</th>
+                    <th>Parent Category</th>
+                    <th>Description</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($subcategories as $s): ?>
+                <tr>
+                    <td>
+                        <div style="font-weight: 800;"><?php echo htmlspecialchars($s['subcategory_name']); ?></div>
+                        <div style="font-size: 10px; opacity: 0.5; font-family: var(--f-mono); margin-top: 2px;">ID: #<?php echo $s['subcategory_id']; ?></div>
+                    </td>
+                    <td>
+                        <span class="status-badge" style="background: var(--off); color: var(--ink);"><?php echo htmlspecialchars($s['category_name']); ?></span>
+                    </td>
+                    <td>
+                        <div style="color: var(--mid-gray); font-size: 12px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <?php echo htmlspecialchars($s['description']); ?>
+                        </div>
+                    </td>
+                    <td style="text-align: right;">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a class="action-btn" href="manage_subcategories.php?action=edit&id=<?php echo $s['subcategory_id']; ?>">Edit</a>
+                            <form method="POST" action="" class="d-inline" onsubmit="return confirmAction(event, 'Delete this subcategory?');">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="subcategory_id" value="<?php echo $s['subcategory_id']; ?>">
+                                <button class="action-btn danger" type="submit">Del</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <!-- Subcategory Modal -->
-<div class="modal fade" id="subcategoryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 bg-dark text-white p-4">
-                <h5 class="modal-title fw-bold">
-                    <i class="fas <?php echo $edit ? 'fa-edit' : 'fa-plus-circle'; ?> me-2"></i>
-                    <?php echo $edit ? 'Edit Subcategory' : 'Add New Subcategory'; ?>
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="modal-overlay" id="subcategoryModal">
+    <div class="modal-content">
+        <button type="button" class="modal-close" onclick="closeModal('subcategoryModal')">×</button>
+        <div class="modal-title"><?php echo $edit ? 'Edit Subcategory' : 'Add New Subcategory'; ?></div>
+        <form method="POST" action="">
+            <?php if ($edit): ?>
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="subcategory_id" value="<?php echo $edit['subcategory_id']; ?>">
+            <?php else: ?>
+                <input type="hidden" name="action" value="create">
+            <?php endif; ?>
+
+            <div class="field-group">
+                <label class="field-label">Parent Category</label>
+                <select class="field-input" name="category_id" required>
+                    <option value="">Select Category</option>
+                    <?php foreach ($categories as $c): ?>
+                        <option value="<?php echo $c['category_id']; ?>" <?php echo ($edit && $edit['category_id']==$c['category_id'])?'selected':''; ?>>
+                            <?php echo htmlspecialchars($c['category_name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
-            <div class="modal-body p-4">
-                <form method="POST" action="">
-                    <?php if ($edit): ?>
-                        <input type="hidden" name="action" value="update">
-                        <input type="hidden" name="subcategory_id" value="<?php echo $edit['subcategory_id']; ?>">
-                    <?php else: ?>
-                        <input type="hidden" name="action" value="create">
-                    <?php endif; ?>
 
-                    <div class="mb-3">
-                        <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Parent Category</label>
-                        <select class="form-select rounded-3 fw-bold" name="category_id" required>
-                            <option value="">Select Category</option>
-                            <?php foreach ($categories as $c): ?>
-                                <option value="<?php echo $c['category_id']; ?>" <?php echo ($edit && $edit['category_id']==$c['category_id'])?'selected':''; ?>>
-                                    <?php echo htmlspecialchars($c['category_name']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Subcategory Name</label>
-                        <input type="text" class="form-control rounded-3" name="subcategory_name" value="<?php echo htmlspecialchars($edit['subcategory_name'] ?? ''); ?>" required placeholder="e.g. Gaming Laptops">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">Description</label>
-                        <textarea class="form-control rounded-3" name="description" rows="3" placeholder="Briefly describe this subcategory..."><?php echo htmlspecialchars($edit['description'] ?? ''); ?></textarea>
-                    </div>
-
-                    <div class="mt-4">
-                        <button class="btn-premium w-100 py-3 rounded-3 shadow-sm" type="submit">
-                            <i class="fas fa-save me-2"></i><?php echo $edit ? 'Save Changes' : 'Create Subcategory'; ?>
-                        </button>
-                    </div>
-                </form>
+            <div class="field-group">
+                <label class="field-label">Subcategory Name</label>
+                <input type="text" class="field-input" name="subcategory_name" value="<?php echo htmlspecialchars($edit['subcategory_name'] ?? ''); ?>" required placeholder="e.g. Gaming Laptops">
             </div>
-        </div>
+
+            <div class="field-group">
+                <label class="field-label">Description</label>
+                <textarea class="field-input" name="description" rows="3" placeholder="Briefly describe this subcategory..."><?php echo htmlspecialchars($edit['description'] ?? ''); ?></textarea>
+            </div>
+
+            <div class="modal-btn-row">
+                <button type="button" class="btn-ink" style="flex: 1; justify-content: center;" onclick="closeModal('subcategoryModal')">Cancel</button>
+                <button class="btn-red" style="flex: 1; justify-content: center;" type="submit"><?php echo $edit ? 'Save Changes' : 'Create Subcategory'; ?></button>
+            </div>
+        </form>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     <?php if ($edit || !empty($errors)): ?>
-    var myModal = new bootstrap.Modal(document.getElementById('subcategoryModal'));
-    myModal.show();
+    openModal('subcategoryModal');
     <?php endif; ?>
 });
 </script>
 
-<?php include 'includes/footer-new.php'; ?>
+<?php include 'includes/avazonia_footer.php'; ?>
 
 
 

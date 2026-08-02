@@ -1,17 +1,14 @@
-const CACHE_NAME = 'aso-online-market-cache-v1';
+const CACHE_NAME = 'aso-online-market-cache-v2';
 const OFFLINE_URL = 'offline.html';
 
 const ASSETS_TO_CACHE = [
     './',
     'index.php',
     'offline.html',
-    'assets/images/logo-rounded.png',
+    'assets/css/aso.css',
+    'assets/images/logo2-rounded.png',
     'assets/images/logo-v3.png',
-    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap',
-    'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-    'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css',
-    'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js'
+    'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap'
 ];
 
 self.addEventListener('install', event => {
@@ -58,7 +55,7 @@ self.addEventListener('fetch', event => {
                 })
         );
     } else {
-        // Static assets (images, fonts, stylesheets, swiper script, etc.)
+        // Static assets (images, fonts, stylesheets, etc.)
         // use Stale-While-Revalidate.
         event.respondWith(
             caches.match(event.request).then(cachedResponse => {
