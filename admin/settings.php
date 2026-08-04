@@ -82,6 +82,8 @@ try {
             $description = sanitizeInput($_POST['description'] ?? '');
             $button_text = sanitizeInput($_POST['button_text'] ?? 'Shop Now');
             $button_link = sanitizeInput($_POST['button_link'] ?? 'shop.php');
+            $secondary_button_text = sanitizeInput($_POST['secondary_button_text'] ?? '');
+            $secondary_button_link = sanitizeInput($_POST['secondary_button_link'] ?? '');
             $display_order = (int)($_POST['display_order'] ?? 0);
             $is_active = isset($_POST['is_active']) ? 1 : 0;
 
@@ -93,12 +95,12 @@ try {
                 $text_color = $_POST['text_color'] ?? '#1A1A1A';
                 
                 if ($action === 'create_slide') {
-                    $stmt = $pdo->prepare("INSERT INTO hero_slides (badge_text, title_black, title_gray, description, button_text, button_link, image_path, card_bg, text_color, display_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    $stmt->execute([$badge_text, $title_black, $title_gray, $description, $button_text, $button_link, $image, $card_bg, $text_color, $display_order, $is_active]);
+                    $stmt = $pdo->prepare("INSERT INTO hero_slides (badge_text, title_black, title_gray, description, button_text, button_link, secondary_button_text, secondary_button_link, image_path, card_bg, text_color, display_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([$badge_text, $title_black, $title_gray, $description, $button_text, $button_link, $secondary_button_text, $secondary_button_link, $image, $card_bg, $text_color, $display_order, $is_active]);
                     $success = 'Hero slide added successfully';
                 } else {
-                    $stmt = $pdo->prepare("UPDATE hero_slides SET badge_text = ?, title_black = ?, title_gray = ?, description = ?, button_text = ?, button_link = ?, image_path = ?, card_bg = ?, text_color = ?, display_order = ?, is_active = ? WHERE id = ?");
-                    $stmt->execute([$badge_text, $title_black, $title_gray, $description, $button_text, $button_link, $image, $card_bg, $text_color, $display_order, $is_active, $id]);
+                    $stmt = $pdo->prepare("UPDATE hero_slides SET badge_text = ?, title_black = ?, title_gray = ?, description = ?, button_text = ?, button_link = ?, secondary_button_text = ?, secondary_button_link = ?, image_path = ?, card_bg = ?, text_color = ?, display_order = ?, is_active = ? WHERE id = ?");
+                    $stmt->execute([$badge_text, $title_black, $title_gray, $description, $button_text, $button_link, $secondary_button_text, $secondary_button_link, $image, $card_bg, $text_color, $display_order, $is_active, $id]);
                     $success = 'Hero slide updated successfully';
                 }
             }
@@ -375,12 +377,22 @@ include 'includes/avazonia_header.php';
                             </div>
                             <div class="field-grid">
                                 <div class="field-group">
-                                    <label class="field-label">Btn Text</label>
+                                    <label class="field-label">Primary Btn Text</label>
                                     <input type="text" name="button_text" class="field-input" value="<?php echo $edit_slide['button_text'] ?? 'Shop Now'; ?>">
                                 </div>
                                 <div class="field-group">
-                                    <label class="field-label">Btn Link</label>
+                                    <label class="field-label">Primary Btn Link</label>
                                     <input type="text" name="button_link" class="field-input" value="<?php echo $edit_slide['button_link'] ?? 'shop.php'; ?>">
+                                </div>
+                            </div>
+                            <div class="field-grid">
+                                <div class="field-group">
+                                    <label class="field-label">Secondary Btn Text (Optional)</label>
+                                    <input type="text" name="secondary_button_text" class="field-input" value="<?php echo $edit_slide['secondary_button_text'] ?? ''; ?>" placeholder="e.g. Our Farms">
+                                </div>
+                                <div class="field-group">
+                                    <label class="field-label">Secondary Btn Link</label>
+                                    <input type="text" name="secondary_button_link" class="field-input" value="<?php echo $edit_slide['secondary_button_link'] ?? ''; ?>" placeholder="shop.php">
                                 </div>
                             </div>
                             <div class="field-grid">

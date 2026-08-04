@@ -4,8 +4,52 @@
  * Renders template-split slides (text left, full-bleed image right).
  * Include from index.php.
  */
+if (!function_exists('ensureHeroSlidesSchema')) {
+    function ensureHeroSlidesSchema($pdo) {
+        if (!$pdo) return;
+        try {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS hero_slides (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                badge_text VARCHAR(100) DEFAULT 'Featured This Week',
+                title_black VARCHAR(255) NOT NULL,
+                title_gray VARCHAR(255) DEFAULT '',
+                description TEXT,
+                button_text VARCHAR(100) DEFAULT 'Shop Now',
+                button_link VARCHAR(255) DEFAULT 'shop.php',
+                secondary_button_text VARCHAR(100) DEFAULT '',
+                secondary_button_link VARCHAR(255) DEFAULT 'shop.php',
+                image_path VARCHAR(255) NOT NULL,
+                card_bg VARCHAR(50) DEFAULT '#FFFFFF',
+                text_color VARCHAR(50) DEFAULT '#1A1A1A',
+                display_order INT DEFAULT 0,
+                is_active TINYINT(1) DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+            $cols = [
+                'secondary_button_text' => "ALTER TABLE hero_slides ADD COLUMN secondary_button_text VARCHAR(100) DEFAULT '' AFTER button_link",
+                'secondary_button_link' => "ALTER TABLE hero_slides ADD COLUMN secondary_button_link VARCHAR(255) DEFAULT 'shop.php' AFTER secondary_button_text",
+                'badge_text' => "ALTER TABLE hero_slides ADD COLUMN badge_text VARCHAR(100) DEFAULT 'Featured This Week' AFTER id",
+                'title_gray' => "ALTER TABLE hero_slides ADD COLUMN title_gray VARCHAR(255) DEFAULT '' AFTER title_black",
+                'card_bg' => "ALTER TABLE hero_slides ADD COLUMN card_bg VARCHAR(50) DEFAULT '#FFFFFF' AFTER image_path",
+                'text_color' => "ALTER TABLE hero_slides ADD COLUMN text_color VARCHAR(50) DEFAULT '#1A1A1A' AFTER card_bg",
+            ];
+            foreach ($cols as $col => $sql) {
+                try {
+                    $check = $pdo->query("SHOW COLUMNS FROM hero_slides LIKE '$col'");
+                    if ($check && $check->rowCount() === 0) {
+                        $pdo->exec($sql);
+                    }
+                } catch (Throwable $e) {}
+            }
+        } catch (Throwable $e) {}
+    }
+}
+
 $activeSlides = [];
 if (isset($pdo)) {
+    ensureHeroSlidesSchema($pdo);
     try {
         $activeSlides = $pdo->query("SELECT * FROM hero_slides WHERE is_active = 1 ORDER BY display_order ASC, id ASC")->fetchAll();
     } catch (PDOException $e) { $activeSlides = []; }
