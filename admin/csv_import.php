@@ -385,7 +385,7 @@ function runImport($pdo, $validatedRows, $mapping, $autoCreate, $dryRun) {
     return $results;
 }
 
-include 'includes/header-new.php';
+include 'includes/avazonia_header.php';
 ?>
 
 <div class="row">
@@ -659,4 +659,4 @@ include 'includes/header-new.php';
     </div>
 </div>
 
-<?php include 'includes/footer-new.php'; ?>
+<?php include 'includes/avazonia_footer.php'; ?>
