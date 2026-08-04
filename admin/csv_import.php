@@ -388,275 +388,259 @@ function runImport($pdo, $validatedRows, $mapping, $autoCreate, $dryRun) {
 include 'includes/avazonia_header.php';
 ?>
 
-<div class="row">
-    <div class="col-12">
-        <?php if (!empty($errors)): ?>
-            <div class="alert alert-danger border-0 rounded-4 mb-4 small fw-bold animate-up">
-                <ul class="mb-0">
-                    <?php foreach ($errors as $e): ?><li><?php echo htmlspecialchars($e); ?></li><?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
+<?php if (!empty($errors)): ?>
+    <div class="alert-box alert-error" style="flex-direction: column; align-items: flex-start;">
+        <ul style="margin: 0; padding-left: 18px;">
+            <?php foreach ($errors as $e): ?><li><?php echo htmlspecialchars($e); ?></li><?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
 
-        <?php if (!empty($results)): ?>
-            <div class="admin-card mb-4 animate-up">
-                <div class="admin-card-header">
-                    <h5 class="admin-card-title mb-0">
-                        <i class="fas <?php echo ($results['dry_run'] ?? false) ? 'fa-flask' : 'fa-check-circle'; ?> me-2"></i>
-                        <?php echo ($results['dry_run'] ?? false) ? 'Dry Run Results' : 'Import Results'; ?>
-                    </h5>
+<?php if (!empty($results)): ?>
+    <div class="panel animate-up">
+        <div class="panel-header">
+            <div class="panel-title">
+                <i class="fas <?php echo ($results['dry_run'] ?? false) ? 'fa-flask' : 'fa-check-circle'; ?>" style="margin-right: 8px;"></i>
+                <?php echo ($results['dry_run'] ?? false) ? 'Dry Run Results' : 'Import Results'; ?>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px;">
+                <div style="padding: 20px; border-radius: 4px; background: #f0fdf4; text-align: center;">
+                    <div style="font-size: 28px; font-weight: 900; color: #16a34a; margin-bottom: 4px;"><?php echo $results['created'] ?? 0; ?></div>
+                    <div style="font-size: 11px; color: var(--mid-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Created</div>
                 </div>
-                <div class="p-4">
-                    <div class="row text-center g-3 mb-4">
-                        <div class="col-md-3">
-                            <div class="p-3 rounded-4 bg-success-subtle">
-                                <div class="h3 fw-black text-success mb-0"><?php echo $results['created'] ?? 0; ?></div>
-                                <div class="small text-muted fw-bold">Would Create</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="p-3 rounded-4 bg-primary-subtle">
-                                <div class="h3 fw-black text-primary mb-0"><?php echo $results['updated'] ?? 0; ?></div>
-                                <div class="small text-muted fw-bold">Would Update</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="p-3 rounded-4 bg-warning-subtle">
-                                <div class="h3 fw-black text-warning mb-0"><?php echo $results['skipped'] ?? 0; ?></div>
-                                <div class="small text-muted fw-bold">Skipped / Errors</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="p-3 rounded-4 bg-light border">
-                                <div class="h3 fw-black text-muted mb-0"><?php echo ($results['dry_run'] ?? false) ? 'DRY RUN' : 'COMMITTED'; ?></div>
-                                <div class="small text-muted fw-bold"><?php echo ($results['dry_run'] ?? false) ? 'No changes made' : 'Changes applied'; ?></div>
-                            </div>
-                        </div>
-                    </div>
-                    <?php if (!empty($results['errors'])): ?>
-                        <div class="alert alert-warning rounded-3 small">
-                            <strong>Errors:</strong>
-                            <ul class="mb-0 mt-1 ps-3">
-                                <?php foreach ($results['errors'] as $err): ?><li><?php echo htmlspecialchars($err); ?></li><?php endforeach; ?>
-                            </ul>
-                        </div>
-                    <?php endif; ?>
-                    <div class="d-flex gap-2">
-                        <a href="csv_import.php" class="btn-premium"><i class="fas fa-redo me-2"></i>New Import</a>
-                        <a href="manage_products.php" class="btn-premium-outline"><i class="fas fa-arrow-left me-2"></i>Back to Products</a>
-                    </div>
+                <div style="padding: 20px; border-radius: 4px; background: #f0f4ff; text-align: center;">
+                    <div style="font-size: 28px; font-weight: 900; color: #3b82f6; margin-bottom: 4px;"><?php echo $results['updated'] ?? 0; ?></div>
+                    <div style="font-size: 11px; color: var(--mid-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Updated</div>
+                </div>
+                <div style="padding: 20px; border-radius: 4px; background: #fefce8; text-align: center;">
+                    <div style="font-size: 28px; font-weight: 900; color: #ca8a04; margin-bottom: 4px;"><?php echo $results['skipped'] ?? 0; ?></div>
+                    <div style="font-size: 11px; color: var(--mid-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Skipped</div>
+                </div>
+                <div style="padding: 20px; border-radius: 4px; background: var(--off); text-align: center;">
+                    <div style="font-size: 14px; font-weight: 900; color: var(--ink); margin-bottom: 4px; text-transform: uppercase;"><?php echo ($results['dry_run'] ?? false) ? 'Dry Run' : 'Committed'; ?></div>
+                    <div style="font-size: 11px; color: var(--mid-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"><?php echo ($results['dry_run'] ?? false) ? 'No changes' : 'Applied'; ?></div>
                 </div>
             </div>
-        <?php endif; ?>
-
-        <?php if (isset($_GET['step']) && $_GET['step'] === 'map'): ?>
-            <!-- Step 2: Column Mapping -->
-            <div class="admin-card animate-up">
-                <div class="admin-card-header d-flex justify-content-between align-items-center">
-                    <h5 class="admin-card-title mb-0"><i class="fas fa-columns me-2"></i>Map Columns</h5>
-                    <span class="small text-muted fw-bold"><?php echo htmlspecialchars($_SESSION['csv_filename'] ?? ''); ?> — <?php echo count($_SESSION['csv_headers'] ?? []); ?> columns</span>
+            <?php if (!empty($results['errors'])): ?>
+                <div class="alert-box alert-error" style="margin-bottom: 16px;">
+                    <div style="font-weight: 700;">Errors:</div>
+                    <ul style="margin: 4px 0 0; padding-left: 18px;">
+                        <?php foreach ($results['errors'] as $err): ?><li style="font-size: 12px;"><?php echo htmlspecialchars($err); ?></li><?php endforeach; ?>
+                    </ul>
                 </div>
-                <div class="p-4">
-                    <form method="POST" action="">
-                        <?php echo csrfField(); ?>
-                        <input type="hidden" name="action" value="map">
-                        <div class="table-responsive">
-                            <table class="table align-middle">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 200px;">CSV Column</th>
-                                        <th>Map To</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($_SESSION['csv_headers'] as $header): ?>
-                                        <tr>
-                                            <td class="fw-bold small"><?php echo htmlspecialchars($header); ?></td>
-                                            <td>
-                                                <select name="column_map[<?php echo htmlspecialchars($header); ?>]" class="form-select form-select-sm">
-                                                    <?php foreach ($columnMapOptions as $val => $label): ?>
-                                                        <option value="<?php echo $val; ?>" <?php echo ($val === $header || (isset($_SESSION['csv_column_map'][$header]) && $_SESSION['csv_column_map'][$header] === $val)) ? 'selected' : ''; ?>>
-                                                            <?php echo htmlspecialchars($label); ?>
-                                                        </option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <a href="csv_import.php" class="btn btn-outline-secondary"><i class="fas fa-redo me-1"></i>Re-upload</a>
-                            <button class="btn-premium" type="submit"><i class="fas fa-arrow-right me-1"></i>Preview</button>
-                        </div>
-                    </form>
-                </div>
+            <?php endif; ?>
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <a href="csv_import.php" class="btn-premium"><i class="fas fa-redo" style="margin-right: 8px;"></i>New Import</a>
+                <a href="manage_products.php" class="btn-premium-outline"><i class="fas fa-arrow-left" style="margin-right: 8px;"></i>Back to Products</a>
             </div>
+        </div>
+    </div>
+<?php endif; ?>
 
-        <?php elseif (isset($_GET['step']) && $_GET['step'] === 'preview'): ?>
-            <?php
-            $validatedPreview = $_SESSION['csv_preview_validated'] ?? [];
-            $mapping = $_SESSION['csv_column_map'] ?? [];
-            ?>
-            <!-- Step 3: Preview with Validation -->
-            <div class="admin-card animate-up">
-                <div class="admin-card-header d-flex justify-content-between align-items-center">
-                    <h5 class="admin-card-title mb-0"><i class="fas fa-eye me-2"></i>Preview & Validation <span class="badge bg-light text-dark ms-2 rounded-pill"><?php echo count($validatedPreview); ?> rows</span></h5>
-                    <span class="small text-muted fw-bold"><?php echo htmlspecialchars($_SESSION['csv_filename'] ?? ''); ?></span>
-                </div>
-                <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
-                    <table class="table table-sm align-middle">
-                        <thead class="sticky-top bg-white">
+<?php if (isset($_GET['step']) && $_GET['step'] === 'map'): ?>
+    <div class="panel animate-up">
+        <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-columns" style="margin-right: 8px;"></i>Map Columns</div>
+            <span style="font-size: 12px; color: var(--mid-gray); font-weight: 700;"><?php echo htmlspecialchars($_SESSION['csv_filename'] ?? ''); ?> — <?php echo count($_SESSION['csv_headers'] ?? []); ?> columns</span>
+        </div>
+        <div class="panel-body">
+            <form method="POST" action="">
+                <?php echo csrfField(); ?>
+                <input type="hidden" name="action" value="map">
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
                             <tr>
-                                <th>#</th>
-                                <?php foreach ($mapping as $csvCol => $dbField): ?>
-                                    <?php if ($dbField !== 'skip'): ?>
-                                        <th><?php echo htmlspecialchars($csvCol); ?></th>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
-                                <th>Status</th>
+                                <th>CSV Column</th>
+                                <th>Map To</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($validatedPreview as $vrow): ?>
-                                <tr class="<?php echo !$vrow['valid'] ? 'table-danger' : ''; ?>">
-                                    <td class="text-muted"><?php echo $vrow['row_num']; ?></td>
-                                    <?php foreach ($mapping as $csvCol => $dbField): ?>
-                                        <?php if ($dbField !== 'skip'): ?>
-                                            <td class="small"><?php echo htmlspecialchars($vrow['data'][$csvCol] ?? ''); ?></td>
-                                        <?php endif; ?>
-                                    <?php endforeach; ?>
+                            <?php foreach ($_SESSION['csv_headers'] as $header): ?>
+                                <tr>
+                                    <td style="font-weight: 700; font-size: 13px;"><?php echo htmlspecialchars($header); ?></td>
                                     <td>
-                                        <?php if (!$vrow['valid']): ?>
-                                            <span class="badge bg-danger-subtle text-danger rounded-pill small">
-                                                <i class="fas fa-exclamation-triangle me-1"></i><?php echo implode(', ', $vrow['errors']); ?>
-                                            </span>
-                                        <?php elseif (!empty($vrow['warnings'])): ?>
-                                            <span class="badge bg-warning-subtle text-warning rounded-pill small">
-                                                <i class="fas fa-exclamation-circle me-1"></i><?php echo implode(', ', $vrow['warnings']); ?>
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge bg-success-subtle text-success rounded-pill small">
-                                                <i class="fas fa-check me-1"></i>OK
-                                            </span>
-                                        <?php endif; ?>
+                                        <select name="column_map[<?php echo htmlspecialchars($header); ?>]" class="field-input" style="height: 40px; font-size: 13px;">
+                                            <?php foreach ($columnMapOptions as $val => $label): ?>
+                                                <option value="<?php echo $val; ?>" <?php echo ($val === $header || (isset($_SESSION['csv_column_map'][$header]) && $_SESSION['csv_column_map'][$header] === $val)) ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($label); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
-                <div class="p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="auto_create_categories" form="confirmImportForm" id="autoCreate">
-                        <label class="form-check-label small fw-bold" for="autoCreate">
-                            Auto-create missing categories & subcategories
-                        </label>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a href="csv_import.php" class="btn btn-outline-secondary"><i class="fas fa-redo me-1"></i>Start Over</a>
-                        <form method="POST" action="" id="confirmImportForm" onsubmit="return confirmAction(event, 'Run this import now?');">
-                            <?php echo csrfField(); ?>
-                            <input type="hidden" name="action" value="confirm">
-                            <button class="btn-premium" type="submit"><i class="fas fa-check me-2"></i>Confirm Import</button>
-                        </form>
-                        <form method="POST" action="" onsubmit="return confirmAction(event, 'Run a DRY RUN? No data will be changed.');" style="display:inline;">
-                            <?php echo csrfField(); ?>
-                            <input type="hidden" name="action" value="confirm">
-                            <input type="hidden" name="dry_run" value="1">
-                            <button class="btn btn-outline-info" type="submit"><i class="fas fa-flask me-1"></i>Dry Run</button>
-                        </form>
-                    </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                    <a href="csv_import.php" class="btn-ink" style="font-size: 11px;"><i class="fas fa-redo" style="margin-right: 6px;"></i>Re-upload</a>
+                    <button class="btn-premium" type="submit"><i class="fas fa-arrow-right" style="margin-right: 6px;"></i>Preview</button>
                 </div>
-            </div>
-
-        <?php else: ?>
-            <!-- Step 1: Upload -->
-            <div class="admin-card animate-up">
-                <div class="admin-card-header">
-                    <h5 class="admin-card-title mb-0"><i class="fas fa-file-import me-2"></i>Upload CSV</h5>
-                </div>
-                <div class="p-4">
-                    <form method="POST" action="" enctype="multipart/form-data">
-                        <?php echo csrfField(); ?>
-                        <input type="hidden" name="action" value="upload">
-                        <div class="mb-3">
-                            <label class="stat-label small mb-1 uppercase tracking-wider fw-bold">CSV File</label>
-                            <input type="file" class="form-control rounded-3" name="csv" accept=".csv,text/csv" required>
-                        </div>
-                        <button class="btn-premium" type="submit"><i class="fas fa-arrow-right me-2"></i>Continue to Column Mapping</button>
-                        <a href="manage_products.php" class="btn btn-outline-secondary ms-2">Cancel</a>
-                    </form>
-                    <hr>
-                    <div class="small text-muted">
-                        <strong>Supported columns:</strong>
-                        <code>product_id, name, sku, category, subcategory, price, original_price, stock_quantity, low_stock_threshold, status, is_featured, description, features, tags, meta_title, meta_description, slug</code>
-                        <div class="mt-2">
-                            <ul class="mb-0 ps-3">
-                                <li>Products are updated when a matching <code>product_id</code> or <code>sku</code> exists; otherwise a new product is created.</li>
-                                <li><code>price</code> and <code>category</code> are required for new products.</li>
-                                <li><code>status</code>: <code>published</code> or <code>draft</code>. <code>is_featured</code>: <code>0</code>/<code>1</code>.</li>
-                                <li><code>tags</code> are comma-separated.</li>
-                                <li>You can map CSV columns to any field above — unmatched columns are skipped.</li>
-                            </ul>
-                        </div>
-                        <a href="csv_export.php" class="btn-link small fw-bold">Download a sample export to use as a template &rarr;</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Import History -->
-            <?php
-            $importJobs = [];
-            try {
-                $stmt = $pdo->query('SELECT * FROM import_jobs ORDER BY created_at DESC LIMIT 10');
-                $importJobs = $stmt->fetchAll();
-            } catch (PDOException $e) {}
-            ?>
-            <?php if (!empty($importJobs)): ?>
-                <div class="admin-card mt-4 animate-up">
-                    <div class="admin-card-header">
-                        <h5 class="admin-card-title mb-0"><i class="fas fa-history me-2"></i>Import History</h5>
-                    </div>
-                    <div class="p-4">
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>File</th>
-                                        <th>Date</th>
-                                        <th>Rows</th>
-                                        <th>Created</th>
-                                        <th>Updated</th>
-                                        <th>Skipped</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($importJobs as $job): ?>
-                                        <tr>
-                                            <td class="small fw-bold"><?php echo htmlspecialchars($job['filename']); ?></td>
-                                            <td class="small text-muted"><?php echo date('M d, H:i', strtotime($job['created_at'])); ?></td>
-                                            <td class="small"><?php echo $job['total_rows']; ?></td>
-                                            <td class="small text-success fw-bold"><?php echo $job['created_count']; ?></td>
-                                            <td class="small text-primary fw-bold"><?php echo $job['updated_count']; ?></td>
-                                            <td class="small text-warning fw-bold"><?php echo $job['skipped_count']; ?></td>
-                                            <td>
-                                                <span class="badge rounded-pill px-2 py-0 small <?php echo $job['status'] === 'completed' ? 'bg-success-subtle text-success' : ($job['status'] === 'dry_run' ? 'bg-info-subtle text-info' : 'bg-danger-subtle text-danger'); ?>">
-                                                    <?php echo htmlspecialchars($job['status']); ?>
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
-        <?php endif; ?>
+            </form>
+        </div>
     </div>
-</div>
+
+<?php elseif (isset($_GET['step']) && $_GET['step'] === 'preview'): ?>
+    <?php
+    $validatedPreview = $_SESSION['csv_preview_validated'] ?? [];
+    $mapping = $_SESSION['csv_column_map'] ?? [];
+    ?>
+    <div class="panel animate-up">
+        <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-eye" style="margin-right: 8px;"></i>Preview &amp; Validation <span style="font-size: 11px; font-weight: 700; background: var(--off); padding: 2px 10px; border-radius: 99px; margin-left: 8px;"><?php echo count($validatedPreview); ?> rows</span></div>
+            <span style="font-size: 12px; color: var(--mid-gray); font-weight: 700;"><?php echo htmlspecialchars($_SESSION['csv_filename'] ?? ''); ?></span>
+        </div>
+        <div class="table-container" style="max-height: 420px; overflow-y: auto; border: none; border-radius: 0;">
+            <table class="admin-table" style="min-width: 600px;">
+                <thead style="position: sticky; top: 0; background: #fff; z-index: 1;">
+                    <tr>
+                        <th>#</th>
+                        <?php foreach ($mapping as $csvCol => $dbField): ?>
+                            <?php if ($dbField !== 'skip'): ?>
+                                <th><?php echo htmlspecialchars($csvCol); ?></th>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($validatedPreview as $vrow): ?>
+                        <tr style="<?php echo !$vrow['valid'] ? 'background: #fffafa;' : ''; ?>">
+                            <td style="color: var(--mid-gray);"><?php echo $vrow['row_num']; ?></td>
+                            <?php foreach ($mapping as $csvCol => $dbField): ?>
+                                <?php if ($dbField !== 'skip'): ?>
+                                    <td style="font-size: 12px;"><?php echo htmlspecialchars($vrow['data'][$csvCol] ?? ''); ?></td>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                            <td>
+                                <?php if (!$vrow['valid']): ?>
+                                    <span style="display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: #fffafa; color: #d32f2f; text-transform: uppercase; letter-spacing: 0.03em;">
+                                        <i class="fas fa-exclamation-triangle" style="margin-right: 4px;"></i><?php echo htmlspecialchars(implode(', ', $vrow['errors'])); ?>
+                                    </span>
+                                <?php elseif (!empty($vrow['warnings'])): ?>
+                                    <span style="display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: #fefce8; color: #ca8a04; text-transform: uppercase; letter-spacing: 0.03em;">
+                                        <i class="fas fa-exclamation-circle" style="margin-right: 4px;"></i><?php echo htmlspecialchars(implode(', ', $vrow['warnings'])); ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span style="display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: #f0fdf4; color: #16a34a; text-transform: uppercase; letter-spacing: 0.03em;">
+                                        <i class="fas fa-check" style="margin-right: 4px;"></i>OK
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <div class="panel-body" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; border-top: 1px solid var(--light-gray);">
+            <div class="check-row" style="padding-top: 0; margin: 0;">
+                <input class="field-check" type="checkbox" name="auto_create_categories" form="confirmImportForm" id="autoCreate">
+                <label class="field-label" for="autoCreate" style="margin: 0;">Auto-create missing categories &amp; subcategories</label>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <a href="csv_import.php" class="btn-ink" style="font-size: 11px;"><i class="fas fa-redo" style="margin-right: 6px;"></i>Start Over</a>
+                <form method="POST" action="" id="confirmImportForm" onsubmit="return confirmAction(event, 'Run this import now?');" style="display: inline;">
+                    <?php echo csrfField(); ?>
+                    <input type="hidden" name="action" value="confirm">
+                    <button class="btn-premium" type="submit"><i class="fas fa-check" style="margin-right: 6px;"></i>Confirm Import</button>
+                </form>
+                <form method="POST" action="" onsubmit="return confirmAction(event, 'Run a DRY RUN? No data will be changed.');" style="display: inline;">
+                    <?php echo csrfField(); ?>
+                    <input type="hidden" name="action" value="confirm">
+                    <input type="hidden" name="dry_run" value="1">
+                    <button class="btn-ink" type="submit" style="font-size: 11px;"><i class="fas fa-flask" style="margin-right: 6px;"></i>Dry Run</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<?php else: ?>
+    <div class="panel animate-up">
+        <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-file-import" style="margin-right: 8px;"></i>Upload CSV</div>
+        </div>
+        <div class="panel-body">
+            <form method="POST" action="" enctype="multipart/form-data">
+                <?php echo csrfField(); ?>
+                <input type="hidden" name="action" value="upload">
+                <div class="field-group">
+                    <label class="field-label">CSV File</label>
+                    <input type="file" class="field-input" style="padding: 10px 12px; height: auto;" name="csv" accept=".csv,text/csv" required>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <button class="btn-premium" type="submit"><i class="fas fa-arrow-right" style="margin-right: 6px;"></i>Continue to Column Mapping</button>
+                    <a href="manage_products.php" class="btn-ink" style="font-size: 11px;">Cancel</a>
+                </div>
+            </form>
+            <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--light-gray);">
+            <div style="font-size: 12px; color: var(--mid-gray);">
+                <strong>Supported columns:</strong>
+                <code style="font-size: 11px; background: var(--off); padding: 2px 6px; border-radius: 3px;">product_id, name, sku, category, subcategory, price, original_price, stock_quantity, low_stock_threshold, status, is_featured, description, features, tags, meta_title, meta_description, slug</code>
+                <div style="margin-top: 12px;">
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>Products are updated when a matching <code style="font-size: 11px; background: var(--off); padding: 2px 6px; border-radius: 3px;">product_id</code> or <code style="font-size: 11px; background: var(--off); padding: 2px 6px; border-radius: 3px;">sku</code> exists; otherwise a new product is created.</li>
+                        <li><code style="font-size: 11px; background: var(--off); padding: 2px 6px; border-radius: 3px;">price</code> and <code style="font-size: 11px; background: var(--off); padding: 2px 6px; border-radius: 3px;">category</code> are required for new products.</li>
+                        <li><code style="font-size: 11px; background: var(--off); padding: 2px 6px; border-radius: 3px;">status</code>: <code style="font-size: 11px; background: var(--off); padding: 2px 6px; border-radius: 3px;">published</code> or <code style="font-size: 11px; background: var(--off); padding: 2px 6px; border-radius: 3px;">draft</code>. <code style="font-size: 11px; background: var(--off); padding: 2px 6px; border-radius: 3px;">is_featured</code>: <code style="font-size: 11px; background: var(--off); padding: 2px 6px; border-radius: 3px;">0</code>/<code style="font-size: 11px; background: var(--off); padding: 2px 6px; border-radius: 3px;">1</code>.</li>
+                        <li><code style="font-size: 11px; background: var(--off); padding: 2px 6px; border-radius: 3px;">tags</code> are comma-separated.</li>
+                        <li>You can map CSV columns to any field above — unmatched columns are skipped.</li>
+                    </ul>
+                </div>
+                <a href="csv_export.php" style="font-size: 12px; font-weight: 700; color: var(--ink); text-decoration: underline; text-underline-offset: 3px;">Download a sample export to use as a template &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <?php
+    $importJobs = [];
+    try {
+        $stmt = $pdo->query('SELECT * FROM import_jobs ORDER BY created_at DESC LIMIT 10');
+        $importJobs = $stmt->fetchAll();
+    } catch (PDOException $e) {}
+    ?>
+    <?php if (!empty($importJobs)): ?>
+        <div class="panel animate-up" style="margin-top: 32px;">
+            <div class="panel-header">
+                <div class="panel-title"><i class="fas fa-history" style="margin-right: 8px;"></i>Import History</div>
+            </div>
+            <div class="panel-body">
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>File</th>
+                                <th>Date</th>
+                                <th>Rows</th>
+                                <th>Created</th>
+                                <th>Updated</th>
+                                <th>Skipped</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($importJobs as $job): ?>
+                                <tr>
+                                    <td style="font-size: 13px; font-weight: 700;"><?php echo htmlspecialchars($job['filename']); ?></td>
+                                    <td style="font-size: 12px; color: var(--mid-gray);"><?php echo date('M d, H:i', strtotime($job['created_at'])); ?></td>
+                                    <td style="font-size: 13px;"><?php echo $job['total_rows']; ?></td>
+                                    <td style="font-size: 13px; font-weight: 700; color: #16a34a;"><?php echo $job['created_count']; ?></td>
+                                    <td style="font-size: 13px; font-weight: 700; color: #3b82f6;"><?php echo $job['updated_count']; ?></td>
+                                    <td style="font-size: 13px; font-weight: 700; color: #ca8a04;"><?php echo $job['skipped_count']; ?></td>
+                                    <td>
+                                        <span style="display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.03em; <?php echo $job['status'] === 'completed' ? 'background: #f0fdf4; color: #16a34a;' : ($job['status'] === 'dry_run' ? 'background: #f0f4ff; color: #3b82f6;' : 'background: #fffafa; color: #d32f2f;'); ?>">
+                                            <?php echo htmlspecialchars($job['status']); ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+<?php endif; ?>
 
 <?php include 'includes/avazonia_footer.php'; ?>
