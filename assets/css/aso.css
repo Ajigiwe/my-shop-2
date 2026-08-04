@@ -5495,4 +5495,66 @@ form button[type="submit"]:hover {
     font-family: var(--f-mono);
 }
 
+/* ── HERO SECONDARY BUTTON ──────────────────────────── */
+.btn-hero-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 28px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.5);
+    border-radius: 9999px;
+    font-family: var(--f-semi);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-decoration: none !important;
+    backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+}
 
+.btn-hero-secondary:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: #ffffff;
+    color: #ffffff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+/* ── FOOTER BOTTOM ENHANCEMENT ──────────────────────── */
+.footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 28px;
+    padding-bottom: 28px;
+    margin-top: 24px;
+}
+
+.footer-copy {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.footer-legal {
+    display: flex;
+    gap: 20px;
+}
+
+.footer-legal a {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-legal a:hover {
+    color: #00e650 !important;
+}

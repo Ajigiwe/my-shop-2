@@ -36,7 +36,7 @@ if (empty($activeSlides)) return;
             <div style="display: flex; gap: 16px; flex-wrap: wrap;">
                 <a href="<?php echo $base . ltrim(htmlspecialchars($s['button_link'] ?: 'shop.php'), '/'); ?>" class="btn-red"><?php echo htmlspecialchars($s['button_text'] ?: 'Shop Now'); ?> →</a>
                 <?php if (!empty($s['secondary_button_text'])): ?>
-                <a href="<?php echo $base . ltrim(htmlspecialchars($s['secondary_button_link'] ?: 'shop.php'), '/'); ?>" class="btn-ghost" style="background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.4);"><?php echo htmlspecialchars($s['secondary_button_text']); ?></a>
+                <a href="<?php echo $base . ltrim(htmlspecialchars($s['secondary_button_link'] ?: 'shop.php'), '/'); ?>" class="btn-hero-secondary"><?php echo htmlspecialchars($s['secondary_button_text']); ?></a>
                 <?php endif; ?>
             </div>
         </div>
