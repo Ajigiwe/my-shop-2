@@ -107,16 +107,6 @@ $socials = [
                     </a>
                 <?php endif; ?>
             </div>
-
-            <div class="partner-box">
-                <img src="<?php echo $base; ?>assets/images/ghana-post.webp" alt="Ghana Post">
-            </div>
-            <div class="partner-box">
-                <img src="<?php echo $base; ?>assets/images/paystack1.png" alt="Paystack">
-            </div>
-            <div class="partner-box">
-                <img src="<?php echo $base; ?>assets/images/uba-logo.webp" alt="UBA Bank">
-            </div>
         </div>
 
         <div class="footer-bottom">
