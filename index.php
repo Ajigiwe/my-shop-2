@@ -57,41 +57,7 @@ include 'includes/header.php';
 
     <?php
     // ── CATEGORY GRID ──────────────────────────────
-    $categoryGrid = [];
-    try {
-        $cat_stmt = $pdo->query("SELECT category_id, category_name, image FROM categories ORDER BY category_id ASC");
-        while ($row = $cat_stmt->fetch(PDO::FETCH_ASSOC)) {
-            $row['name'] = $row['category_name'];
-            $row['image_url'] = !empty($row['image']) ? getProductImage($row['image']) : '';
-            $categoryGrid[] = $row;
-        }
-    } catch (PDOException $e) {}
-    ?>
 
-    <!-- CATEGORY GRID SECTION -->
-    <?php if (!empty($categoryGrid)): ?>
-    <section class="category-grid-section">
-        <div class="container">
-            <div class="category-grid">
-                <?php
-                $first = array_shift($categoryGrid);
-                $img = !empty($first['image_url']) ? $first['image_url'] : '';
-                $fallbackBg = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
-                ?>
-                <a href="shop.php?category=<?= urlencode($first['category_name']) ?>" class="cat-tile cat-hero" style="background-image: <?= $img ? 'url(\'' . $img . '\')' : $fallbackBg ?>;">
-                    <span class="cat-label"><?= htmlspecialchars($first['name']) ?></span>
-                </a>
-                <?php foreach ($categoryGrid as $cat):
-                    $img2 = !empty($cat['image_url']) ? $cat['image_url'] : '';
-                ?>
-                    <a href="shop.php?category=<?= urlencode($cat['category_name']) ?>" class="cat-tile" style="background-image: <?= $img2 ? 'url(\'' . $img2 . '\')' : $fallbackBg ?>;">
-                        <span class="cat-label"><?= htmlspecialchars($cat['name']) ?></span>
-                    </a>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </section>
-    <?php endif; ?>
 
     <?php
     // ── FEATURED / ALL PRODUCTS (paginated) ────────
