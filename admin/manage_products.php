@@ -387,21 +387,40 @@ if ($page > $total_pages) $page = $total_pages;
 // Fetch products
 $products = [];
 try {
-    $stmt = $pdo->prepare("SELECT p.*, c.category_name, 
-                            (SELECT COUNT(*) FROM product_variations WHERE product_id = p.product_id) AS variation_count,
-                            (SELECT price FROM product_variations WHERE product_id = p.product_id AND is_default = 1 LIMIT 1) AS variation_price,
-                            (SELECT sku FROM product_variations WHERE product_id = p.product_id AND is_default = 1 LIMIT 1) AS variation_sku
-                            FROM products p 
-                            LEFT JOIN categories c ON c.category_id = p.category_id 
-                            $where_sql 
-                            ORDER BY $order_sql 
-                            LIMIT $per_page OFFSET $offset");
+    $hasVariations = false;
+    try {
+        $pdo->query("SELECT 1 FROM product_variations LIMIT 1");
+        $hasVariations = true;
+    } catch (PDOException $e) {
+        $hasVariations = false;
+    }
+
+    if ($hasVariations) {
+        $stmt = $pdo->prepare("SELECT p.*, c.category_name, 
+                                (SELECT COUNT(*) FROM product_variations WHERE product_id = p.product_id) AS variation_count,
+                                (SELECT price FROM product_variations WHERE product_id = p.product_id AND is_default = 1 LIMIT 1) AS variation_price,
+                                (SELECT sku FROM product_variations WHERE product_id = p.product_id AND is_default = 1 LIMIT 1) AS variation_sku
+                                FROM products p 
+                                LEFT JOIN categories c ON c.category_id = p.category_id 
+                                $where_sql 
+                                ORDER BY $order_sql 
+                                LIMIT $per_page OFFSET $offset");
+    } else {
+        $stmt = $pdo->prepare("SELECT p.*, c.category_name,
+                                0 AS variation_count,
+                                NULL AS variation_price,
+                                NULL AS variation_sku
+                                FROM products p 
+                                LEFT JOIN categories c ON c.category_id = p.category_id 
+                                $where_sql 
+                                ORDER BY $order_sql 
+                                LIMIT $per_page OFFSET $offset");
+    }
     $stmt->execute($params);
     $products = $stmt->fetchAll();
 } catch (PDOException $e) {
     error_log('Fetch products error: ' . $e->getMessage());
 }
-error_log('manage_products: count=' . $total_products . ' fetched=' . count($products));
 
 // Helper to rebuild the URL while preserving filters
 function listUrl($overrides = []) {
