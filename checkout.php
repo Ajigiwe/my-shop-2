@@ -3,7 +3,9 @@
  * Checkout Page (Avazonia)
  */
 require_once 'includes/db.php';
-require 'vendor/autoload.php';
+if (file_exists('vendor/autoload.php') && file_exists('vendor/composer/autoload_real.php')) {
+    require_once 'vendor/autoload.php';
+}
 require_once 'includes/functions.php';
 require_once 'includes/email_config.php';
 

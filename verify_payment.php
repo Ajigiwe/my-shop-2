@@ -6,7 +6,9 @@
 
 // Include database connection and Paystack configuration
 require_once 'includes/db.php';
-require_once 'vendor/autoload.php';
+if (file_exists('vendor/autoload.php') && file_exists('vendor/composer/autoload_real.php')) {
+    require_once 'vendor/autoload.php';
+}
 require_once 'includes/paystack_config.php';
 
 // Start session

@@ -6,7 +6,9 @@
 
 // Include environment loader and Composer autoloader
 require_once __DIR__ . '/env_loader.php';
-require_once __DIR__ . '/../vendor/autoload.php';
+if (file_exists(__DIR__ . '/../vendor/autoload.php') && file_exists(__DIR__ . '/../vendor/composer/autoload_real.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+}
 
 // Initialize Paystack with environment variables
 $paystack_public_key = $_ENV['PAYSTACK_PUBLIC_KEY'] ?? '';
@@ -15,11 +17,17 @@ $paystack_secret_key = $_ENV['PAYSTACK_SECRET_KEY'] ?? '';
 // Validate that keys are set
 if (empty($paystack_public_key) || empty($paystack_secret_key)) {
     error_log('Paystack keys not configured in .env file');
-    throw new Exception('Paystack configuration missing. Please check your .env file.');
 }
 
-// Initialize Paystack
-$paystack = new \Yabacon\Paystack($paystack_secret_key);
+// Initialize Paystack if library class exists and keys are present
+$paystack = null;
+if (!empty($paystack_secret_key) && class_exists('\Yabacon\Paystack')) {
+    try {
+        $paystack = new \Yabacon\Paystack($paystack_secret_key);
+    } catch (Throwable $e) {
+        error_log('Paystack init error: ' . $e->getMessage());
+    }
+}
 
 /**
  * Initialize Paystack payment using direct cURL

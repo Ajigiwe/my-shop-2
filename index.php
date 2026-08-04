@@ -1,9 +1,15 @@
 <?php
 // Load environment variables
-if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-    require __DIR__ . '/vendor/autoload.php';
-    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-    $dotenv->load();
+if (file_exists(__DIR__ . '/vendor/autoload.php') && file_exists(__DIR__ . '/vendor/composer/autoload_real.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+    if (class_exists('Dotenv\Dotenv')) {
+        try {
+            $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+            $dotenv->safeLoad();
+        } catch (Throwable $e) {
+            error_log("Dotenv load error: " . $e->getMessage());
+        }
+    }
 }
 
 /**

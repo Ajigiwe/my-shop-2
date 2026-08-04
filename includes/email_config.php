@@ -7,12 +7,18 @@
  * Templates follow the Avazonia email design system (shared email_layout shell).
  */
 
-// Load Composer's autoloader
-require __DIR__ . '/../vendor/autoload.php';
-
-// Load environment variables
-$dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
-$dotenv->load();
+// Load Composer's autoloader safely
+if (file_exists(__DIR__ . '/../vendor/autoload.php') && file_exists(__DIR__ . '/../vendor/composer/autoload_real.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+    if (class_exists('Dotenv\Dotenv')) {
+        try {
+            $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
+            $dotenv->safeLoad();
+        } catch (Throwable $e) {
+            error_log("Dotenv load error in email_config: " . $e->getMessage());
+        }
+    }
+}
 
 // Store information
 define('STORE_EMAIL', $_ENV['STORE_EMAIL'] ?? 'minatoflash82@gmail.com');
@@ -55,8 +61,10 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
-// Require Composer's autoloader
-require __DIR__ . '/../vendor/autoload.php';
+// Require Composer's autoloader safely
+if (file_exists(__DIR__ . '/../vendor/autoload.php') && file_exists(__DIR__ . '/../vendor/composer/autoload_real.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+}
 
 /**
  * Send an email with HTML support using PHPMailer with SMTP
