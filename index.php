@@ -56,10 +56,6 @@ include 'includes/header.php';
     <?php include 'includes/hero.php'; ?>
 
     <?php
-    // ── CATEGORY GRID ──────────────────────────────
-
-
-    <?php
     // ── FEATURED / ALL PRODUCTS (paginated) ────────
     $perPage = 8;
     $page = max(1, (int)($_GET['page'] ?? 1));
