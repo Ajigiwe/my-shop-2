@@ -34,12 +34,15 @@ if (!defined('REMEMBER_SECRET')) {
 
 // Global Session Initialization (ensures sessions persist across root and subfolders)
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
-    $is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? 80) == 443;
+    $is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+             || ($_SERVER['SERVER_PORT'] ?? 80) == 443
+             || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https');
+
     session_set_cookie_params([
         'lifetime' => 0,
-        'path' => '/',
-        'domain' => '',
-        'secure' => $is_https,
+        'path'     => '/',
+        'domain'   => '', // Host-only cookie prevents browser rejection across subfolders/redirects
+        'secure'   => $is_https,
         'httponly' => true,
         'samesite' => 'Lax'
     ]);
