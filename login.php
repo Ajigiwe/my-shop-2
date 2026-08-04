@@ -65,12 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            $stmt = $pdo->prepare("SELECT user_id, name, email, password, role, email_verified FROM users WHERE email = ?");
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
             $stmt->execute([$email]);
             $user = $stmt->fetch();
 
             if ($user && verifyPassword($password, $user['password'])) {
-                if (!(int)($user['email_verified'] ?? 1)) {
+                if (isset($user['email_verified']) && !(int)$user['email_verified']) {
                     header('Location: verify_email.php?email=' . urlencode($email) . '&required=1');
                     exit();
                 }
@@ -107,9 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $errors[] = 'Invalid email or password';
             }
-        } catch(PDOException $e) {
+        } catch(Throwable $e) {
             error_log("Login error: " . $e->getMessage());
-            $errors[] = 'An error occurred during login. Please try again.';
+            $errors[] = 'An error occurred during login: ' . $e->getMessage();
         }
     }
 }
