@@ -7,8 +7,14 @@
  * - Step 4: Confirm import (with rollback log)
  */
 require_once '../includes/db.php';
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once '../includes/admin_guard.php';
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 $page_title = 'Import Products';
 $errors = [];
@@ -122,13 +128,18 @@ if (isset($_GET['step']) && $_GET['step'] === 'preview') {
     $rows = $_SESSION['csv_rows'] ?? [];
     $mapping = $_SESSION['csv_column_map'] ?? [];
 
-    if (empty($rows)) {
+    if (empty($rows) || empty($mapping)) {
         header('Location: csv_import.php');
         exit();
     }
 
-    $preview = validateRows($rows, $mapping);
-    $_SESSION['csv_preview_validated'] = $preview;
+    try {
+        $preview = validateRows($rows, $mapping);
+        $_SESSION['csv_preview_validated'] = $preview;
+    } catch (Throwable $e) {
+        error_log("CSV Preview Exception: " . $e->getMessage());
+        $errors[] = "Error generating preview: " . $e->getMessage();
+    }
 }
 
 // ------------------------------------------------------------------
