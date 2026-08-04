@@ -401,6 +401,7 @@ try {
 } catch (PDOException $e) {
     error_log('Fetch products error: ' . $e->getMessage());
 }
+error_log('manage_products: count=' . $total_products . ' fetched=' . count($products));
 
 // Helper to rebuild the URL while preserving filters
 function listUrl($overrides = []) {
