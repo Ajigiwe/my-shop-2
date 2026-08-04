@@ -1407,13 +1407,16 @@ background: #00e650;
 
 .slider-track .card {
     flex: 0 0 180px !important;
+    width: 180px !important;
+    max-width: 180px !important;
     scroll-snap-align: start !important;
-    min-width: 150px;
 }
 
 @media (max-width: 1024px) {
     .slider-track .card {
         flex: 0 0 160px !important;
+        width: 160px !important;
+        max-width: 160px !important;
     }
 
     .slider-nav {
@@ -1423,17 +1426,22 @@ background: #00e650;
 
 @media (max-width: 768px) {
     .slider-track .card {
-        flex: 0 0 calc(45% - 6px) !important;
+        flex: 0 0 calc(50vw - 22px) !important;
+        width: calc(50vw - 22px) !important;
+        max-width: calc(50vw - 22px) !important;
+        min-width: unset !important;
     }
 
     .slider-track {
-        gap: 10px;
+        gap: 12px !important;
     }
 }
 
 @media (max-width: 600px) {
     .slider-track .card {
-        flex: 0 0 calc(48% - 5px) !important;
+        flex: 0 0 calc(50vw - 22px) !important;
+        width: calc(50vw - 22px) !important;
+        max-width: calc(50vw - 22px) !important;
         min-width: unset !important;
     }
 }
