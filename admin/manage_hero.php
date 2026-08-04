@@ -41,6 +41,9 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            $errors[] = 'Invalid form submission. Please refresh and try again.';
+        } else {
         if ($action === 'create' || $action === 'update') {
             $id = (int)($_POST['id'] ?? 0);
             $badge_text = sanitizeInput($_POST['badge_text'] ?? '');
@@ -88,6 +91,7 @@ try {
                 $stmt->execute([$id]);
                 $success = 'Slide deleted successfully';
             }
+        }
         }
     }
 } catch (PDOException $e) {
@@ -173,6 +177,7 @@ include 'includes/avazonia_header.php';
                         <div class="d-flex justify-content-end gap-2">
                             <a href="manage_hero.php?action=edit&id=<?php echo $s['id']; ?>" class="action-btn">Edit</a>
                             <form method="POST" action="manage_hero.php" class="d-inline" onsubmit="return confirmAction(event, 'Permanently delete this slide?');">
+                                <?php echo csrfField(); ?>
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="id" value="<?php echo $s['id']; ?>">
                                 <button type="submit" class="action-btn danger">Del</button>
@@ -197,6 +202,7 @@ include 'includes/avazonia_header.php';
         <button type="button" class="modal-close" onclick="closeModal('heroModal')">×</button>
         <div class="modal-title"><?php echo $edit ? 'Edit Hero Slide' : 'Create New Hero Slide'; ?></div>
         <form method="POST" action="manage_hero.php" enctype="multipart/form-data">
+            <?php echo csrfField(); ?>
             <input type="hidden" name="action" value="<?php echo $edit ? 'update' : 'create'; ?>">
             <?php if ($edit): ?>
                 <input type="hidden" name="id" value="<?php echo $edit['id']; ?>">

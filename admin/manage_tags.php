@@ -14,6 +14,9 @@ $success = '';
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Invalid form submission. Please refresh and try again.';
+    } else {
     if ($action === 'create') {
         $tag_name = sanitizeInput($_POST['tag_name'] ?? '');
         if ($tag_name === '') {
@@ -56,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'Error deleting tag';
             }
         }
+    }
     }
 }
 
@@ -106,6 +110,7 @@ include 'includes/avazonia_header.php';
             <div class="panel-header"><div class="panel-title">Add New Tag</div></div>
             <div class="panel-body">
                 <form method="POST" action="">
+                    <?php echo csrfField(); ?>
                     <input type="hidden" name="action" value="create">
                     <div class="field-group" style="margin-bottom: 8px;">
                         <label class="field-label">Tag Name</label>
@@ -157,6 +162,7 @@ include 'includes/avazonia_header.php';
                                 <button class="action-btn" type="button"
                                         onclick="openEditTag(<?php echo $tag['tag_id']; ?>, '<?php echo htmlspecialchars($tag['tag_name'], ENT_QUOTES); ?>')">Edit</button>
                                 <form method="POST" action="" class="d-inline" onsubmit="return confirmAction(event, 'Delete this tag? It will be removed from all products.');">
+                                    <?php echo csrfField(); ?>
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="tag_id" value="<?php echo $tag['tag_id']; ?>">
                                     <button class="action-btn danger" type="submit">Del</button>
@@ -177,6 +183,7 @@ include 'includes/avazonia_header.php';
         <button type="button" class="modal-close" onclick="closeModal('editTagModal')">×</button>
         <div class="modal-title">Rename Tag</div>
         <form method="POST" action="">
+            <?php echo csrfField(); ?>
             <input type="hidden" name="action" value="update">
             <input type="hidden" name="tag_id" id="editTagId">
             <div class="field-group">

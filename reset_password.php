@@ -37,6 +37,9 @@ if (isset($_GET['token']) && isset($_GET['email'])) {
             $validToken = true;
             
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+                    $errors[] = 'Invalid form submission. Please refresh and try again.';
+                } else {
                 $password = $_POST['password'] ?? '';
                 $confirm_password = $_POST['confirm_password'] ?? '';
                 
@@ -70,6 +73,7 @@ if (isset($_GET['token']) && isset($_GET['email'])) {
                         $errors[] = 'An error occurred. Please try again.';
                     }
                 }
+                } // end else (CSRF valid)
             }
         } else {
             $errors[] = 'Invalid or expired reset link.';
@@ -112,6 +116,7 @@ include 'includes/header.php';
       <?php elseif ($validToken): ?>
 
         <form action="reset_password.php?token=<?php echo urlencode($token); ?>&email=<?php echo urlencode($email); ?>" method="POST" style="display:flex;flex-direction:column;gap:24px;" id="resetForm">
+          <?php echo csrfField(); ?>
 
           <div class="form-group">
             <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">New Password</label>

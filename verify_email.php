@@ -57,6 +57,9 @@ if (isset($_GET['token'])) {
 
 // 2) Resend verification email
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Invalid form submission. Please refresh and try again.';
+    } else {
     $email = sanitizeInput($_POST['email'] ?? '');
     if (empty($email) || !validateEmail($email)) {
         $errors[] = 'Please enter a valid email address';
@@ -84,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'An error occurred. Please try again.';
         }
     }
+    } // end else (CSRF valid)
 }
 
 // 3) Show a "please verify" prompt when redirected from login
@@ -173,6 +177,7 @@ include 'includes/header.php';
           </div>
 
           <form action="verify_email.php" method="POST" style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; text-align: left;">
+              <?php echo csrfField(); ?>
               <div class="form-group">
                   <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Email Address</label>
                   <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">

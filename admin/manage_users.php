@@ -25,6 +25,9 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            $errors[] = 'Invalid form submission. Please refresh and try again.';
+        } else {
         // Update user role
         if ($action === 'update_role') {
             $user_id = (int)($_POST['user_id'] ?? 0);
@@ -60,6 +63,7 @@ try {
                 $stmt->execute([$user_id]);
                 $success = 'User activated';
             }
+        }
         }
     }
 } catch (PDOException $e) {
@@ -146,6 +150,7 @@ include 'includes/avazonia_header.php';
                     </td>
                     <td>
                         <form method="POST" action="" class="d-flex align-items-center gap-2">
+                            <?php echo csrfField(); ?>
                             <input type="hidden" name="action" value="update_role">
                             <input type="hidden" name="user_id" value="<?php echo $u['user_id']; ?>">
                             <select class="role-select" name="role" <?php echo ($u['user_id']===(int)$_SESSION['user_id'])?'disabled':''; ?> onchange="this.form.submit()">
@@ -167,6 +172,7 @@ include 'includes/avazonia_header.php';
                     <td style="text-align: right;">
                         <?php if ($hasActiveColumn && $u['user_id'] !== (int)$_SESSION['user_id']): ?>
                             <form method="POST" action="" class="d-inline">
+                                <?php echo csrfField(); ?>
                                 <input type="hidden" name="user_id" value="<?php echo $u['user_id']; ?>">
                                 <?php if ((int)$u['active'] === 1): ?>
                                     <input type="hidden" name="action" value="deactivate">

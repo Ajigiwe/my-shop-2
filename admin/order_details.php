@@ -26,6 +26,9 @@ $valid_statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Invalid form submission. Please refresh and try again.';
+    } else {
     try {
         if ($action === 'update_status') {
             $new_status = sanitizeInput($_POST['status'] ?? '');
@@ -157,6 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (PDOException $e) {
         $errors[] = 'Database error occurred';
     }
+    }
 }
 
 // Fetch order details
@@ -274,6 +278,7 @@ include 'includes/avazonia_header.php';
             <div class="panel-header"><div class="panel-title">Workflow Control</div></div>
             <div style="padding: 24px;">
                 <form method="POST">
+                    <?php echo csrfField(); ?>
                     <input type="hidden" name="action" value="update_status">
                     <div class="field-group" style="margin-bottom: 16px;">
                         <label class="field-label">Current Status</label>
@@ -316,6 +321,7 @@ include 'includes/avazonia_header.php';
             <div class="panel-header"><div class="panel-title">Quick Actions</div></div>
             <div style="padding: 24px; display: flex; flex-direction: column; gap: 12px;">
                 <form method="post" style="display: flex; flex-direction: column; gap: 12px;">
+                    <?php echo csrfField(); ?>
                     <input type="hidden" name="action" value="send_invoice">
                     <input type="hidden" name="order_id" value="<?php echo $order_id; ?>">
                     <button type="submit" class="btn-ink" style="width: 100%; justify-content: center;">Email Invoice</button>

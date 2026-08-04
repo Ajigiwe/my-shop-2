@@ -63,6 +63,7 @@ include 'includes/header.php';
                     <div id="contactFormMessages" style="display: none; padding: 16px 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; margin-bottom: 24px; font-size: 14px;"></div>
 
                     <form id="contactForm" action="<?php echo $base; ?>process_contact.php" method="POST" style="display: flex; flex-direction: column; gap: 20px;">
+                        <?php echo csrfField(); ?>
                         <div>
                             <input type="text" name="name" placeholder="Name *" required class="contact-input-white" value="<?php echo htmlspecialchars($user_name); ?>">
                         </div>

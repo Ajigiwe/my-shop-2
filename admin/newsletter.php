@@ -8,9 +8,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 }
 
 $page_title = 'Newsletter';
+$errors = [];
 
 // Handle delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Invalid form submission. Please refresh and try again.';
+    } else {
     $id = (int)($_POST['id'] ?? 0);
     if ($id > 0) {
         $stmt = $pdo->prepare("DELETE FROM newsletter_subscribers WHERE id = ?");
@@ -18,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     }
     header('Location: newsletter.php?deleted=1');
     exit();
+    }
 }
 
 // Handle CSV export
@@ -47,6 +52,14 @@ $subscribers = $pdo->query("SELECT * FROM newsletter_subscribers ORDER BY subscr
 
 include 'includes/avazonia_header.php';
 ?>
+
+<?php if (!empty($errors)): ?>
+    <div class="alert-box alert-error">
+        <ul style="margin: 0; padding-left: 20px;">
+            <?php foreach ($errors as $e): ?><li><?php echo htmlspecialchars($e); ?></li><?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
 
 <?php if (isset($_GET['deleted'])): ?>
     <div class="alert-box alert-success">Subscriber removed</div>
@@ -99,6 +112,7 @@ include 'includes/avazonia_header.php';
                     </td>
                     <td style="text-align: right;">
                         <form method="POST" class="d-inline" onsubmit="return confirmAction(event, 'Remove subscriber <?php echo htmlspecialchars($sub['email']); ?>?');">
+                            <?php echo csrfField(); ?>
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="id" value="<?php echo (int)$sub['id']; ?>">
                             <button type="submit" class="action-btn danger">Del</button>

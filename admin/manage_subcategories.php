@@ -26,6 +26,9 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            $errors[] = 'Invalid form submission. Please refresh and try again.';
+        } else {
         if ($action === 'create') {
             // Create new subcategory
             $category_id = (int)($_POST['category_id'] ?? 0);
@@ -61,6 +64,7 @@ try {
                 $stmt->execute([$id]);
                 $success = 'Subcategory deleted';
             }
+        }
         }
     }
 } catch (PDOException $e) {
@@ -146,6 +150,7 @@ include 'includes/avazonia_header.php';
                         <div class="d-flex justify-content-end gap-2">
                             <a class="action-btn" href="manage_subcategories.php?action=edit&id=<?php echo $s['subcategory_id']; ?>">Edit</a>
                             <form method="POST" action="" class="d-inline" onsubmit="return confirmAction(event, 'Delete this subcategory?');">
+                                <?php echo csrfField(); ?>
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="subcategory_id" value="<?php echo $s['subcategory_id']; ?>">
                                 <button class="action-btn danger" type="submit">Del</button>
@@ -165,6 +170,7 @@ include 'includes/avazonia_header.php';
         <button type="button" class="modal-close" onclick="closeModal('subcategoryModal')">×</button>
         <div class="modal-title"><?php echo $edit ? 'Edit Subcategory' : 'Add New Subcategory'; ?></div>
         <form method="POST" action="">
+            <?php echo csrfField(); ?>
             <?php if ($edit): ?>
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="subcategory_id" value="<?php echo $edit['subcategory_id']; ?>">

@@ -50,6 +50,11 @@ $errors = [];
 $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'])) {
+        $errors[] = 'Invalid form submission. Please try again.';
+    }
+
     $email = sanitizeInput($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
@@ -61,6 +66,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($password)) {
         $errors[] = 'Password is required';
+    }
+
+    // Rate limit: max 5 login attempts per 5 minutes per email
+    if (empty($errors)) {
+        $rate_key = 'login:' . strtolower($email);
+        if (!checkRateLimit($rate_key, 5, 300)) {
+            $errors[] = 'Too many login attempts. Please try again in 5 minutes.';
+        }
     }
 
     if (empty($errors)) {
@@ -134,6 +147,7 @@ include 'includes/header.php';
             <?php endif; ?>
 
             <form action="login.php" method="POST" style="display: flex; flex-direction: column; gap: 24px;">
+                <?php echo csrfField(); ?>
                 <div class="form-group">
                     <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Email Address</label>
                     <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>" placeholder="USER@DOMAIN.COM" required style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">

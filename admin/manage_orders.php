@@ -15,6 +15,9 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // Handle Status Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update_status') {
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Invalid form submission. Please refresh and try again.';
+    } else {
     $order_id = (int)($_POST['order_id'] ?? 0);
     $status = sanitizeInput($_POST['status'] ?? '');
     if ($order_id > 0 && in_array($status, $valid_status)) {
@@ -48,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update_status') {
             $errors[] = 'Update failed: ' . $e->getMessage();
         }
     }
+    } // end else (CSRF valid)
 }
 
 // Fetch Orders
@@ -151,6 +155,7 @@ include 'includes/avazonia_header.php';
                     <td style="font-weight: 800;"><?php echo formatCurrency($o['total_amount']); ?></td>
                     <td>
                         <form method="POST" onchange="this.submit()">
+                            <?php echo csrfField(); ?>
                             <input type="hidden" name="action" value="update_status">
                             <input type="hidden" name="order_id" value="<?php echo $o['order_id']; ?>">
                             <select name="status" style="border: none; padding: 4px 10px; border-radius: 99px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; background: var(--off); color: var(--ink);">

@@ -31,6 +31,10 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Invalid form submission. Please refresh and try again.';
+    } else {
+
     if ($action === 'delete') {
         $product_id = (int)($_POST['product_id'] ?? 0);
         if ($product_id <= 0) {
@@ -305,6 +309,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+
+    }
 }
 
 // ------------------------------------------------------------------
@@ -501,6 +507,7 @@ include 'includes/avazonia_header.php';
 
             <!-- Bulk Actions Bar -->
             <form method="POST" action="" id="bulkForm">
+                <?php echo csrfField(); ?>
                 <div id="bulkBar" class="d-none align-items-center gap-2" style="display: none; align-items: center; gap: 12px; padding: 16px 24px; border-bottom: 1px solid var(--light-gray); background: var(--off);">
                     <span style="font-weight: 800; font-size: 12px; text-transform: uppercase;"><span id="bulkCount">0</span> selected</span>
                     <select name="bulk_action" id="bulkActionSelect" class="field-input" style="width: auto; height: 40px; padding: 0 12px;">
@@ -746,13 +753,15 @@ include 'includes/avazonia_header.php';
                                                  data-status="<?php echo htmlspecialchars($p['status'] ?? 'published'); ?>"
                                                  title="Quick Edit">Quick</button>
                                          <form method="POST" action="" class="d-inline">
+                                             <?php echo csrfField(); ?>
                                              <input type="hidden" name="action" value="bulk_duplicate">
                                              <input type="hidden" name="product_ids[]" value="<?php echo $p['product_id']; ?>">
                                              <button class="action-btn" type="submit" title="Duplicate product">Copy</button>
                                          </form>
                                          <a class="action-btn" href="product_editor.php?id=<?php echo $p['product_id']; ?>" title="Full Edit">Edit</a>
-                                         <form method="POST" action="" class="d-inline" onsubmit="return confirmAction(event, 'Delete this product?');">
-                                             <input type="hidden" name="action" value="delete">
+                                          <form method="POST" action="" class="d-inline" onsubmit="return confirmAction(event, 'Delete this product?');">
+                                              <?php echo csrfField(); ?>
+                                              <input type="hidden" name="action" value="delete">
                                              <input type="hidden" name="product_id" value="<?php echo $p['product_id']; ?>">
                                              <button class="action-btn danger" type="submit" title="Delete">Del</button>
                                          </form>

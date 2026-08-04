@@ -340,6 +340,7 @@ include 'includes/header.php';
             <?php endif; ?>
 
             <form id="product-add-form" class="ajax-cart-form" action="ajax/add_to_cart.php" method="POST">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCsrfToken()) ?>">
                 <input type="hidden" name="product_id" value="<?= $product['product_id'] ?>">
                 <input type="hidden" name="variant_id" id="form-variant-id" value="<?= !empty($variants) ? $variants[0]['id'] : '' ?>">
 
@@ -708,6 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="review-form-inner">
                 <h3 style="font-family: var(--f-display); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .15em; margin-bottom: 32px; text-align: center;">Share Your Experience</h3>
                 <form action="api/submit_review.php" method="POST" style="display: flex; flex-direction: column; gap: 24px;">
+                    <?= csrfField() ?>
                     <input type="hidden" name="product_id" value="<?= $product['product_id'] ?>">
 
                     <div class="form-group">

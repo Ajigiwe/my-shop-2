@@ -62,9 +62,7 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 // Require Composer's autoloader safely
-if (file_exists(__DIR__ . '/../vendor/autoload.php') && file_exists(__DIR__ . '/../vendor/composer/autoload_real.php')) {
-    require_once __DIR__ . '/../vendor/autoload.php';
-}
+// (already loaded above)
 
 /**
  * Send an email with HTML support using PHPMailer with SMTP

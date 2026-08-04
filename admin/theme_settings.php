@@ -14,6 +14,9 @@ $success_msg = '';
 $error_msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $error_msg = 'Invalid form submission. Please refresh and try again.';
+    } else {
     $primary_color = $_POST['primary_color'] ?? '#0d631b';
     $site_name = $_POST['site_name'] ?? 'ASO Online Market';
     $products_per_row = (int)($_POST['products_per_row'] ?? 4);
@@ -26,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $success_msg = 'Settings updated successfully!';
     } catch (PDOException $e) {
         $error_msg = 'Update failed: ' . $e->getMessage();
+    }
     }
 }
 
@@ -54,6 +58,7 @@ include 'includes/avazonia_header.php';
         <div class="panel-header"><div class="panel-title">Core Branding</div></div>
         <div class="panel-body">
             <form method="POST">
+                <?php echo csrfField(); ?>
                 <div class="field-group">
                     <label class="field-label">Marketplace Identity</label>
                     <input type="text" name="site_name" required value="<?php echo htmlspecialchars($settings['site_name'] ?? 'ASO Online Market'); ?>" class="field-input" placeholder="Site Name">

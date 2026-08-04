@@ -230,6 +230,8 @@ async function quickAddToCart(pid, event) {
     const formData = new FormData();
     formData.append('product_id', pid);
     formData.append('quantity', 1);
+    const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+    formData.append('csrf_token', csrfToken);
     try {
         const res = await fetch(window.SHOP_URL + 'ajax/add_to_cart.php', { method: 'POST', body: formData });
         const data = await res.json();

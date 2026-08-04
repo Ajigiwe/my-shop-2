@@ -83,10 +83,8 @@ try {
  * @return string Sanitized data
  */
 function sanitizeInput($data) {
-    // Basic trimming and slash stripping for safe DB storage
-    // htmlspecialchars should ONLY be used on output to the template
+    // Trim whitespace; prepared statements handle DB safety
     $data = trim($data);
-    $data = stripslashes($data);
     return $data;
 }
 
@@ -152,6 +150,63 @@ if (!function_exists('formatCurrency')) {
         global $currency_symbol;
         $num = is_numeric($amount) ? (float)$amount : 0.0;
         return $currency_symbol . number_format($num, 2);
+    }
+}
+
+/**
+ * CSRF Token helpers
+ */
+if (!function_exists('generateCsrfToken')) {
+    function generateCsrfToken() {
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        return $_SESSION['csrf_token'];
+    }
+}
+
+if (!function_exists('validateCsrfToken')) {
+    function validateCsrfToken($token) {
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+        return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+    }
+}
+
+if (!function_exists('csrfField')) {
+    function csrfField() {
+        return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(generateCsrfToken()) . '">';
+    }
+}
+
+/**
+ * Simple file-based rate limiter
+ */
+if (!function_exists('checkRateLimit')) {
+    function checkRateLimit($key, $max_attempts = 5, $window_seconds = 300) {
+        $cache_dir = dirname(__DIR__) . '/logs';
+        if (!is_dir($cache_dir)) {
+            mkdir($cache_dir, 0755, true);
+        }
+        $file = $cache_dir . '/rate_' . md5($key) . '.json';
+        $now = time();
+        $attempts = [];
+        if (file_exists($file)) {
+            $data = json_decode(file_get_contents($file), true);
+            if (is_array($data)) {
+                $attempts = array_filter($data, fn($ts) => $ts > ($now - $window_seconds));
+            }
+        }
+        if (count($attempts) >= $max_attempts) {
+            return false;
+        }
+        $attempts[] = $now;
+        file_put_contents($file, json_encode(array_values($attempts)));
+        return true;
     }
 }
 

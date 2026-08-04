@@ -21,6 +21,11 @@ $email = '';
 $phone = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'])) {
+        $errors[] = 'Invalid form submission. Please try again.';
+    }
+
     $name = sanitizeInput($_POST['name'] ?? '');
     $email = sanitizeInput($_POST['email'] ?? '');
     $phone = sanitizeInput($_POST['phone'] ?? '');
@@ -112,6 +117,7 @@ include 'includes/header.php';
             <?php endif; ?>
 
             <form action="register.php" method="POST" style="display: flex; flex-direction: column; gap: 24px;">
+                <?php echo csrfField(); ?>
                 <div class="form-group">
                     <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Full Name</label>
                     <input type="text" name="name" value="<?php echo htmlspecialchars($name); ?>" placeholder="KWAME MENSAH" required style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">

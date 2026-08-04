@@ -3,7 +3,6 @@ const OFFLINE_URL = 'offline.html';
 
 const ASSETS_TO_CACHE = [
     './',
-    'index.php',
     'offline.html',
     'assets/css/aso.css',
     'assets/images/logo2-rounded.png',

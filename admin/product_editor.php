@@ -192,6 +192,10 @@ function saveProductTags($pdo, $productId, $tagIds) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Invalid form submission. Please refresh and try again.';
+    } else {
+
     if ($action === 'create' || $action === 'update') {
         $name = sanitizeInput($_POST['name'] ?? '');
         $sku = sanitizeInput($_POST['sku'] ?? '');
@@ -585,6 +589,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+
+    }
 }
 
 // After a successful save via redirect, refresh $edit
@@ -679,6 +685,7 @@ details .details-toggle::-webkit-details-marker { display: none; }
 <?php endif; ?>
 
 <form method="POST" action="" enctype="multipart/form-data" id="productForm">
+    <?php echo csrfField(); ?>
     <?php if ($edit): ?>
         <input type="hidden" name="action" value="update">
         <input type="hidden" name="product_id" value="<?php echo $edit_id; ?>">
@@ -845,6 +852,7 @@ details .details-toggle::-webkit-details-marker { display: none; }
                     <details style="margin-bottom: 12px;">
                         <summary class="details-toggle">Add Attribute</summary>
                         <form method="POST" action="" style="margin-top: 12px;">
+                            <?php echo csrfField(); ?>
                             <input type="hidden" name="action" value="create_attribute">
                             <div class="field-group" style="margin-bottom: 10px;">
                                 <input type="text" name="attribute_name" class="field-input" placeholder="Attribute name (e.g. Color)" required>
@@ -867,6 +875,7 @@ details .details-toggle::-webkit-details-marker { display: none; }
                         <details>
                             <summary class="details-toggle">Add Term to Attribute</summary>
                             <form method="POST" action="" style="margin-top: 12px;">
+                                <?php echo csrfField(); ?>
                                 <input type="hidden" name="action" value="create_attribute_term">
                                 <div class="field-group" style="margin-bottom: 10px;">
                                     <select name="attribute_id" class="field-input" required>
@@ -916,13 +925,15 @@ details .details-toggle::-webkit-details-marker { display: none; }
                                     <div class="d-flex gap-2">
                                         <?php if (!$var['is_default']): ?>
                                             <form method="POST" action="" class="d-inline" onsubmit="return confirm('Set as default variation?');">
+                                                <?php echo csrfField(); ?>
                                                 <input type="hidden" name="action" value="set_default_variation">
                                                 <input type="hidden" name="variation_id" value="<?php echo $var['variation_id']; ?>">
                                                 <button class="action-btn" title="Set as default" type="submit">★</button>
                                             </form>
                                         <?php endif; ?>
-                                        <form method="POST" action="" class="d-inline" onsubmit="return confirm('Delete this variation?');">
-                                            <input type="hidden" name="action" value="delete_variation">
+                                         <form method="POST" action="" class="d-inline" onsubmit="return confirm('Delete this variation?');">
+                                             <?php echo csrfField(); ?>
+                                             <input type="hidden" name="action" value="delete_variation">
                                             <input type="hidden" name="variation_id" value="<?php echo $var['variation_id']; ?>">
                                             <button class="action-btn danger" title="Delete" type="submit">×</button>
                                         </form>
@@ -941,6 +952,7 @@ details .details-toggle::-webkit-details-marker { display: none; }
                     <details>
                         <summary class="details-toggle">Add Variation</summary>
                         <form method="POST" action="" style="margin-top: 12px;">
+                            <?php echo csrfField(); ?>
                             <input type="hidden" name="action" value="create_variation">
                             <div class="field-group" style="margin-bottom: 10px;">
                                 <label class="field-label">SKU</label>
@@ -1005,6 +1017,7 @@ details .details-toggle::-webkit-details-marker { display: none; }
                         <details style="margin-bottom: 12px;">
                             <summary class="details-toggle">Receive Stock</summary>
                             <form method="POST" action="" style="margin-top: 12px;">
+                                <?php echo csrfField(); ?>
                                 <input type="hidden" name="action" value="receive_stock">
                                 <div class="field-group" style="margin-bottom: 10px;">
                                     <label class="field-label">Quantity</label>
@@ -1020,6 +1033,7 @@ details .details-toggle::-webkit-details-marker { display: none; }
                         <details style="margin-bottom: 16px;">
                             <summary class="details-toggle">Adjust Stock</summary>
                             <form method="POST" action="" style="margin-top: 12px;">
+                                <?php echo csrfField(); ?>
                                 <input type="hidden" name="action" value="adjust_stock">
                                 <div class="field-group" style="margin-bottom: 10px;">
                                     <label class="field-label">Quantity (+/-)</label>
@@ -1167,11 +1181,13 @@ details .details-toggle::-webkit-details-marker { display: none; }
 
 <!-- Hidden forms for image ops -->
 <form id="deleteImageForm" method="POST" action="">
+    <?php echo csrfField(); ?>
     <input type="hidden" name="action" value="delete_image">
     <input type="hidden" name="image_id" id="delete_image_id">
     <input type="hidden" name="product_id" id="delete_product_id">
 </form>
 <form id="setMainImageForm" method="POST" action="">
+    <?php echo csrfField(); ?>
     <input type="hidden" name="action" value="set_main_image">
     <input type="hidden" name="image_id" id="main_image_id">
     <input type="hidden" name="product_id" id="main_product_id">

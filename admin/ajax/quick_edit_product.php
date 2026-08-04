@@ -21,6 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
+if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Invalid form submission']);
+    exit();
+}
+
 $product_id = (int)($_POST['product_id'] ?? 0);
 if ($product_id <= 0) {
     http_response_code(400);

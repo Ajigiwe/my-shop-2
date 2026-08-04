@@ -25,6 +25,12 @@ $response = [
 
 // Check if form is submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF validation
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        echo json_encode(['success' => false, 'message' => 'Invalid form submission. Please refresh and try again.']);
+        exit;
+    }
+
     // Check if it's a newsletter subscription request
     if (isset($_POST['action']) && $_POST['action'] === 'newsletter_subscribe') {
         $email = isset($_POST['email']) ? filter_var(sanitizeInput($_POST['email']), FILTER_SANITIZE_EMAIL) : '';

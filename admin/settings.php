@@ -52,6 +52,9 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            $errors[] = 'Invalid form submission. Please refresh and try again.';
+        } else {
         // Handle General / UI / Social Settings
         if ($action === 'save_general') {
             $allowed_keys = [
@@ -165,6 +168,7 @@ try {
                 $success = 'Slide deleted successfully';
             }
         }
+        } // end else (CSRF valid)
     }
 } catch (PDOException $e) {
     $errors[] = 'Database error: ' . $e->getMessage();
@@ -226,6 +230,7 @@ include 'includes/avazonia_header.php';
                 <p>Core identity, brand color, and grid density that define the storefront.</p>
             </div>
             <form method="POST">
+                <?php echo csrfField(); ?>
                 <input type="hidden" name="action" value="save_general">
                 <div class="settings-grid">
                     <div class="panel">
@@ -291,6 +296,7 @@ include 'includes/avazonia_header.php';
                 <p>Where customers can follow and reach the marketplace.</p>
             </div>
             <form method="POST">
+                <?php echo csrfField(); ?>
                 <input type="hidden" name="action" value="save_general">
                 <div class="panel">
                     <div class="panel-header"><div class="panel-title">Social Connectivity</div></div>
@@ -338,6 +344,7 @@ include 'includes/avazonia_header.php';
                     <div class="panel-header"><div class="panel-title"><?php echo $edit_slide ? 'Edit Slide' : 'New Slide'; ?></div></div>
                     <div class="panel-body">
                         <form method="POST" enctype="multipart/form-data">
+                            <?php echo csrfField(); ?>
                             <input type="hidden" name="action" value="<?php echo $edit_slide ? 'update_slide' : 'create_slide'; ?>">
                             <?php if ($edit_slide): ?>
                                 <input type="hidden" name="slide_id" value="<?php echo $edit_slide['id']; ?>">
@@ -441,6 +448,7 @@ include 'includes/avazonia_header.php';
                                         <div class="d-flex justify-content-end gap-2">
                                             <a href="settings.php?action=edit_slide&slide_id=<?php echo $s['id']; ?>#hero" class="action-btn">Edit</a>
                                             <form method="POST" class="d-inline" onsubmit="return confirmAction(event, 'Delete slide?');">
+                                                <?php echo csrfField(); ?>
                                                 <input type="hidden" name="action" value="delete_slide">
                                                 <input type="hidden" name="slide_id" value="<?php echo $s['id']; ?>">
                                                 <button type="submit" class="action-btn danger">Del</button>
@@ -477,6 +485,7 @@ include 'includes/avazonia_header.php';
                     <div class="panel-header"><div class="panel-title"><?php echo $edit_promo ? 'Edit Promo Card' : 'Create New Promo'; ?></div></div>
                     <div class="panel-body">
                         <form method="POST" enctype="multipart/form-data">
+                            <?php echo csrfField(); ?>
                             <input type="hidden" name="action" value="<?php echo $edit_promo ? 'update_promo' : 'create_promo'; ?>">
                             <?php if ($edit_promo): ?>
                                 <input type="hidden" name="promo_id" value="<?php echo $edit_promo['id']; ?>">
@@ -587,6 +596,7 @@ include 'includes/avazonia_header.php';
                                         <div class="d-flex justify-content-end gap-2">
                                             <a href="settings.php?action=edit_promo&promo_id=<?php echo $p['id']; ?>#promo" class="action-btn">Edit</a>
                                             <form method="POST" class="d-inline" onsubmit="return confirmAction(event, 'Delete promo card?');">
+                                                <?php echo csrfField(); ?>
                                                 <input type="hidden" name="action" value="delete_promo">
                                                 <input type="hidden" name="promo_id" value="<?php echo $p['id']; ?>">
                                                 <button type="submit" class="action-btn danger">Del</button>
@@ -614,6 +624,7 @@ include 'includes/avazonia_header.php';
                 <p>Configure the timed countdown sale that surfaces on the homepage.</p>
             </div>
             <form method="POST">
+                <?php echo csrfField(); ?>
                 <input type="hidden" name="action" value="save_general">
                 <div class="settings-grid">
                     <div class="panel">

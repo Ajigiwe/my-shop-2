@@ -13,6 +13,16 @@ if (session_status() == PHP_SESSION_NONE) {
 
 // Handle cart updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Invalid form submission']);
+            exit();
+        }
+        header('Location: cart.php');
+        exit();
+    }
+
     if (isset($_POST['update_cart'])) {
         $product_id = (int)$_POST['product_id'];
         $quantity = (int)$_POST['quantity'];
@@ -344,6 +354,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (sel) updateCartTotal(sel);
 
     function postForm(url, data) {
+        data.csrf_token = document.querySelector('input[name="csrf_token"]')?.value || '';
         const body = new URLSearchParams(data);
         return fetch(url, {
             method: 'POST',

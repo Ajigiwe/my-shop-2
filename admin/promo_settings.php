@@ -14,6 +14,9 @@ $success_msg = '';
 $error_msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $error_msg = 'Invalid form submission. Please refresh and try again.';
+    } else {
     $promo_enabled = isset($_POST['promo_popup_enabled']) ? '1' : '0';
     $promo_title = $_POST['promo_popup_title'] ?? '';
     $promo_content = $_POST['promo_popup_content'] ?? '';
@@ -60,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error_msg = 'Update failed: ' . $e->getMessage();
         }
     }
+    }
 }
 
 // Fetch current settings
@@ -93,6 +97,7 @@ include 'includes/avazonia_header.php';
         </div>
         <div class="panel-body">
             <form method="POST" enctype="multipart/form-data">
+                <?php echo csrfField(); ?>
                 <input type="checkbox" name="promo_popup_enabled" id="realEnableToggle" class="d-none" <?php echo (isset($settings['promo_popup_enabled']) && $settings['promo_popup_enabled'] == '1') ? 'checked' : ''; ?>>
 
                 <div class="field-grid">

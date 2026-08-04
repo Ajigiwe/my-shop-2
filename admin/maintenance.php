@@ -8,6 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 }
 
 $page_title = 'Maintenance Mode';
+$error_msg = '';
 
 // Fetch current settings
 $settings = [];
@@ -22,6 +23,9 @@ try {
 
 // Handle save
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save') {
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $error_msg = 'Invalid form submission. Please refresh and try again.';
+    } else {
     $mode = isset($_POST['maintenance_mode']) ? '1' : '0';
     $message = $_POST['maintenance_message'] ?? "We're doing a little maintenance. We'll be back shortly.";
 
@@ -34,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save'
     } catch (PDOException $e) {
         error_log("Maintenance settings save error: " . $e->getMessage());
     }
+    }
 }
 
 $maintenance_mode = ($settings['maintenance_mode'] ?? '0') === '1';
@@ -44,6 +49,9 @@ include 'includes/avazonia_header.php';
 
 <?php if (isset($_GET['saved'])): ?>
     <div class="alert-box alert-success">Maintenance settings saved</div>
+<?php endif; ?>
+<?php if ($error_msg): ?>
+    <div class="alert-box alert-error"><?php echo htmlspecialchars($error_msg); ?></div>
 <?php endif; ?>
 
 <div class="maintenance-grid">
@@ -56,6 +64,7 @@ include 'includes/avazonia_header.php';
         </div>
         <div class="panel-body">
             <form method="POST">
+                <?php echo csrfField(); ?>
                 <input type="hidden" name="action" value="save">
                 <div class="check-row" style="padding-top: 0; margin-bottom: 32px;">
                     <input type="checkbox" name="maintenance_mode" id="maintenanceMode" class="field-check" <?php echo $maintenance_mode ? 'checked' : ''; ?>>

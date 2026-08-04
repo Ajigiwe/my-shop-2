@@ -8,6 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 }
 
 $page_title = 'System Logs';
+$errors = [];
 
 $log_dir = realpath(__DIR__ . '/../logs');
 
@@ -47,12 +48,16 @@ if (!$selected || !in_array($selected, $log_files, true)) {
 
 // Clear the selected log
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'clear') {
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Invalid form submission. Please refresh and try again.';
+    } else {
     $clear_file = cleanLogFilename($_POST['file'] ?? '');
     if ($clear_file && in_array($clear_file, $log_files, true)) {
         file_put_contents($log_dir . '/' . $clear_file, '');
     }
     header('Location: logs.php' . ($clear_file ? '?file=' . urlencode($clear_file) : ''));
     exit();
+    }
 }
 
 // Read selected log contents
@@ -67,11 +72,20 @@ if ($selected) {
 include 'includes/avazonia_header.php';
 ?>
 
+<?php if (!empty($errors)): ?>
+    <div class="alert-box alert-error">
+        <ul style="margin: 0; padding-left: 20px;">
+            <?php foreach ($errors as $e): ?><li><?php echo htmlspecialchars($e); ?></li><?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
+
 <div class="panel">
     <div class="panel-header">
         <div class="panel-title">Email / Activity Logs</div>
         <?php if ($selected): ?>
         <form method="POST" class="d-inline">
+            <?php echo csrfField(); ?>
             <input type="hidden" name="action" value="clear">
             <input type="hidden" name="file" value="<?php echo htmlspecialchars($selected); ?>">
             <button type="submit" class="action-btn danger" onclick="return confirmAction(event, 'Clear this log file (<?php echo htmlspecialchars($selected); ?>)?');">Clear this log</button>

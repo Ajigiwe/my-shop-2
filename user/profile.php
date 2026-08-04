@@ -118,6 +118,7 @@ include '../includes/header.php';
                     <?php endif; ?>
 
                     <form method="POST" action="" style="display: flex; flex-direction: column; gap: 24px;">
+                        <?php echo csrfField(); ?>
                         <div>
                             <h3 style="font-family: var(--f-mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink); border-bottom: 1px solid var(--light-gray); padding-bottom: 10px; margin-bottom: 20px;">Basic information</h3>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">

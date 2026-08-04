@@ -19,6 +19,12 @@ $settings = loadSiteSettings($pdo);
 
 // Guests may fill the checkout form; login is required at the final order step.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'process_order') {
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Invalid form submission. Please refresh and try again.']);
+        exit();
+    }
+
     // Persist the form so it survives the login/sign-up hop.
     $_SESSION['pending_checkout'] = array_intersect_key($_POST, array_flip([
         'full_name', 'email', 'phone', 'zone_id', 'address', 'city', 'payment_method'
@@ -272,6 +278,7 @@ body { background: #f8f8f8; color: #111; font-family: var(--f-body); }
 </style>
 
 <div class="co-page" id="coView">
+    <?php echo csrfField(); ?>
     <div class="pb-bar">
         <div class="pb-inner">
             <a href="cart.php" class="pb-step done" style="text-decoration:none;"><div class="pb-n">✓</div> <span class="pb-step-name">Cart</span></a>
@@ -559,6 +566,7 @@ function placeOrder(evt) {
 
     const payload = new URLSearchParams({
         action: 'process_order',
+        csrf_token: document.querySelector('input[name="csrf_token"]')?.value || '',
         full_name: document.getElementById('co-name').value,
         email: document.getElementById('co-email').value,
         phone: document.getElementById('co-phone').value,

@@ -13,6 +13,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['user_id'])) {
     exit();
 }
 
+if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+    header("Location: ../product.php?id=" . ((int)($_POST['product_id'] ?? 0)) . "&error=csrf_error");
+    exit();
+}
+
 $product_id = (int)($_POST['product_id'] ?? 0);
 $rating = (int)($_POST['rating'] ?? 0);
 $comment = sanitizeInput($_POST['comment'] ?? '');

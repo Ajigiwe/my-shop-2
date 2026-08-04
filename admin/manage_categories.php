@@ -67,6 +67,9 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            $errors[] = 'Invalid form submission. Please refresh and try again.';
+        } else {
         if ($action === 'create') {
             // Create new category
             $name = sanitizeInput($_POST['category_name'] ?? '');
@@ -127,6 +130,7 @@ try {
 
                 $success = 'Category deleted';
             }
+        }
         }
     }
 } catch (PDOException $e) {
@@ -246,6 +250,7 @@ include 'includes/avazonia_header.php';
                         <div class="d-flex justify-content-end gap-2">
                             <a class="action-btn" href="manage_categories.php?action=edit&id=<?php echo $c['category_id']; ?>">Edit</a>
                             <form method="POST" action="" class="d-inline" onsubmit="return confirmAction(event, 'Delete this category?');">
+                                <?php echo csrfField(); ?>
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="category_id" value="<?php echo $c['category_id']; ?>">
                                 <button class="action-btn danger" type="submit">Del</button>
@@ -265,6 +270,7 @@ include 'includes/avazonia_header.php';
         <button type="button" class="modal-close" onclick="closeModal('categoryModal')">×</button>
         <div class="modal-title"><?php echo $edit ? 'Edit Category' : 'Add New Category'; ?></div>
         <form method="POST" action="" enctype="multipart/form-data">
+            <?php echo csrfField(); ?>
             <?php if ($edit): ?>
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="category_id" value="<?php echo $edit['category_id']; ?>">

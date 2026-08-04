@@ -56,7 +56,7 @@ function initializePaystackPayment($data) {
         'Authorization: Bearer ' . $paystack_secret_key,
         'Content-Type: application/json'
     ]);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -100,7 +100,7 @@ function verifyPaystackPayment($reference) {
         'Authorization: Bearer ' . $paystack_secret_key,
         'Content-Type: application/json'
     ]);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

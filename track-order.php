@@ -17,6 +17,9 @@ $items = [];
 $searched = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Invalid form submission. Please refresh and try again.';
+    } else {
     $searched = true;
     $order_number = sanitizeInput($_POST['order_number'] ?? '');
     $identity = sanitizeInput($_POST['identity'] ?? '');
@@ -51,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'An error occurred. Please try again.';
         }
     }
+    } // end else (CSRF valid)
 }
 
 include 'includes/header.php';
@@ -108,6 +112,7 @@ include 'includes/header.php';
                 <p style="color: var(--mid-gray); margin-bottom: 48px;">Enter your Order ID and the Email or Phone number used for the order.</p>
 
                 <form method="POST" action="track-order.php" style="display: flex; flex-direction: column; gap: 16px; max-width: 500px; margin: 0 auto;">
+                    <?php echo csrfField(); ?>
                     <input type="text" name="order_number" value="<?php echo htmlspecialchars($_POST['order_number'] ?? ''); ?>" placeholder="ORDER ID (e.g. ORD-...)  *" required style="height: 64px; padding: 0 24px; border: 2px solid #EEE; border-radius: 12px; font-family: var(--f-display); font-size: 16px; font-weight: 700; outline: none; transition: 0.2s; box-sizing: border-box; width: 100%;">
                     <input type="text" name="identity" value="<?php echo htmlspecialchars($_POST['identity'] ?? ''); ?>" placeholder="EMAIL OR PHONE NUMBER" required style="height: 64px; padding: 0 24px; border: 2px solid #EEE; border-radius: 12px; font-family: var(--f-display); font-size: 16px; font-weight: 700; outline: none; transition: 0.2s; box-sizing: border-box; width: 100%;">
                     <button type="submit" style="height: 64px; background: var(--red); color: #fff; border: none; border-radius: 12px; font-family: var(--f-display); font-size: 15px; font-weight: 900; text-transform: uppercase; cursor: pointer; transition: transform 0.2s;">Track My Order</button>

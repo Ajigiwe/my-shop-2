@@ -28,6 +28,11 @@ if (session_status() == PHP_SESSION_NONE) {
 // Set page title
 $page_title = 'Home';
 
+// Prevent stale cached assets (especially the service-worker)
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
+
 // Get settings
 $settings = [];
 try {

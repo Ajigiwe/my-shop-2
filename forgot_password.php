@@ -20,6 +20,9 @@ $success = '';
 $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Invalid form submission. Please refresh and try again.';
+    } else {
     $email = sanitizeInput($_POST['email'] ?? '');
     
     if (empty($email)) {
@@ -64,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'An error occurred. Please try again.';
         }
     }
+    } // end else (CSRF valid)
 }
 
 include 'includes/header.php';
@@ -100,6 +104,7 @@ include 'includes/header.php';
         <?php endif; ?>
 
         <form action="forgot_password.php" method="POST" style="display:flex;flex-direction:column;gap:24px;">
+          <?php echo csrfField(); ?>
           <div class="form-group">
             <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">Email Address</label>
             <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>" placeholder="USER@DOMAIN.COM" required
