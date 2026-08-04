@@ -3717,13 +3717,17 @@ form button[type="submit"]:hover {
     }
 
     .promo-img-side {
-        height: 150px !important;
+        height: 220px !important;
         width: 100% !important;
+        background: #f4f4f4 !important;
+        border-radius: 20px 20px 0 0 !important;
     }
 
     .promo-img-side img {
-        padding: 16px !important;
+        padding: 12px !important;
         object-fit: contain !important;
+        width: 100% !important;
+        height: 100% !important;
     }
 
     .promo-close {
