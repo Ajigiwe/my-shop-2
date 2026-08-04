@@ -10,12 +10,7 @@ DirectoryIndex index.php index.html
 	RewriteCond %{HTTP_HOST} ^(www\.)?asoonlinemarket\.com$ [NC]
 	RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-	# Hide .php extensions safely (only for direct requests, excluding index.php)
-	RewriteCond %{THE_REQUEST} \s/+(.+)\.php[\s?] [NC]
-	RewriteCond %{REQUEST_URI} !^/index\.php$ [NC]
-	RewriteRule ^ /%1 [R=301,L]
-
-	# Resolve extensionless URLs to .php files
+	# Resolve extensionless URLs to .php files if requested without extension
 	RewriteCond %{REQUEST_FILENAME} !-f
 	RewriteCond %{REQUEST_FILENAME} !-d
 	RewriteCond %{REQUEST_FILENAME}.php -f
