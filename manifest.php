@@ -12,7 +12,7 @@ $settings = loadSiteSettings($pdo);
 
 $site_name = $settings['site_name'] ?? 'ASO Online Market';
 $short_name = mb_strimwidth($site_name, 0, 15, '');
-$primary_color = $settings['primary_color'] ?? '#E8002D';
+$primary_color = $settings['primary_color'] ?? '#0a4722';
 
 $manifest = [
     "name" => $site_name,

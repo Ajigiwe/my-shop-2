@@ -25,7 +25,7 @@ $app_root   = rtrim(preg_replace('#/[^/]+/\.\.(?=/|$)#', '', $script_dir . '/' .
 $settings = loadSiteSettings($pdo);
 
 $site_name = $settings['site_name'] ?? 'ASO Online Market';
-$primary_color = $settings['primary_color'] ?? '#E8002D';
+$primary_color = $settings['primary_color'] ?? '#0a4722';
 $dbSettings = $settings; // alias so ported components can read global $dbSettings
 
 // Avazonia-style runtime constants used by ported views
