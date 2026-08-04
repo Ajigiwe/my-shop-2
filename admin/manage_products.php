@@ -392,7 +392,7 @@ try {
                             (SELECT price FROM product_variations WHERE product_id = p.product_id AND is_default = 1 LIMIT 1) AS variation_price,
                             (SELECT sku FROM product_variations WHERE product_id = p.product_id AND is_default = 1 LIMIT 1) AS variation_sku
                             FROM products p 
-                            JOIN categories c ON c.category_id = p.category_id 
+                            LEFT JOIN categories c ON c.category_id = p.category_id 
                             $where_sql 
                             ORDER BY $order_sql 
                             LIMIT $per_page OFFSET $offset");
