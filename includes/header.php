@@ -170,7 +170,7 @@ $meta_description = $settings['site_description'] ?? $site_name . ' — your one
     <link rel="icon" type="image/png" href="<?php echo $base; ?>assets/images/logo-rounded.png?v=2">
 
     <!-- PWA Support -->
-    <link rel="manifest" href="<?php echo $base; ?>manifest.json">
+    <link rel="manifest" href="<?php echo $base; ?>manifest.php">
     <meta name="theme-color" content="<?php echo $primary_color; ?>">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">

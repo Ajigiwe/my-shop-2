@@ -140,14 +140,14 @@ $socials = [
 <div id="pwa-install-banner" class="pwa-banner" style="display: none;">
     <div class="pwa-banner-content">
         <div class="pwa-banner-icon">
-            <img src="<?php echo $base; ?>assets/images/logo2-rounded.png" alt="App Icon">
+            <img src="<?php echo $base; ?>assets/images/logo-rounded.png?v=3" alt="<?php echo htmlspecialchars($site_name ?? 'ASO'); ?>">
         </div>
         <div class="pwa-banner-text">
             <h4><?php echo htmlspecialchars($site_name ?? 'ASO'); ?> App</h4>
-            <p>Fast, reliable &amp; offline support</p>
+            <p>Fast, reliable &amp; offline shopping app</p>
         </div>
         <button id="pwa-install-btn" class="pwa-banner-btn">Install</button>
-        <button id="pwa-close-banner" class="pwa-banner-close">✕</button>
+        <button id="pwa-close-banner" class="pwa-banner-close" aria-label="Close">✕</button>
     </div>
 </div>
 
@@ -155,9 +155,9 @@ $socials = [
 <div id="ios-install-guide" class="ios-guide-modal" style="display: none;">
     <div class="ios-guide-content">
         <div class="ios-guide-header">
-            <img src="<?php echo $base; ?>assets/images/logo2-rounded.png" alt="Icon">
+            <img src="<?php echo $base; ?>assets/images/logo-rounded.png?v=3" alt="<?php echo htmlspecialchars($site_name ?? 'ASO'); ?>">
             <h3>Install <?php echo htmlspecialchars($site_name ?? 'ASO'); ?></h3>
-            <button onclick="document.getElementById('ios-install-guide').style.display='none'" class="ios-guide-close">✕</button>
+            <button onclick="document.getElementById('ios-install-guide').style.display='none'" class="ios-guide-close" aria-label="Close">✕</button>
         </div>
         <div class="ios-guide-body">
             <p>To install the app on your iPhone:</p>
