@@ -3495,6 +3495,74 @@ form button[type="submit"]:hover {
     grid-template-columns: 1.1fr 1fr;
 }
 
+.promo-content.no-img {
+    grid-template-columns: 1fr !important;
+}
+
+.promo-text-side {
+    padding: 36px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+}
+
+.promo-label {
+    font-family: var(--f-semi);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: var(--green, #0a4722);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.promo-title {
+    font-family: var(--f-display);
+    font-size: clamp(20px, 4vw, 32px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    word-break: break-word;
+}
+
+.promo-desc {
+    font-size: 14px;
+    color: var(--mid-gray);
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+.btn-promo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 28px;
+    background: var(--green, #0a4722);
+    color: #ffffff !important;
+    border-radius: 9999px;
+    font-family: var(--f-display);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none !important;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+    border: none;
+    box-shadow: 0 4px 14px rgba(10, 71, 34, 0.25);
+    width: fit-content;
+}
+
+.btn-promo:hover {
+    background: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
 .promo-img-side {
     background: #f8f8f8;
     position: relative;
@@ -3630,41 +3698,73 @@ form button[type="submit"]:hover {
 @media (max-width: 600px) {
     .promo-overlay {
         padding: 16px !important;
+        align-items: center !important;
     }
 
     .promo-modal {
-        max-width: 420px !important;
+        max-width: 360px !important;
         width: 100% !important;
-        border-radius: 18px !important;
+        border-radius: 20px !important;
         max-height: 85vh !important;
         overflow-y: auto !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.4) !important;
     }
 
     .promo-content {
+        display: flex !important;
+        flex-direction: column !important;
         grid-template-columns: 1fr !important;
     }
 
+    .promo-img-side {
+        height: 150px !important;
+        width: 100% !important;
+    }
+
+    .promo-img-side img {
+        padding: 16px !important;
+        object-fit: contain !important;
+    }
+
     .promo-close {
-        top: 12px !important;
-        right: 12px !important;
+        top: 10px !important;
+        right: 10px !important;
         width: 32px !important;
         height: 32px !important;
         font-size: 18px !important;
         background: rgba(255, 255, 255, 0.95) !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+        z-index: 20 !important;
     }
 
     .promo-top-img {
-        height: 120px !important;
-    }
-
-    .promo-img-side {
-        height: 180px !important;
+        height: 110px !important;
     }
 
     .promo-text-side,
     .popup-mode-newsletter .promo-text-side {
-        padding: 20px 18px !important;
+        padding: 24px 20px !important;
+        text-align: center !important;
+        align-items: center !important;
+    }
+
+    .promo-title {
+        font-size: 20px !important;
+        margin-bottom: 8px !important;
+        text-align: center !important;
+    }
+
+    .promo-desc {
+        font-size: 13px !important;
+        margin-bottom: 18px !important;
+        text-align: center !important;
+    }
+
+    .btn-promo {
+        width: 100% !important;
+        padding: 12px 20px !important;
+        font-size: 12px !important;
+        margin-bottom: 16px !important;
     }
 
     .newsletter-title {
@@ -3673,7 +3773,7 @@ form button[type="submit"]:hover {
     }
 
     .newsletter-pill-form {
-        margin: 16px 0 12px !important;
+        margin: 14px 0 10px !important;
     }
 
     .pill-container {

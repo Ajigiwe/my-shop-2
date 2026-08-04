@@ -280,11 +280,13 @@ include 'includes/header.php';
         <div class="promo-modal popup-mode-<?= $popup['type'] ?>">
             <button id="close-promo" class="promo-close" aria-label="Close popup">&times;</button>
 
-            <div class="promo-content">
+            <div class="promo-content <?= empty($popup['image']) ? 'no-img' : '' ?>">
                 <?php if ($popup['type'] === 'promo'): ?>
+                    <?php if (!empty($popup['image'])): ?>
                     <div class="promo-img-side">
                         <img src="<?= htmlspecialchars($popup['image']) ?>" alt="Promotion">
                     </div>
+                    <?php endif; ?>
                     <div class="promo-text-side">
                         <div class="promo-label">SPECIAL OFFER</div>
                         <h2 class="promo-title"><?= htmlspecialchars($popup['title']) ?></h2>
