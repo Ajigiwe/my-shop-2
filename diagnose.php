@@ -1,6 +1,6 @@
 <?php
 /**
- * Live Session & Authentication Diagnostics
+ * Live Session & Authentication Diagnostics & Quick Setup
  * Visit: https://asoonlinemarket.com/diagnose.php
  */
 ini_set('display_errors', 1);
@@ -10,6 +10,29 @@ error_reporting(E_ALL);
 require_once __DIR__ . '/includes/db.php';
 
 echo "<h1>Session & Auth Diagnostics</h1>";
+
+// Create Admin Account On Demand
+if (isset($_GET['create_admin'])) {
+    try {
+        $adminEmail = 'aso@admin.gh';
+        $adminPassword = 'asoadmin123';
+        $hashedPassword = password_hash($adminPassword, PASSWORD_DEFAULT);
+
+        $checkStmt = $pdo->prepare("SELECT user_id FROM users WHERE email = ?");
+        $checkStmt->execute([$adminEmail]);
+        if ($checkStmt->fetch()) {
+            $upd = $pdo->prepare("UPDATE users SET password = ?, role = 'admin' WHERE email = ?");
+            $upd->execute([$hashedPassword, $adminEmail]);
+            echo "<p style='color:green; font-weight:bold; font-size:18px;'>✓ Admin Account 'aso@admin.gh' Password Reset to 'asoadmin123'!</p>";
+        } else {
+            $ins = $pdo->prepare("INSERT INTO users (name, email, password, role) VALUES ('Administrator', ?, ?, 'admin')");
+            $ins->execute([$adminEmail, $hashedPassword]);
+            echo "<p style='color:green; font-weight:bold; font-size:18px;'>✓ Admin Account 'aso@admin.gh' Created Successfully!</p>";
+        }
+    } catch (Throwable $e) {
+        echo "<p style='color:red;'>Failed to create admin: " . htmlspecialchars($e->getMessage()) . "</p>";
+    }
+}
 
 // Test Session Write/Read
 if (isset($_GET['test_session'])) {
@@ -45,15 +68,19 @@ try {
 
         $passCheck = password_verify('asoadmin123', $admin['password']);
         if ($passCheck) {
-            echo "<p style='color:green;'>✓ Password 'asoadmin123' VERIFIED & MATCHES hash!</p>";
+            echo "<p style='color:green; font-weight:bold;'>✓ Password 'asoadmin123' VERIFIED & MATCHES hash!</p>";
+            echo "<p><a href='login.php' style='background:#0a4722; color:#fff; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:bold;'>Go to Login Page →</a></p>";
         } else {
             echo "<p style='color:red;'>✗ Password 'asoadmin123' DOES NOT MATCH hash!</p>";
+            echo "<p><a href='diagnose.php?create_admin=1' style='background:#e67e22; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;'>Reset Password to asoadmin123</a></p>";
         }
         echo "</div>";
     } else {
         echo "<div style='background:#fff0f0; border:1px solid #e74c3c; padding:15px; border-radius:8px; margin:20px 0;'>";
         echo "<h3 style='color:#e74c3c; margin-top:0;'>✗ Admin Account 'aso@admin.gh' NOT FOUND in Database</h3>";
-        echo "<p>Please visit <a href='seed.php'>seed.php</a> to populate the database with default admin credentials.</p>";
+        echo "<p style='margin-bottom:15px;'>The admin account does not exist in your live MySQL database yet.</p>";
+        echo "<p><a href='diagnose.php?create_admin=1' style='background:#0a4722; color:#fff; padding:10px 20px; border-radius:6px; text-decoration:none; font-weight:bold;'>Click Here to Create Admin Account (aso@admin.gh) Now →</a></p>";
+        echo "<p style='margin-top:15px;'>Or visit <a href='seed.php'>seed.php</a> to populate all sample categories, products, and admin accounts.</p>";
         echo "</div>";
     }
 
