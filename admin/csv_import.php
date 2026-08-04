@@ -440,8 +440,63 @@ function logImport($pdo, $filename, $totalRows, $results) {
         error_log('Import log error: ' . $e->getMessage());
     }
 }
+// Auto-patch missing columns or tables on the live database
+function ensureProductsSchema($pdo) {
+    if (!$pdo) return;
+    $columns = [
+        "sku" => "ALTER TABLE products ADD COLUMN sku VARCHAR(100) NULL AFTER name",
+        "subcategory_id" => "ALTER TABLE products ADD COLUMN subcategory_id INT NULL AFTER category_id",
+        "features" => "ALTER TABLE products ADD COLUMN features TEXT NULL AFTER description",
+        "original_price" => "ALTER TABLE products ADD COLUMN original_price DECIMAL(10,2) NULL AFTER price",
+        "low_stock_threshold" => "ALTER TABLE products ADD COLUMN low_stock_threshold INT NULL AFTER stock_quantity",
+        "status" => "ALTER TABLE products ADD COLUMN status ENUM('draft','published') NOT NULL DEFAULT 'published'",
+        "is_featured" => "ALTER TABLE products ADD COLUMN is_featured TINYINT(1) NOT NULL DEFAULT 0",
+        "meta_title" => "ALTER TABLE products ADD COLUMN meta_title VARCHAR(255) NULL",
+        "meta_description" => "ALTER TABLE products ADD COLUMN meta_description TEXT NULL",
+        "slug" => "ALTER TABLE products ADD COLUMN slug VARCHAR(255) NULL"
+    ];
+
+    foreach ($columns as $col => $sql) {
+        try {
+            $check = $pdo->query("SHOW COLUMNS FROM products LIKE '$col'");
+            if ($check && $check->rowCount() === 0) {
+                $pdo->exec($sql);
+            }
+        } catch (Throwable $e) {
+            error_log("Schema check error ($col): " . $e->getMessage());
+        }
+    }
+
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS product_tags (
+            tag_id INT AUTO_INCREMENT PRIMARY KEY,
+            tag_name VARCHAR(100) UNIQUE NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS product_tag_relations (
+            product_id INT NOT NULL,
+            tag_id INT NOT NULL,
+            PRIMARY KEY (product_id, tag_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS import_jobs (
+            job_id INT AUTO_INCREMENT PRIMARY KEY,
+            filename VARCHAR(255) NOT NULL,
+            total_rows INT DEFAULT 0,
+            created_count INT DEFAULT 0,
+            updated_count INT DEFAULT 0,
+            skipped_count INT DEFAULT 0,
+            error_count INT DEFAULT 0,
+            status VARCHAR(50) DEFAULT 'completed',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    } catch (Throwable $e) {}
+}
+
+ensureProductsSchema($pdo);
 
 function runImport($pdo, $validatedRows, $mapping, $autoCreate, $dryRun) {
+    ensureProductsSchema($pdo);
     $results = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => [], 'dry_run' => false];
     $rowNum = 0;
 
@@ -460,11 +515,11 @@ function runImport($pdo, $validatedRows, $mapping, $autoCreate, $dryRun) {
         $price = (float)($row['price'] ?? 0);
         $categoryName = trim((string)($row['category'] ?? ''));
         $subcategoryName = trim((string)($row['subcategory'] ?? ''));
-        $originalPrice = ($row['original_price'] ?? '') !== '' ? (float)$row['original_price'] : null;
+        $originalPrice = isset($row['original_price']) && is_numeric($row['original_price']) ? (float)$row['original_price'] : null;
         $stockQuantity = (int)($row['stock_quantity'] ?? 0);
-        $lowStockThreshold = ($row['low_stock_threshold'] ?? '') !== '' ? (int)$row['low_stock_threshold'] : null;
-        $status = in_array(($row['status'] ?? ''), ['draft', 'published']) ? $row['status'] : 'published';
-        $isFeatured = in_array(strtolower((string)($row['is_featured'] ?? '0')), ['1', 'true', 'yes', 'featured']) ? 1 : 0;
+        $lowStockThreshold = isset($row['low_stock_threshold']) && is_numeric($row['low_stock_threshold']) ? (int)$row['low_stock_threshold'] : null;
+        $status = in_array(strtolower((string)($row['status'] ?? '')), ['draft', 'published']) ? strtolower((string)$row['status']) : 'published';
+        $isFeatured = (int)($row['is_featured'] ?? 0) === 1 ? 1 : 0;
         $description = (string)($row['description'] ?? '');
         $features = (string)($row['features'] ?? '');
         $tags = (string)($row['tags'] ?? '');
@@ -473,17 +528,22 @@ function runImport($pdo, $validatedRows, $mapping, $autoCreate, $dryRun) {
         $slug = (string)($row['slug'] ?? '');
         $image = trim((string)($row['image'] ?? ''));
 
-        // Find existing product
+        // Find existing product safely
         $existingId = 0;
-        if ($productId > 0) {
-            $stmt = $pdo->prepare('SELECT product_id FROM products WHERE product_id = ?');
-            $stmt->execute([$productId]);
-            $existingId = (int)$stmt->fetchColumn();
-        }
-        if (!$existingId && $sku !== '') {
-            $stmt = $pdo->prepare('SELECT product_id FROM products WHERE sku = ?');
-            $stmt->execute([$sku]);
-            $existingId = (int)$stmt->fetchColumn();
+        try {
+            if ($productId > 0) {
+                $stmt = $pdo->prepare('SELECT product_id FROM products WHERE product_id = ?');
+                $stmt->execute([$productId]);
+                $existingId = (int)$stmt->fetchColumn();
+            }
+            if (!$existingId && $sku !== '') {
+                $stmt = $pdo->prepare('SELECT product_id FROM products WHERE sku = ?');
+                $stmt->execute([$sku]);
+                $existingId = (int)$stmt->fetchColumn();
+            }
+        } catch (Throwable $e) {
+            error_log("Product lookup error: " . $e->getMessage());
+            $existingId = 0;
         }
 
         if ($dryRun) {
