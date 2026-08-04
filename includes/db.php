@@ -32,6 +32,20 @@ if (!defined('REMEMBER_SECRET')) {
     define('REMEMBER_SECRET', hash('sha256', ($_ENV['DB_PASS'] ?? '') . '|' . SITE_URL . '|aso-remember'));
 }
 
+// Global Session Initialization (ensures sessions persist across root and subfolders)
+if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+    $is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? 80) == 443;
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => '',
+        'secure' => $is_https,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    session_start();
+}
+
 try {
     // Create PDO connection with UTF-8 charset (prevents mojibake)
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
