@@ -196,6 +196,41 @@ $meta_description = $settings['site_description'] ?? $site_name . ' — your one
 </div>
 <?php endif; ?>
 
+<div class="ghana-topbar" id="ghana-topbar">
+    <a href="<?php echo $base; ?>local.php" class="ghana-topbar-link">
+        <span class="ghana-topbar-flag">🇬🇭</span>
+        <span class="ghana-topbar-text">Made in Ghana — authentic local goods, delivered worldwide</span>
+        <span class="ghana-topbar-cta">Explore <span class="ghana-topbar-arrow">→</span></span>
+    </a>
+    <button type="button" class="ghana-topbar-close" id="ghana-topbar-close" aria-label="Dismiss Made in Ghana banner">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+</div>
+<style>
+.ghana-topbar { position: relative; background: linear-gradient(90deg,#1f1407,#3a2410); color: #fff; }
+.ghana-topbar-link { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 10px 48px; text-decoration: none; color: #fff; font-family: var(--f-semi); font-size: 13px; letter-spacing: 0.02em; text-align: center; }
+.ghana-topbar-flag { font-size: 15px; line-height: 1; }
+.ghana-topbar-text { color: rgba(255,255,255,0.85); }
+.ghana-topbar-cta { font-family: var(--f-mono); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #f0c36a; white-space: nowrap; }
+.ghana-topbar-arrow { transition: transform 0.25s ease; display: inline-block; }
+.ghana-topbar-link:hover .ghana-topbar-arrow { transform: translateX(4px); }
+.ghana-topbar-close { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; }
+.ghana-topbar-close:hover { color: #fff; }
+@media (max-width: 640px) { .ghana-topbar-link { flex-direction: column; gap: 2px; padding: 8px 40px; } .ghana-topbar-text { font-size: 12px; } }
+</style>
+<script>
+(function(){
+    var bar = document.getElementById('ghana-topbar');
+    if (!bar) return;
+    if (sessionStorage.getItem('aso_ghana_topbar_dismissed') === '1') { bar.style.display = 'none'; }
+    var closeBtn = document.getElementById('ghana-topbar-close');
+    if (closeBtn) closeBtn.addEventListener('click', function(){
+        sessionStorage.setItem('aso_ghana_topbar_dismissed', '1');
+        bar.style.display = 'none';
+    });
+})();
+</script>
+
 <nav class="nav" id="main-nav">
     <div class="container-fluid nav-inner">
         <!-- Row 1: Actions & Brand -->
