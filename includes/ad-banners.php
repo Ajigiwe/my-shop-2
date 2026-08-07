@@ -9,18 +9,18 @@ $adBanners = getAdBanners($pdo);
 if (empty($adBanners)) return;
 ?>
 <style>
-.ad-slider { margin: 36px auto 8px; max-width: 1180px; }
+.ad-slider { margin: 36px auto 8px; max-width: 1180px; padding: 0 16px; box-sizing: border-box; }
 .ad-wrap { position: relative; border-radius: 22px; overflow: hidden; box-shadow: 0 14px 40px rgba(0,0,0,0.12); background: #1a1006; }
 .ad-track { display: flex; transition: transform .7s cubic-bezier(0.22, 1, 0.36, 1); }
 .ad-slide { flex: 0 0 100%; min-width: 100%; position: relative; display: flex; align-items: center; }
-.ad-slide a, .ad-slide a:visited { text-decoration: none; color: inherit; width: 100%; display: flex; align-items: center; min-height: 210px; }
-.ad-slide-copy { flex: 1 1 46%; padding: 40px 36px; color: #fff; position: relative; z-index: 2; }
+.ad-slide a, .ad-slide a:visited { text-decoration: none; color: inherit; width: 100%; display: flex; align-items: stretch; min-height: 210px; }
+.ad-slide-copy { flex: 1 1 46%; padding: 40px 36px; color: #fff; position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: center; }
 .ad-slide-copy h3 { font-family: var(--f-display); font-weight: 900; font-size: clamp(22px, 3.4vw, 34px); letter-spacing: -0.02em; line-height: 1.05; margin: 0 0 10px; }
 .ad-slide-copy h3 span { color: #f0c36a; }
 .ad-slide-copy p { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.82); margin: 0 0 18px; max-width: 420px; }
-.ad-slide-btn { display: inline-block; font-family: var(--f-mono); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #1f1407; background: #f0c36a; padding: 12px 22px; border-radius: 999px; transition: transform .25s ease, background .25s ease; }
+.ad-slide-btn { display: inline-block; font-family: var(--f-mono); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #1f1407; background: #f0c36a; padding: 12px 22px; border-radius: 999px; transition: transform .25s ease, background .25s ease; align-self: flex-start; }
 .ad-slide-btn:hover { transform: translateY(-2px); background: #ffd88a; }
-.ad-slide-imgbox { flex: 1 1 42%; height: 100%; min-height: 210px; position: relative; }
+.ad-slide-imgbox { flex: 1 1 42%; min-width: 0; min-height: 210px; position: relative; overflow: hidden; }
 .ad-slide-imgbox img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .ad-slide-imgbox .ad-shade { position: absolute; inset: 0; background: linear-gradient(90deg, var(--shade, #1f1407) 0%, rgba(31,20,7,0) 55%); }
 
@@ -37,7 +37,17 @@ if (empty($adBanners)) return;
 @media (max-width: 768px) {
     .ad-slide a { flex-direction: column; }
     .ad-slide-copy { padding: 26px 22px 18px; }
-    .ad-slide-imgbox { width: 100%; min-height: 150px; }
+    .ad-slide-imgbox { width: 100%; min-height: 160px; flex: none; }
+    .ad-cover { display: none; }
+    .ad-shade { display: none; }
+}
+@media (max-width: 480px) {
+    .ad-slider { padding: 0 10px; }
+    .ad-slide-copy h3 { font-size: clamp(19px, 6vw, 24px); }
+    .ad-slide-copy p { font-size: 13px; margin-bottom: 14px; }
+    .ad-slide-btn { padding: 10px 18px; font-size: 10px; }
+    .ad-slide-imgbox { min-height: 170px; }
+    .ad-arrows { width: 32px; height: 32px; font-size: 13px; }
 }
 </style>
 <section class="ad-slider" aria-label="Promotions">
