@@ -210,6 +210,7 @@ $meta_description = $settings['site_description'] ?? $site_name . ' — your one
 </style>
 
 <nav class="nav" id="main-nav">
+    <?php if (basename($current_path) !== 'local.php'): ?>
     <div class="ghana-topbar" id="ghana-topbar">
         <a href="<?php echo $base; ?>local.php" class="ghana-topbar-link">
             <span class="ghana-topbar-flag">🇬🇭</span>
@@ -220,6 +221,7 @@ $meta_description = $settings['site_description'] ?? $site_name . ' — your one
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
     </div>
+    <?php endif; ?>
     <div class="container-fluid nav-inner">
         <!-- Row 1: Actions & Brand -->
         <div class="nav-top">
