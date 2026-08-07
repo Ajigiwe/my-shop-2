@@ -92,12 +92,19 @@ foreach ($cart_items as $item) {
 }
 $totalItems = $item_count;
 
-$shipping_accra  = (float)($settings['shipping_accra'] ?? 15);
-$shipping_kumasi = (float)($settings['shipping_kumasi'] ?? 25);
-$shipping_others = (float)($settings['shipping_others'] ?? 60);
-$shipping_pickup = (float)($settings['shipping_pickup'] ?? 0);
 $free_threshold  = (float)($settings['free_shipping_threshold'] ?? 500);
-$default_ship    = $total >= $free_threshold ? 0 : $shipping_accra;
+$cart_zone_rows  = getShippingZones($pdo);
+$cart_zones      = [];
+foreach ($cart_zone_rows as $czr) {
+    $czr['flat_rate']    = (float)$czr['flat_rate'];
+    $czr['free_threshold'] = !empty($czr['free_threshold']) ? (float)$czr['free_threshold'] : null;
+    $cart_zones[] = $czr;
+}
+$default_zone    = !empty($cart_zones) ? $cart_zones[0] : null;
+$default_ship    = 0;
+if ($default_zone) {
+    $default_ship = calculateShippingFee($total, $default_zone);
+}
 
 $page_title = 'Shopping Cart';
 include 'includes/header.php';
@@ -293,10 +300,18 @@ include 'includes/header.php';
         <div class="sum-title">Order Summary</div>
 
         <select class="zone-sel" id="cart-zone" onchange="updateCartTotal(this)">
-          <option value="<?= $shipping_accra ?>" data-id="1">📍 Accra & Greater Accra — ₵<?= number_format($shipping_accra, 0) ?> (1–2 days)</option>
-          <option value="<?= $shipping_kumasi ?>" data-id="2">📍 Kumasi / Takoradi — ₵<?= number_format($shipping_kumasi, 0) ?> (2–3 days)</option>
-          <option value="<?= $shipping_others ?>" data-id="3">📍 All Other Regions — ₵<?= number_format($shipping_others, 0) ?> (3–5 days)</option>
-          <option value="<?= $shipping_pickup ?>" data-id="4">🏪 Store Pickup — <?= $shipping_pickup > 0 ? '₵' . number_format($shipping_pickup, 0) : 'Free' ?></option>
+          <?php foreach ($cart_zones as $cz): ?>
+            <?php $cz_rate = (float)$cz['flat_rate'];
+                $cz_free = !empty($cz['free_threshold']) ? (float)$cz['free_threshold'] : null;
+                $cz_eff = ($cz_free !== null && $total >= $cz_free) ? 0 : $cz_rate;
+                $cz_label = htmlspecialchars($cz['zone_name']);
+                $cz_flag = htmlspecialchars($cz['flag_emoji'] ?? '');
+                $cz_type = $cz['zone_type'];
+            ?>
+            <option value="<?php echo (int)$cz['zone_id']; ?>" data-type="<?php echo $cz_type; ?>" data-rate="<?php echo $cz_rate; ?>" data-free="<?php echo $cz_free !== null ? $cz_free : ''; ?>" <?php echo ($default_zone && (int)$default_zone['zone_id'] === (int)$cz['zone_id']) ? 'selected' : ''; ?>>
+                <?php echo $cz_flag; ?> <?php echo $cz_eff > 0 ? $cz_label . ' — ₵' . number_format($cz_eff, 0) : $cz_label . ' — Free'; ?> <?php echo !empty($cz['estimated_days']) ? '(' . htmlspecialchars($cz['estimated_days']) . ')' : ''; ?>
+            </option>
+          <?php endforeach; ?>
         </select>
 
         <div class="sum-line"><span class="sum-l">Subtotal</span><span class="sum-v">₵<?= number_format($total, 2) ?></span></div>
@@ -307,7 +322,7 @@ include 'includes/header.php';
           <span class="sum-tv" id="cart-est-total">₵<?= number_format($total + $default_ship, 2) ?></span>
         </div>
 
-        <a href="checkout.php?zone_id=1" class="checkout-btn" id="cart-checkout-btn">
+        <a href="checkout.php" class="checkout-btn" id="cart-checkout-btn">
           Proceed to Checkout
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </a>
@@ -332,9 +347,11 @@ function updateCartTotal(el) {
     if (!el) return;
     const subtotal = <?= $total ?? 0 ?>;
     const threshold = <?= (int)$free_threshold ?>;
-    let shipVal = parseFloat(el.value) || 0;
-
-    if (subtotal >= threshold) {
+    let shipVal = parseFloat(el.options[el.selectedIndex].dataset.rate) || 0;
+    const freeOver = el.options[el.selectedIndex].dataset.free;
+    if (freeOver && subtotal >= parseFloat(freeOver)) {
+        shipVal = 0;
+    } else if (subtotal >= threshold) {
         shipVal = 0;
     }
 
@@ -343,7 +360,7 @@ function updateCartTotal(el) {
     document.getElementById('cart-ship-val').innerText = shipVal > 0 ? '₵' + shipVal.toFixed(2) : 'FREE';
     document.getElementById('cart-est-total').innerText = '₵' + estTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    const zoneId = el.options[el.selectedIndex].getAttribute('data-id');
+    const zoneId = el.value;
     const checkoutBtn = document.getElementById('cart-checkout-btn');
     if (checkoutBtn && zoneId) {
         checkoutBtn.href = 'checkout.php?zone_id=' + zoneId;

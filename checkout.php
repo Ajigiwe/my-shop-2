@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     // Persist the form so it survives the login/sign-up hop.
     $_SESSION['pending_checkout'] = array_intersect_key($_POST, array_flip([
-        'full_name', 'email', 'phone', 'zone_id', 'address', 'city', 'payment_method'
+        'full_name', 'email', 'phone', 'zone_id', 'address', 'city', 'payment_method', 'country'
     ]));
 
     if (!isset($_SESSION['user_id'])) {
@@ -40,13 +40,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $user_id = $_SESSION['user_id'];
 }
 
-// Shipping zones from site settings (fallbacks keep existing store defaults)
-$zone_fees = [
-    1 => (float)($settings['shipping_accra'] ?? 15),
-    2 => (float)($settings['shipping_kumasi'] ?? 25),
-    3 => (float)($settings['shipping_others'] ?? 60),
-    4 => (float)($settings['shipping_pickup'] ?? 0),
-];
+// Shipping zones (domestic + international) from the shipping_zones table
+$zone_rows = getShippingZones($pdo);
+$zone_fees = [];
+foreach ($zone_rows as $zr) {
+    $zone_fees[(int)$zr['zone_id']] = $zr;
+}
+// First zone is the fallback (Accra, sort_order 1)
+$default_zone_id = !empty($zone_fees) ? (int)array_keys($zone_fees)[0] : 1;
 $free_threshold = (float)($settings['free_shipping_threshold'] ?? 500);
 
 $cart_items = asoGetCartItems($pdo);
@@ -65,12 +66,13 @@ foreach ($cart_items as $item) {
     }
 }
 
-// Resolve selected delivery zone (defaults to Accra zone id=1)
-$zone_id = (int)($_GET['zone_id'] ?? $_POST['zone_id'] ?? 1);
+// Resolve selected delivery zone
+$zone_id = (int)($_GET['zone_id'] ?? $_POST['zone_id'] ?? $default_zone_id);
 if (!isset($zone_fees[$zone_id])) {
-    $zone_id = 1;
+    $zone_id = $default_zone_id;
 }
-$default_ship = $subtotal >= $free_threshold ? 0 : $zone_fees[$zone_id];
+$selected_zone = $zone_fees[$zone_id];
+$default_ship = calculateShippingFee($subtotal, $selected_zone);
 $total = $subtotal + $default_ship;
 $pay_now = $total;
 
@@ -82,10 +84,12 @@ $pf_phone = $pending['phone']      ?? '';
 $pf_city  = $pending['city']       ?? '';
 $pf_addr  = $pending['address']    ?? '';
 $pf_pay   = $pending['payment_method'] ?? 'paystack';
+$pf_country = $pending['country']  ?? '';
 $pending_zone = (int)($pending['zone_id'] ?? 0);
 if ($pending_zone > 0 && isset($zone_fees[$pending_zone])) {
     $zone_id = $pending_zone;
-    $default_ship = $subtotal >= $free_threshold ? 0 : $zone_fees[$zone_id];
+    $selected_zone = $zone_fees[$zone_id];
+    $default_ship = calculateShippingFee($subtotal, $selected_zone);
     $total = $subtotal + $default_ship;
     $pay_now = $total;
 }
@@ -96,30 +100,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $city = sanitizeInput($_POST['city'] ?? '');
     $address = sanitizeInput($_POST['address'] ?? '');
     $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
+    $country = sanitizeInput($_POST['country'] ?? '');
     $payment_method = ($_POST['payment_method'] ?? 'paystack') === 'paystack' ? 'paystack' : 'in_person';
 
-    $posted_zone = (int)($_POST['zone_id'] ?? 1);
+    $posted_zone = (int)($_POST['zone_id'] ?? $default_zone_id);
     if (!isset($zone_fees[$posted_zone])) {
-        $posted_zone = 1;
+        $posted_zone = $default_zone_id;
     }
-    $shipping = $subtotal >= $free_threshold ? 0 : $zone_fees[$posted_zone];
+    $selected_zone = $zone_fees[$posted_zone];
+    $is_international = ($selected_zone['zone_type'] ?? 'domestic') === 'international';
+    $shipping = calculateShippingFee($subtotal, $selected_zone);
     $total_with_ship = $subtotal + $shipping;
 
     if (empty($full_name) || empty($phone) || empty($city) || empty($address) || empty($email)) {
         $errors[] = 'All required fields must be filled';
     }
+    if ($is_international && empty($country)) {
+        $errors[] = 'Country is required for international delivery';
+    }
 
     if (empty($errors)) {
         // Normalize Ghana phone number (Avazonia shows a +233 prefix box)
-        if (!preg_match('/^\+/', $phone)) {
+        if (!$is_international && !preg_match('/^\+/', $phone)) {
             $phone = '+233' . preg_replace('/\D/', '', $phone);
         }
         $shipping_address = $full_name . "\n" . $city . "\n" . $address;
+        if ($is_international) {
+            $shipping_address .= "\n" . ($country ?: '');
+        }
+        $shipping_label = ($selected_zone['flag_emoji'] ?? '') . ' ' . $selected_zone['zone_name'] . ($is_international && $country ? ' — ' . $country : '');
         try {
             $pdo->beginTransaction();
             $order_number = 'NX-' . str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, payment_method, shipping_address, billing_address, email, phone, order_notes, order_status, payment_status, order_date, order_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', NOW(), ?)");
-            $stmt->execute([$user_id, $total_with_ship, $payment_method, $shipping_address, $shipping_address, $email, $phone, '', $order_number]);
+            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, payment_method, shipping_address, billing_address, email, phone, shipping_zone_id, country, shipping_label, order_notes, order_status, payment_status, order_date, order_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', NOW(), ?)");
+            $stmt->execute([$user_id, $total_with_ship, $payment_method, $shipping_address, $shipping_address, $email, $phone, $posted_zone, $is_international ? $country : null, $shipping_label, '', $order_number]);
             $order_id = $pdo->lastInsertId();
 
             foreach ($cart_items as $item) {
@@ -349,15 +363,31 @@ body { background: #f8f8f8; color: #111; font-family: var(--f-body); }
                             <div class="fg">
                                 <label class="fl">Delivery Zone</label>
                                 <div style="position:relative;">
-                                    <select class="fs" id="co-zone" onchange="updateShip(this)">
-                                        <option value="<?php echo $zone_fees[1]; ?>" data-id="1" <?php echo $zone_id == 1 ? 'selected' : ''; ?>>📍 Accra & Greater Accra — ₵<?php echo number_format($zone_fees[1], 0); ?> (1–2 days)</option>
-                                        <option value="<?php echo $zone_fees[2]; ?>" data-id="2" <?php echo $zone_id == 2 ? 'selected' : ''; ?>>📍 Kumasi / Takoradi — ₵<?php echo number_format($zone_fees[2], 0); ?> (2–3 days)</option>
-                                        <option value="<?php echo $zone_fees[3]; ?>" data-id="3" <?php echo $zone_id == 3 ? 'selected' : ''; ?>>📍 All Other Regions — ₵<?php echo number_format($zone_fees[3], 0); ?> (3–5 days)</option>
-                                        <option value="<?php echo $zone_fees[4]; ?>" data-id="4" <?php echo $zone_id == 4 ? 'selected' : ''; ?>>🏪 Store Pickup — <?php echo $zone_fees[4] > 0 ? '₵' . number_format($zone_fees[4], 0) : 'Free'; ?></option>
+                                    <select class="fs" id="co-zone" onchange="selectZone(this)">
+                                        <?php foreach ($zone_rows as $zr): ?>
+                                            <?php $zrid = (int)$zr['zone_id']; $zrate = (float)$zr['flat_rate'];
+                                                $zn = htmlspecialchars($zr['zone_name']); $zflag = htmlspecialchars($zr['flag_emoji'] ?? '');
+                                                $zfree = !empty($zr['free_threshold']) ? (float)$zr['free_threshold'] : null;
+                                                $free = ($zfree !== null && $subtotal >= $zfree) ? 0 : $zrate;
+                                            ?>
+                                            <option value="<?php echo $zrid; ?>" data-type="<?php echo $zr['zone_type']; ?>" <?php echo $zone_id == $zrid ? 'selected' : ''; ?>>
+                                                <?php echo $zflag; ?> <?php echo $free > 0 ? $zn . ' — ₵' . number_format($free, 0) : $zn . ' — Free'; ?> <?php echo !empty($zr['estimated_days']) ? '(' . htmlspecialchars($zr['estimated_days']) . ')' : ''; ?>
+                                            </option>
+                                        <?php endforeach; ?>
                                     </select>
                                     <div class="err-icon" style="top:50%; transform:translateY(-50%); right:32px;">!</div>
                                 </div>
                                 <div class="err-txt">This is a required field</div>
+                            </div>
+                        </div>
+                        <div class="co-row full" id="co-country-row" <?php echo ($selected_zone['zone_type'] ?? 'domestic') === 'international' ? '' : 'style="display:none;"'; ?>>
+                            <div class="fg">
+                                <label class="fl">Country (for international delivery)</label>
+                                <div style="position:relative;">
+                                    <input class="fi" type="text" id="co-country" placeholder="e.g. United Kingdom" value="<?php echo htmlspecialchars($pf_country); ?>">
+                                    <div class="err-icon">!</div>
+                                </div>
+                                <div class="err-txt">Country is required for international delivery</div>
                             </div>
                         </div>
                         <div class="co-row full">
@@ -474,9 +504,15 @@ body { background: #f8f8f8; color: #111; font-family: var(--f-body); }
 <script>
 const CO = {
     subtotal: <?php echo $subtotal; ?>,
-    freeThreshold: <?php echo (int)$free_threshold; ?>,
-    fees: { 1: <?php echo $zone_fees[1]; ?>, 2: <?php echo $zone_fees[2]; ?>, 3: <?php echo $zone_fees[3]; ?>, 4: <?php echo $zone_fees[4]; ?> }
+    zones: <?php echo json_encode(array_values(array_map(function($z) { return ['id'=>(int)$z['zone_id'], 'rate'=>(float)$z['flat_rate'], 'free'=>!empty($z['free_threshold']) ? (float)$z['free_threshold'] : null, 'type'=>$z['zone_type']]; }, $zone_rows))); ?>
 };
+
+function currentZone() {
+    const sel = document.getElementById('co-zone');
+    if (!sel) return null;
+    const id = parseInt(sel.value, 10);
+    return CO.zones.find(z => z.id === id) || null;
+}
 
 function selectPayMethod(m) {
     document.getElementById('co-payment-method').value = m;
@@ -491,11 +527,24 @@ function selectPayMethod(m) {
 }
 
 function currentShip() {
-    const sel = document.getElementById('co-zone');
-    if (!sel) return 0;
-    let shipVal = parseFloat(sel.value) || 0;
-    if (CO.subtotal >= CO.freeThreshold) shipVal = 0;
+    const z = currentZone();
+    if (!z) return 0;
+    let shipVal = z.rate;
+    if (z.free !== null && z.free !== undefined && CO.subtotal >= z.free) shipVal = 0;
     return shipVal;
+}
+
+function selectZone(el) {
+    const z = currentZone();
+    const countryRow = document.getElementById('co-country-row');
+    if (countryRow) {
+        countryRow.style.display = (z && z.type === 'international') ? 'flex' : 'none';
+        if (!(z && z.type === 'international')) {
+            const c = document.getElementById('co-country');
+            if (c) c.value = '';
+        }
+    }
+    updateShip(el);
 }
 
 function updateShip(el) {
@@ -542,6 +591,28 @@ function validateForm() {
         }
     });
 
+    // International country is required
+    const z = currentZone();
+    const countryEl = document.getElementById('co-country');
+    if (z && z.type === 'international' && countryEl) {
+        if (!countryEl.value.trim()) {
+            countryEl.classList.add('err');
+            const fg = countryEl.closest('.fg');
+            const icon = fg.querySelector('.err-icon');
+            const txt = fg.querySelector('.err-txt');
+            if (icon) icon.style.display = 'flex';
+            if (txt) txt.style.display = 'block';
+            anyMissing = true;
+        } else {
+            countryEl.classList.remove('err');
+            const fg = countryEl.closest('.fg');
+            const icon = fg.querySelector('.err-icon');
+            const txt = fg.querySelector('.err-txt');
+            if (icon) icon.style.display = 'none';
+            if (txt) txt.style.display = 'none';
+        }
+    }
+
     const banner = document.getElementById('co-error-banner');
     if (anyMissing) {
         banner.style.display = 'flex';
@@ -562,7 +633,7 @@ function placeOrder(evt) {
     btn.disabled = true;
 
     const sel = document.getElementById('co-zone');
-    const zoneId = sel.options[sel.selectedIndex].getAttribute('data-id');
+    const zoneId = sel.options[sel.selectedIndex].value;
 
     const payload = new URLSearchParams({
         action: 'process_order',
@@ -573,6 +644,7 @@ function placeOrder(evt) {
         zone_id: zoneId,
         address: document.getElementById('co-address').value,
         city: document.getElementById('co-city').value,
+        country: document.getElementById('co-country')?.value || '',
         payment_method: document.getElementById('co-payment-method').value
     });
 
@@ -603,7 +675,7 @@ function placeOrder(evt) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    updateShip(document.getElementById('co-zone'));
+    selectZone(document.getElementById('co-zone'));
 });
 </script>
 

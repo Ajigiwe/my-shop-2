@@ -5,11 +5,9 @@ if (session_status() == PHP_SESSION_NONE) {
 $page_title = 'Shipping Policy';
 require_once '../includes/db.php';
 $settings = loadSiteSettings($pdo);
-$f1 = number_format((float)($settings['shipping_accra'] ?? 15), 0);
-$f2 = number_format((float)($settings['shipping_kumasi'] ?? 25), 0);
-$f3 = number_format((float)($settings['shipping_others'] ?? 40), 0);
-$f4 = (float)($settings['shipping_pickup'] ?? 0);
-$f4_str = $f4 > 0 ? 'GH₵' . number_format($f4, 0) : 'FREE';
+$sh_zones = getShippingZones($pdo);
+$domestic_zones = array_values(array_filter($sh_zones, function($z) { return ($z['zone_type'] ?? 'domestic') === 'domestic'; }));
+$intl_zones = array_values(array_filter($sh_zones, function($z) { return ($z['zone_type'] ?? 'domestic') === 'international'; }));
 $threshold = number_format((float)($settings['free_shipping_threshold'] ?? 500), 0);
 include '../includes/header.php';
 ?>
@@ -45,11 +43,28 @@ include '../includes/header.php';
             <h2>2. Delivery Zones & Fees</h2>
             <p>For orders below GH₵<?php echo $threshold; ?>, delivery fees apply based on your region:</p>
             <div>
-                <div class="zone-row"><span>📍 Accra & Greater Accra (1–2 days)</span><span>GH₵<?php echo $f1; ?></span></div>
-                <div class="zone-row"><span>📍 Kumasi / Takoradi (2–3 days)</span><span>GH₵<?php echo $f2; ?></span></div>
-                <div class="zone-row"><span>📍 All Other Regions (3–5 days)</span><span>GH₵<?php echo $f3; ?></span></div>
-                <div class="zone-row"><span>🏪 Store Pickup</span><span><?php echo $f4_str; ?></span></div>
+                <?php foreach ($domestic_zones as $z): ?>
+                    <?php $flag = htmlspecialchars($z['flag_emoji'] ?? '📍');
+                          $name = htmlspecialchars($z['zone_name']);
+                          $days = htmlspecialchars($z['estimated_days'] ?? '');
+                          $rate = (float)$z['flat_rate'];
+                          $free = !empty($z['free_threshold']) ? (float)$z['free_threshold'] : null;
+                          $eff = ($free !== null && 0 >= $free) ? 0 : $rate; // show standard rate
+                    ?>
+                    <div class="zone-row"><span><?php echo $flag; ?> <?php echo $name; ?> <?php echo $days ? '(' . $days . ')' : ''; ?></span><span>GH₵<?php echo number_format($rate, 0); ?></span></div>
+                <?php endforeach; ?>
             </div>
+
+            <h2>2b. International Delivery</h2>
+            <p>We ship our <a href="../local.php" style="color: var(--red); font-weight: 700;">Made in Ghana</a> goods internationally. Flat-rate international delivery is charged in Ghanaian Cedis (GHS) and paid securely via <strong>Paystack</strong>. You'll choose your country at checkout:</p>
+            <div>
+                <?php foreach ($intl_zones as $z): ?>
+                    <?php $flag = htmlspecialchars($z['flag_emoji'] ?? '🌍');
+                          ?>
+                    <div class="zone-row"><span><?php echo $flag; ?> <?php echo htmlspecialchars($z['zone_name']); ?> (<?php echo htmlspecialchars($z['estimated_days'] ?? 'Worldwide'); ?>)</span><span>GH₵<?php echo number_format((float)$z['flat_rate'], 0); ?></span></div>
+                <?php endforeach; ?>
+            </div>
+            <p>Please note: customs duties, taxes or import fees at the destination country are the responsibility of the recipient.</p>
 
             <h2>3. Shipment Confirmation & Tracking</h2>
             <p>You will receive a Shipment Confirmation email once your order has shipped containing your tracking number(s). The tracking number will be active within 24 hours. You can also <a href="../track-order.php" style="color: var(--red); font-weight: 700;">track your order</a> any time using your Order ID and email or phone.</p>

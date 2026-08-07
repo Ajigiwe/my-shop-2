@@ -188,9 +188,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Insert duplicate with draft status
                     $stmt = $pdo->prepare("
                         INSERT INTO products (category_id, subcategory_id, name, description, features, price, original_price, 
-                                             stock_quantity, image, has_multiple_images, main_image_id, 
+                                             stock_quantity, image, has_multiple_images, main_image_id, product_section,
                                              sku, status, is_featured, low_stock_threshold, meta_title, meta_description, slug)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', 0, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', 0, ?, ?, ?, ?)
                     ");
                     $stmt->execute([
                         $product['category_id'],
@@ -204,6 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $product['image'],
                         $product['has_multiple_images'],
                         $product['main_image_id'],
+                        $product['product_section'] ?? 'main',
                         $new_sku,
                         $product['low_stock_threshold'],
                         $product['meta_title'],
@@ -310,6 +311,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    if ($action === 'bulk_section') {
+        $ids = array_filter(array_map('intval', $_POST['product_ids'] ?? []));
+        $section = sanitizeInput($_POST['bulk_section_value'] ?? '');
+        if (!empty($ids) && in_array($section, ['main', 'local'])) {
+            $in = implode(',', array_fill(0, count($ids), '?'));
+            $stmt = $pdo->prepare("UPDATE products SET product_section = ? WHERE product_id IN ($in)");
+            $stmt->execute(array_merge([$section], $ids));
+            $label = $section === 'local' ? 'Made in Ghana' : 'Main Store';
+            header('Location: manage_products.php?success=' . urlencode(count($ids) . ' product(s) moved to ' . $label));
+            exit();
+        }
+    }
+
     }
 }
 
@@ -322,6 +336,7 @@ $category_filter = (int)($_GET['category'] ?? 0);
 $status_filter = sanitizeInput($_GET['status'] ?? '');
 $stock_filter = sanitizeInput($_GET['stock'] ?? '');
 $featured_filter = sanitizeInput($_GET['featured'] ?? '');
+$section_filter = sanitizeInput($_GET['section'] ?? '');
 $sort = sanitizeInput($_GET['sort'] ?? 'newest');
 $page = max(1, (int)($_GET['page'] ?? 1));
 $per_page = (int)($_GET['per_page'] ?? 20);
@@ -357,6 +372,10 @@ if ($featured_filter === 'yes') {
     $where[] = 'p.is_featured = 1';
 } elseif ($featured_filter === 'no') {
     $where[] = 'p.is_featured = 0';
+}
+if ($section_filter === 'main' || $section_filter === 'local') {
+    $where[] = 'p.product_section = ?';
+    $params[] = $section_filter;
 }
 
 $where_sql = 'WHERE ' . implode(' AND ', $where);
@@ -507,6 +526,14 @@ include 'includes/avazonia_header.php';
                     </select>
                 </div>
                 <div class="filter-group">
+                    <span class="flabel">Section</span>
+                    <select name="section">
+                        <option value="">All Sections</option>
+                        <option value="main" <?php echo $section_filter === 'main' ? 'selected' : ''; ?>>Main Store</option>
+                        <option value="local" <?php echo $section_filter === 'local' ? 'selected' : ''; ?>>🇬🇭 Made in Ghana</option>
+                    </select>
+                </div>
+                <div class="filter-group">
                     <span class="flabel">Sort</span>
                     <select name="sort">
                         <option value="newest" <?php echo $sort === 'newest' ? 'selected' : ''; ?>>Newest First</option>
@@ -538,6 +565,7 @@ include 'includes/avazonia_header.php';
                         <option value="bulk_duplicate">Duplicate</option>
                         <option value="bulk_restock">Restock</option>
                         <option value="bulk_alert">Send Low-Stock Alert</option>
+                        <option value="bulk_section">Move to Section</option>
                         <option value="bulk_delete">Delete</option>
                     </select>
                     <div id="bulkStatusWrap" class="d-none">
@@ -568,6 +596,12 @@ include 'includes/avazonia_header.php';
                     </div>
                     <div id="bulkAlertWrap" class="d-none">
                         <button type="button" class="btn-ink" style="height: 40px; padding: 0 16px;" onclick="openModal('alertModal')">Configure</button>
+                    </div>
+                    <div id="bulkSectionWrap" class="d-none">
+                        <select name="bulk_section_value" class="field-input" style="width: auto; height: 40px; padding: 0 12px;">
+                            <option value="main">Main Store</option>
+                            <option value="local">Made in Ghana</option>
+                        </select>
                     </div>
                     <input type="hidden" name="action" id="bulkActionName">
                     <button class="btn-red" style="height: 40px; padding: 0 16px;" type="submit" onclick="return submitBulkAction(event)">Apply</button>
@@ -728,6 +762,9 @@ include 'includes/avazonia_header.php';
                                 </td>
                                 <td>
                                     <span class="status-badge" style="background: var(--off); color: var(--ink);"><?php echo htmlspecialchars($p['category_name']); ?></span>
+                                    <?php if (($p['product_section'] ?? 'main') === 'local'): ?>
+                                        <span style="display: block; margin-top: 4px; font-size: 9px; font-weight: 700; color: var(--red); text-transform: uppercase; letter-spacing: 0.04em;">🇬🇭 Made in Ghana</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if (!empty($p['sku'])): ?>
@@ -871,7 +908,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('bulkCategoryWrap').classList.toggle('d-none', this.value !== 'bulk_category');
             document.getElementById('bulkPriceChangeWrap').classList.toggle('d-none', this.value !== 'bulk_price_change');
             document.getElementById('bulkRestockWrap').classList.toggle('d-none', this.value !== 'bulk_restock');
-            document.getElementById('bulkAlertWrap').classList.toggle('d-none', this.value !== 'bulk_alert');
+                        document.getElementById('bulkAlertWrap').classList.toggle('d-none', this.value !== 'bulk_alert');
+            document.getElementById('bulkSectionWrap').classList.toggle('d-none', this.value !== 'bulk_section');
         });
     }
 

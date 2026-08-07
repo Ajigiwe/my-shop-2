@@ -321,6 +321,7 @@ $meta_description = $settings['site_description'] ?? $site_name . ' — your one
         <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 10px 0;"></div>
         <a href="<?php echo $base; ?>index.php" class="mobile-link">Store Home</a>
         <a href="<?php echo $base; ?>shop.php" class="mobile-link">Shop All</a>
+        <a href="<?php echo $base; ?>local.php" class="mobile-link" style="color: var(--red); font-weight: 800;">🇬🇭 Made in Ghana</a>
         <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 10px 0;"></div>
         <?php foreach ($navCategories as $cat): ?>
             <a href="<?php echo $base; ?>shop.php?category=<?php echo urlencode($cat['category_name']); ?>" class="mobile-link"><?php echo htmlspecialchars($cat['category_name']); ?></a>

@@ -163,10 +163,61 @@ try {
                     if (file_exists($filePath)) @unlink($filePath);
                 }
                 
-                $stmt = $pdo->prepare("DELETE FROM hero_slides WHERE id = ?");
+                $stmt =                 $pdo->prepare("DELETE FROM hero_slides WHERE id = ?");
                 $stmt->execute([$id]);
                 $success = 'Slide deleted successfully';
             }
+        } elseif ($action === 'save_shipping_zones') {
+            // Upsert each zone row from the grid
+            $zone_names   = $_POST['zone_name']   ?? [];
+            $zone_types   = $_POST['zone_type']   ?? [];
+            $zone_rates   = $_POST['flat_rate']   ?? [];
+            $zone_free    = $_POST['free_threshold'] ?? [];
+            $zone_est     = $_POST['estimated_days'] ?? [];
+            $zone_flags   = $_POST['flag_emoji'] ?? [];
+            $zone_active  = $_POST['zone_active'] ?? [];
+            $zone_ccodes  = $_POST['country_codes'] ?? [];
+
+            $stmt_u = $pdo->prepare("UPDATE shipping_zones SET zone_name = ?, zone_type = ?, flat_rate = ?, free_threshold = ?, estimated_days = ?, flag_emoji = ?, is_active = ?, country_codes = ? WHERE zone_id = ?");
+            foreach ((array)$zone_names as $i => $name) {
+                $zid = (int)($_POST['zone_id'][$i] ?? 0);
+                if ($zid <= 0) continue;
+                $rate = (float)($zone_rates[$i] ?? 0);
+                $free = isset($zone_free[$i]) && $zone_free[$i] !== '' ? (float)$zone_free[$i] : null;
+                $ccodes = isset($zone_ccodes[$i]) && trim($zone_ccodes[$i]) !== '' ? trim($zone_ccodes[$i]) : null;
+                $stmt_u->execute([
+                    sanitizeInput($name),
+                    sanitizeInput($zone_types[$i] ?? 'domestic') === 'international' ? 'international' : 'domestic',
+                    $rate,
+                    $free,
+                    sanitizeInput($zone_est[$i] ?? ''),
+                    sanitizeInput($zone_flags[$i] ?? ''),
+                    isset($zone_active[$i]) ? 1 : 0,
+                    $ccodes,
+                    $zid
+                ]);
+            }
+
+            // Create a new zone if a name was provided
+            if (!empty(trim($_POST['new_zone_name'] ?? ''))) {
+                $stmt_i = $pdo->prepare("INSERT INTO shipping_zones (zone_name, zone_type, country_codes, flat_rate, free_threshold, estimated_days, flag_emoji, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order),0)+1 FROM shipping_zones), 1)");
+                $stmt_i->execute([
+                    sanitizeInput($_POST['new_zone_name']),
+                    ($_POST['new_zone_type'] ?? 'international') === 'international' ? 'international' : 'domestic',
+                    !empty(trim($_POST['new_country_codes'] ?? '')) ? trim($_POST['new_country_codes']) : null,
+                    (float)($_POST['new_flat_rate'] ?? 0),
+                    isset($_POST['new_free_threshold']) && $_POST['new_free_threshold'] !== '' ? (float)$_POST['new_free_threshold'] : null,
+                    sanitizeInput($_POST['new_estimated_days'] ?? ''),
+                    sanitizeInput($_POST['new_flag_emoji'] ?? ''),
+                ]);
+            }
+
+            // Delete zones marked for removal
+            foreach ((array)($_POST['delete_zone'] ?? []) as $zid) {
+                $pdo->prepare("DELETE FROM shipping_zones WHERE zone_id = ?")->execute([(int)$zid]);
+            }
+
+            $success = 'Shipping zones updated successfully';
         }
         } // end else (CSRF valid)
     }
@@ -193,6 +244,14 @@ $active_tab = 'branding';
 if ($action === 'edit_slide' || $edit_slide) $active_tab = 'hero';
 if (isset($_GET['action']) && $_GET['action'] === 'edit_promo') $active_tab = 'promo';
 
+// Shipping zones data for the Shipping tab
+$shipping_zones = [];
+try {
+    $shipping_zones = $pdo->query("SELECT * FROM shipping_zones ORDER BY sort_order ASC, zone_id ASC")->fetchAll();
+} catch (PDOException $e) {
+    error_log("Fetch shipping zones error: " . $e->getMessage());
+}
+
 include 'includes/avazonia_header.php';
 ?>
 <style>
@@ -209,6 +268,7 @@ include 'includes/avazonia_header.php';
         <button class="settings-tab-btn <?php echo $active_tab === 'hero' ? 'active' : ''; ?>" data-target="hero"><span>03</span>Hero Slider</button>
         <button class="settings-tab-btn <?php echo $active_tab === 'promo' ? 'active' : ''; ?>" data-target="promo"><span>04</span>Promo Grid</button>
         <button class="settings-tab-btn <?php echo $active_tab === 'flash' ? 'active' : ''; ?>" data-target="flash"><span>05</span>Flash Sale</button>
+        <button class="settings-tab-btn <?php echo $active_tab === 'shipping' ? 'active' : ''; ?>" data-target="shipping"><span>06</span>Shipping Zones</button>
     </nav>
 
     <div class="settings-content-area">
@@ -665,6 +725,124 @@ include 'includes/avazonia_header.php';
                 </div>
                 <button type="submit" class="btn-red" style="margin-top: 24px;">Save Flash Sale Settings</button>
             </form>
+        </section>
+
+        <!-- Shipping Zones -->
+        <section class="settings-section <?php echo $active_tab === 'shipping' ? 'active' : ''; ?>" id="shipping">
+            <div class="section-header">
+                <h2>Shipping Zones</h2>
+                <p>Configure delivery zones — domestic (Ghana) and international (abroad) — with flat-rate fees used at checkout. 🇬🇭 local goods ship both ways.</p>
+            </div>
+            <?php if (empty($shipping_zones)): ?>
+                <div class="alert-box alert-error">No shipping zones found. Run the migration (<code>run_migration-local.php</code>) first, then refresh.</div>
+            <?php else: ?>
+                <form method="POST">
+                    <?php echo csrfField(); ?>
+                    <input type="hidden" name="action" value="save_shipping_zones">
+                    <div class="panel">
+                        <div class="panel-header"><div class="panel-title">Zone Rates</div></div>
+                        <div class="table-container" style="border: none; border-bottom: 1px solid var(--light-gray); border-radius: 0; margin: 0;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Zone</th>
+                                        <th>Type</th>
+                                        <th>Countries (ISO-2, JSON)</th>
+                                        <th>Flat Rate (₵)</th>
+                                        <th>Free over (₵)</th>
+                                        <th>ETA</th>
+                                        <th>Active</th>
+                                        <th>Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($shipping_zones as $z): ?>
+                                        <tr>
+                                            <input type="hidden" name="zone_id[]" value="<?php echo (int)$z['zone_id']; ?>">
+                                            <td>
+                                                <input type="text" name="zone_name[]" class="field-input" style="height: 38px; min-width: 150px;" value="<?php echo htmlspecialchars($z['zone_name']); ?>">
+                                            </td>
+                                            <td>
+                                                <select name="zone_type[]" class="field-input" style="height: 38px; padding: 0 8px;">
+                                                    <option value="domestic" <?php echo $z['zone_type'] === 'domestic' ? 'selected' : ''; ?>>Domestic</option>
+                                                    <option value="international" <?php echo $z['zone_type'] === 'international' ? 'selected' : ''; ?>>International</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input type="text" name="country_codes[]" class="field-input" style="height: 38px; min-width: 120px; font-family: var(--f-mono); font-size: 11px;" value="<?php echo htmlspecialchars($z['country_codes'] ?? ''); ?>" placeholder='["US","GB",...]'>
+                                            </td>
+                                            <td>
+                                                <input type="number" step="0.01" min="0" name="flat_rate[]" class="field-input" style="height: 38px; width: 90px;" value="<?php echo htmlspecialchars($z['flat_rate']); ?>">
+                                            </td>
+                                            <td>
+                                                <input type="number" step="0.01" min="0" name="free_threshold[]" class="field-input" style="height: 38px; width: 90px;" value="<?php echo $z['free_threshold'] !== null && $z['free_threshold'] !== '' ? htmlspecialchars($z['free_threshold']) : ''; ?>" placeholder="—">
+                                            </td>
+                                            <td>
+                                                <input type="text" name="estimated_days[]" class="field-input" style="height: 38px; width: 110px;" value="<?php echo htmlspecialchars($z['estimated_days'] ?? ''); ?>">
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <input type="checkbox" name="zone_active[]" value="<?php echo (int)$z['zone_id']; ?>" class="field-check" <?php echo !empty($z['is_active']) ? 'checked' : ''; ?>>
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <input type="checkbox" name="delete_zone[]" value="<?php echo (int)$z['zone_id']; ?>" class="field-check">
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="submit" class="btn-red" style="margin: 24px;">Save Zone Changes</button>
+                    </div>
+                </form>
+
+                <div class="panel" style="margin-top: 32px;">
+                    <div class="panel-header"><div class="panel-title">Add New Zone</div></div>
+                    <div class="panel-body">
+                        <form method="POST">
+                            <?php echo csrfField(); ?>
+                            <input type="hidden" name="action" value="save_shipping_zones">
+                            <div class="field-grid">
+                                <div class="field-group">
+                                    <label class="field-label">Zone Name</label>
+                                    <input type="text" name="new_zone_name" class="field-input" placeholder="e.g. Asia">
+                                </div>
+                                <div class="field-group">
+                                    <label class="field-label">Type</label>
+                                    <select name="new_zone_type" class="field-input">
+                                        <option value="international">International</option>
+                                        <option value="domestic">Domestic</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="field-grid">
+                                <div class="field-group">
+                                    <label class="field-label">Flat Rate (₵)</label>
+                                    <input type="number" step="0.01" min="0" name="new_flat_rate" class="field-input" value="0">
+                                </div>
+                                <div class="field-group">
+                                    <label class="field-label">Free over (₵) — optional</label>
+                                    <input type="number" step="0.01" min="0" name="new_free_threshold" class="field-input">
+                                </div>
+                            </div>
+                            <div class="field-grid">
+                                <div class="field-group">
+                                    <label class="field-label">Country Codes (ISO-2 JSON)</label>
+                                    <input type="text" name="new_country_codes" class="field-input" style="font-family: var(--f-mono);" placeholder='["CN","JP","IN"]'>
+                                </div>
+                                <div class="field-group">
+                                    <label class="field-label">Estimated Delivery</label>
+                                    <input type="text" name="new_estimated_days" class="field-input" placeholder="e.g. 12–20 days">
+                                </div>
+                            </div>
+                            <div class="field-group" style="margin-bottom: 0;">
+                                <label class="field-label">Flag Emoji</label>
+                                <input type="text" name="new_flag_emoji" class="field-input" placeholder="🌏">
+                            </div>
+                            <button type="submit" class="btn-red" style="margin-top: 16px;">Add Zone</button>
+                        </form>
+                    </div>
+                </div>
+            <?php endif; ?>
         </section>
     </div>
 </div>

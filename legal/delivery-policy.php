@@ -34,7 +34,7 @@ include '../includes/header.php';
     <div class="container">
         <div class="policy-body">
             <h2>1. Service Areas</h2>
-            <p style="background: rgba(82,196,26,0.08); border-left: 4px solid #52C41A; padding: 16px 20px; border-radius: 4px;"><strong>Pan-Ghana Delivery:</strong> We deliver to all regions and districts across Ghana.</p>
+            <p style="background: rgba(82,196,26,0.08); border-left: 4px solid #52C41A; padding: 16px 20px; border-radius: 4px;"><strong>Pan-Ghana Delivery:</strong> We deliver to all regions and districts across Ghana. We also ship <a href="../local.php" style="color: var(--red); font-weight: 700;">Made in Ghana</a> goods internationally — choose your country at checkout and pay in GHS via Paystack.</p>
             <ul>
                 <li><strong>Greater Accra Region</strong> — Accra Metropolitan, Tema Municipality, Ga East/West Districts. Fastest delivery area.</li>
                 <li><strong>Other Regions</strong> — Ashanti Region, Western Region, Central Region, and all remaining regions (standard delivery timeframes).</li>

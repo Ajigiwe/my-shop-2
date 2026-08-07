@@ -209,6 +209,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $low_stock_threshold = isset($_POST['low_stock_threshold']) && $_POST['low_stock_threshold'] !== '' ? (int)$_POST['low_stock_threshold'] : null;
         $status = sanitizeInput($_POST['status'] ?? 'published');
         $is_featured = isset($_POST['is_featured']) ? 1 : 0;
+        $product_section = sanitizeInput($_POST['product_section'] ?? 'main');
+        if (!in_array($product_section, ['main', 'local'])) $product_section = 'main';
         $tag_ids = $_POST['tags'] ?? [];
         // SEO fields
         $meta_title = sanitizeInput($_POST['meta_title'] ?? '');
@@ -235,14 +237,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->beginTransaction();
 
                 if ($action === 'create') {
-                    $stmt = $pdo->prepare('INSERT INTO products (category_id, subcategory_id, name, sku, description, features, price, original_price, stock_quantity, low_stock_threshold, status, is_featured, meta_title, meta_description, slug, alert_email, alert_enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-                    $stmt->execute([$category_id, $subcategory_id, $name, $sku !== '' ? $sku : null, $description, $features, $price, $original_price, $stock_quantity, $low_stock_threshold, $status, $is_featured, $meta_title !== '' ? $meta_title : null, $meta_description !== '' ? $meta_description : null, $slug !== '' ? $slug : null, $alert_email !== '' ? $alert_email : null, $alert_enabled]);
+                    $stmt = $pdo->prepare('INSERT INTO products (category_id, product_section, subcategory_id, name, sku, description, features, price, original_price, stock_quantity, low_stock_threshold, status, is_featured, meta_title, meta_description, slug, alert_email, alert_enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                    $stmt->execute([$category_id, $product_section, $subcategory_id, $name, $sku !== '' ? $sku : null, $description, $features, $price, $original_price, $stock_quantity, $low_stock_threshold, $status, $is_featured, $meta_title !== '' ? $meta_title : null, $meta_description !== '' ? $meta_description : null, $slug !== '' ? $slug : null, $alert_email !== '' ? $alert_email : null, $alert_enabled]);
                     $product_id = (int)$pdo->lastInsertId();
                     $msg = 'Product created successfully';
                 } else {
                     $product_id = (int)($_POST['product_id'] ?? 0);
-                    $stmt = $pdo->prepare('UPDATE products SET category_id = ?, subcategory_id = ?, name = ?, sku = ?, description = ?, features = ?, price = ?, original_price = ?, stock_quantity = ?, low_stock_threshold = ?, status = ?, is_featured = ?, meta_title = ?, meta_description = ?, slug = ?, alert_email = ?, alert_enabled = ? WHERE product_id = ?');
-                    $stmt->execute([$category_id, $subcategory_id, $name, $sku !== '' ? $sku : null, $description, $features, $price, $original_price, $stock_quantity, $low_stock_threshold, $status, $is_featured, $meta_title !== '' ? $meta_title : null, $meta_description !== '' ? $meta_description : null, $slug !== '' ? $slug : null, $alert_email !== '' ? $alert_email : null, $alert_enabled, $product_id]);
+                    $stmt = $pdo->prepare('UPDATE products SET category_id = ?, product_section = ?, subcategory_id = ?, name = ?, sku = ?, description = ?, features = ?, price = ?, original_price = ?, stock_quantity = ?, low_stock_threshold = ?, status = ?, is_featured = ?, meta_title = ?, meta_description = ?, slug = ?, alert_email = ?, alert_enabled = ? WHERE product_id = ?');
+                    $stmt->execute([$category_id, $product_section, $subcategory_id, $name, $sku !== '' ? $sku : null, $description, $features, $price, $original_price, $stock_quantity, $low_stock_threshold, $status, $is_featured, $meta_title !== '' ? $meta_title : null, $meta_description !== '' ? $meta_description : null, $slug !== '' ? $slug : null, $alert_email !== '' ? $alert_email : null, $alert_enabled, $product_id]);
                     $msg = 'Product updated successfully';
                 }
 
@@ -786,6 +788,14 @@ details .details-toggle::-webkit-details-marker { display: none; }
                             <option value="draft" <?php echo ($edit['status'] ?? '') === 'draft' ? 'selected' : ''; ?>>Draft</option>
                         </select>
                         <span class="field-sub">Draft products are hidden from the storefront.</span>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Product Section</label>
+                        <select class="field-input" name="product_section">
+                            <option value="main" <?php echo ($edit['product_section'] ?? 'main') === 'main' ? 'selected' : ''; ?>>Main Store</option>
+                            <option value="local" <?php echo ($edit['product_section'] ?? '') === 'local' ? 'selected' : ''; ?>>🇬🇭 Made in Ghana</option>
+                        </select>
+                        <span class="field-sub">'Made in Ghana' products appear in the local-goods subsection (domestic + international shipping).</span>
                     </div>
                     <div class="check-row">
                         <input type="checkbox" name="is_featured" id="isFeatured" value="1" <?php echo !empty($edit['is_featured']) ? 'checked' : ''; ?>>

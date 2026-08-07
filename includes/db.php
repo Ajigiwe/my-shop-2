@@ -278,6 +278,69 @@ if (!function_exists('loadSiteSettings')) {
     }
 }
 
+/* ── Shipping zones (domestic + international) ─────────────────────────── */
+
+if (!function_exists('getShippingZones')) {
+    /**
+     * All active shipping zones, ordered by sort_order.
+     * Falls back to legacy hardcoded domestic fees if the table is missing.
+     * @param PDO|null $pdo
+     * @return array
+     */
+    function getShippingZones($pdo = null) {
+        global $pdo;
+        if ($pdo) {
+            try {
+                $stmt = $pdo->query("SELECT * FROM shipping_zones WHERE is_active = 1 ORDER BY sort_order ASC, zone_id ASC");
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (PDOException $e) {
+                // table missing -> fall through to legacy
+            }
+        }
+        // Legacy fallback matching checkout.php / cart.php hardcoded zones
+        $settings = loadSiteSettings($pdo);
+        return [
+            ['zone_id' => 1, 'zone_name' => 'Accra & Greater Accra',   'zone_type' => 'domestic',      'flat_rate' => $settings['shipping_accra']  ?? 15, 'free_threshold' => $settings['free_shipping_threshold'] ?? 500, 'estimated_days' => '1–2 days', 'flag_emoji' => '📍'],
+            ['zone_id' => 2, 'zone_name' => 'Kumasi / Takoradi',       'zone_type' => 'domestic',      'flat_rate' => $settings['shipping_kumasi'] ?? 25, 'free_threshold' => $settings['free_shipping_threshold'] ?? 500, 'estimated_days' => '2–3 days', 'flag_emoji' => '📍'],
+            ['zone_id' => 3, 'zone_name' => 'All Other Regions',       'zone_type' => 'domestic',      'flat_rate' => $settings['shipping_others'] ?? 60, 'free_threshold' => $settings['free_shipping_threshold'] ?? 500, 'estimated_days' => '3–5 days', 'flag_emoji' => '📍'],
+            ['zone_id' => 4, 'zone_name' => 'Store Pickup',            'zone_type' => 'domestic',      'flat_rate' => 0, 'free_threshold' => null, 'estimated_days' => 'Ready when you are', 'flag_emoji' => '🏪'],
+        ];
+    }
+}
+
+if (!function_exists('getShippingZoneById')) {
+    /**
+     * Fetch a single active shipping zone by id, or null.
+     */
+    function getShippingZoneById($zone_id, $pdo = null) {
+        $zones = getShippingZones($pdo);
+        foreach ($zones as $z) {
+            if ((int)$z['zone_id'] === (int)$zone_id) return $z;
+        }
+        return null;
+    }
+}
+
+if (!function_exists('calculateShippingFee')) {
+    /**
+     * Shipping fee for a subtotal in a given zone (respects the zone free threshold).
+     * @param float  $subtotal
+     * @param string $zoneType  domestic|international
+     * @param array  $zone      zone row
+     * @return float
+     */
+    function calculateShippingFee($subtotal, $zone = []) {
+        if (empty($zone)) return 0;
+        $threshold = !empty($zone['free_threshold']) ? (float)$zone['free_threshold'] : null;
+        $rate = (float)($zone['flat_rate'] ?? 0);
+        // International zones have no free-shipping threshold by default
+        if ($threshold !== null && (float)$subtotal >= $threshold) {
+            return 0;
+        }
+        return $rate;
+    }
+}
+
 if (!function_exists('createAdminNotification')) {
     /**
      * Record an admin notification (bell in the admin header).

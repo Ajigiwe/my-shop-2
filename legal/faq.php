@@ -61,7 +61,7 @@ include '../includes/header.php';
 
             <div class="faq-item" style="margin-bottom: 32px;">
                 <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--ink);">Do you offer international shipping?</h3>
-                <p style="color: var(--mid-gray); line-height: 1.6;">Currently, we only ship within Ghana. We are working on expanding our reach to other West African countries soon.</p>
+                <p style="color: var(--mid-gray); line-height: 1.6;">Yes! We now ship our <a href="../local.php" style="color: var(--red); font-weight: 700;">Made in Ghana</a> goods worldwide. Flat-rate international delivery is charged in Ghanaian Cedis (GHS) and paid securely via Paystack. Simply select your delivery zone and country at checkout. International customs duties or import fees at the destination are the recipient's responsibility.</p>
             </div>
         </div>
 

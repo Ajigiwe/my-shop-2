@@ -45,6 +45,7 @@ $socials = [
                 <h4 class="footer-col-label">Company</h4>
                 <a href="<?php echo $base; ?>about.php" class="footer-col-link">About Us</a>
                 <a href="<?php echo $base; ?>shop.php" class="footer-col-link">Shop</a>
+                <a href="<?php echo $base; ?>local.php" class="footer-col-link">🇬🇭 Made in Ghana</a>
                 <a href="<?php echo $base; ?>contact.php" class="footer-col-link">Contact Us</a>
                 <a href="<?php echo $base; ?>track-order.php" class="footer-col-link">Track Your Order</a>
                 <?php if (!isset($_SESSION['user_id'])): ?>

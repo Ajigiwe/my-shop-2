@@ -61,6 +61,65 @@ include 'includes/header.php';
     <?php include 'includes/hero.php'; ?>
 
     <?php
+    // ── MADE IN GHANA BANNER ───────────────────────
+    $local_samples = [];
+    $local_count = 0;
+    try {
+        $local_count = (int)$pdo->query("SELECT COUNT(*) FROM products WHERE status = 'published' AND product_section = 'local'")->fetchColumn();
+        $local_stmt = $pdo->prepare("
+            SELECT p.product_id AS id, p.name, c.category_name,
+                   p.image AS primary_image, p.price AS price_ghs,
+                   p.original_price AS compare_at_price_ghs,
+                   p.stock_quantity AS stock_qty, p.average_rating AS avg_rating,
+                   p.has_multiple_images,
+                   (DATEDIFF(NOW(), p.created_at) <= 21) AS is_new_arrival
+            FROM products p
+            LEFT JOIN categories c ON c.category_id = p.category_id
+            WHERE p.status = 'published' AND p.product_section = 'local'
+            ORDER BY p.is_featured DESC, p.product_id DESC
+            LIMIT 4
+        ");
+        $local_stmt->execute();
+        $local_samples = $local_stmt->fetchAll(PDO::FETCH_ASSOC);
+        $local_display = $local_samples;
+    } catch (PDOException $e) { $local_display = []; }
+    ?>
+
+    <style>
+    .ghana-banner { padding: 72px 0 0; }
+    .ghana-inner { background: linear-gradient(120deg,#1f1407,#3a2410); border-radius: 28px; padding: 48px; display: grid; grid-template-columns: 1fr 1.4fr; gap: 40px; align-items: center; color:#fff; position: relative; overflow: hidden; }
+    .ghana-inner::after { content: "🇬🇭"; position: absolute; right: -20px; bottom: -50px; font-size: 220px; opacity: 0.05; line-height: 1; }
+    .ghana-eyebrow { font-family: var(--f-mono); font-size: 10px; letter-spacing: .16em; color:#f0c36a; font-weight:700; text-transform:uppercase; margin-bottom: 16px; display:flex; align-items:center; gap:10px; }
+    .ghana-eyebrow::before { content:""; width:30px; height:2px; background:#f0c36a; }
+    .ghana-h2 { font-family: var(--f-display); font-weight:900; font-size: clamp(32px,4vw, 56px); letter-spacing:-.03em; line-height:.9; margin-bottom:14px; text-transform:uppercase; }
+    .ghana-p { font-size:15px; line-height:1.65; color: rgba(255,255,255,.78); max-width:440px; margin-bottom:28px; }
+    .ghana-count { font-family: var(--f-mono); font-size:11px; color:#f0c36a; letter-spacing:.08em; margin-top:20px; }
+    .ghana-samples { position: relative; z-index: 2; }
+    .ghana-samples .products-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .ghana-samples .card { background: #fff; border-radius: 18px; overflow: hidden; }
+    @media (max-width: 900px){ .ghana-inner { grid-template-columns: 1fr; } .ghana-samples .products-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+    </style>
+
+    <?php if ($local_count > 0): ?>
+    <section class="ghana-banner">
+        <div class="container ghana-inner">
+            <div class="ghana-copy">
+                <div class="ghana-eyebrow">Proudly Ghanaian</div>
+                <h2 class="ghana-h2">Made in<br>Ghana</h2>
+                <p class="ghana-p">Authentic local goods crafted, grown and produced right here in Ghana. Support homegrown artisans — delivered nationwide or worldwide.</p>
+                <a href="local.php" class="btn-red">BROWSE LOCAL GOODS →</a>
+                <div class="ghana-count"><?= (int)$local_count; ?> LOCAL PRODUCTS</div>
+            </div>
+            <div class="ghana-samples">
+                <div class="products-grid">
+                    <?php foreach ($local_display as $p): $wishlistIds = $user_wishlist ?? []; require 'includes/product-card.php'; endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </section>
+    <?php endif; ?>
+
+    <?php
     // ── FEATURED / ALL PRODUCTS (paginated) ────────
     $perPage = 8;
     $page = max(1, (int)($_GET['page'] ?? 1));
