@@ -60,6 +60,8 @@ include 'includes/header.php';
 <main>
     <?php include 'includes/hero.php'; ?>
 
+    <?php include 'includes/ad-banners.php'; ?>
+
     <?php
     // ── FEATURED / ALL PRODUCTS (paginated) ────────
     $perPage = 8;

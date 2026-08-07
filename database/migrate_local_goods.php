@@ -105,4 +105,25 @@ try {
     echo "ERROR (seed shipping_zones): " . $e->getMessage() . "\n";
 }
 
+// 5) ad_banners table (homepage ad slider)
+try {
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `ad_banners` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `image_path` VARCHAR(255) NOT NULL,
+            `title` VARCHAR(255) DEFAULT '',
+            `description` TEXT,
+            `button_text` VARCHAR(100) DEFAULT 'Shop Now',
+            `button_link` VARCHAR(255) DEFAULT 'shop.php',
+            `display_order` INT DEFAULT 0,
+            `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ");
+    echo "OK: ad_banners table created.\n";
+} catch (PDOException $e) {
+    echo "ERROR (ad_banners): " . $e->getMessage() . "\n";
+}
+
 echo "\nMigration complete.\n";

@@ -218,6 +218,67 @@ try {
             }
 
             $success = 'Shipping zones updated successfully';
+        } elseif ($action === 'save_ad_banner') {
+            ensureAdBannersSchema($pdo);
+            $ad_id = (int)($_POST['ad_id'] ?? 0);
+            $ad_title = sanitizeInput($_POST['ad_title'] ?? '');
+            $ad_description = sanitizeInput($_POST['ad_description'] ?? '');
+            $ad_btn = sanitizeInput($_POST['ad_button_text'] ?? 'Shop Now');
+            $ad_link = sanitizeInput($_POST['ad_button_link'] ?? 'shop.php');
+            $ad_order = (int)($_POST['ad_display_order'] ?? 0);
+            $ad_active = isset($_POST['ad_is_active']) ? 1 : 0;
+            $ad_image = sanitizeInput($_POST['existing_ad_image'] ?? '');
+
+            // Handle uploaded image, if any
+            if (isset($_FILES['ad_image']) && $_FILES['ad_image']['error'] === UPLOAD_ERR_OK) {
+                $targetDir = realpath(__DIR__ . '/../assets/images/ads');
+                if (!is_dir($targetDir)) { @mkdir($targetDir, 0777, true); }
+                $fileTmp = $_FILES['ad_image']['tmp_name'];
+                $origName = basename($_FILES['ad_image']['name']);
+                $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+                $allowed = ['jpg','jpeg','png','gif','webp'];
+                if (in_array($ext, $allowed)) {
+                    $newName = 'ad_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                    $dest = $targetDir . DIRECTORY_SEPARATOR . $newName;
+                    if (move_uploaded_file($fileTmp, $dest)) {
+                        // Clean up old image on update
+                        if ($ad_id > 0 && $ad_image && strpos($ad_image, 'http') !== 0) {
+                            $oldPath = realpath(__DIR__ . '/../assets/images/') . DIRECTORY_SEPARATOR . $ad_image;
+                            if (file_exists($oldPath)) @unlink($oldPath);
+                        }
+                        $ad_image = 'ads/' . $newName;
+                    }
+                } else {
+                    $errors[] = 'Ad image must be JPG, PNG, GIF or WebP';
+                }
+            }
+
+            if ($ad_id === 0 && empty($ad_image) && empty($errors)) {
+                $errors[] = 'An ad banner image is required';
+            }
+
+            if (empty($errors)) {
+                $stmt = ($ad_id > 0)
+                    ? $pdo->prepare("UPDATE ad_banners SET image_path = ?, title = ?, description = ?, button_text = ?, button_link = ?, display_order = ?, is_active = ? WHERE id = ?")
+                    : $pdo->prepare("INSERT INTO ad_banners (image_path, title, description, button_text, button_link, display_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $params = [$ad_image, $ad_title, $ad_description, $ad_btn, $ad_link, $ad_order, $ad_active];
+                if ($ad_id > 0) $params[] = $ad_id;
+                $stmt->execute($params);
+                $success = $ad_id > 0 ? 'Ad banner updated successfully' : 'Ad banner created successfully';
+            }
+        } elseif ($action === 'delete_ad_banner') {
+            $ad_id = (int)($_POST['ad_id'] ?? 0);
+            if ($ad_id > 0) {
+                $stmt = $pdo->prepare("SELECT image_path FROM ad_banners WHERE id = ?");
+                $stmt->execute([$ad_id]);
+                $img = $stmt->fetchColumn();
+                if ($img && strpos($img, 'assets/') !== 0 && strpos($img, 'http') !== 0) {
+                    $filePath = realpath(__DIR__ . '/../assets/images/') . DIRECTORY_SEPARATOR . $img;
+                    if (file_exists($filePath)) @unlink($filePath);
+                }
+                $pdo->prepare("DELETE FROM ad_banners WHERE id = ?")->execute([$ad_id]);
+                $success = 'Ad banner deleted successfully';
+            }
         }
         } // end else (CSRF valid)
     }
@@ -243,6 +304,7 @@ if ($action === 'edit_slide' && isset($_GET['slide_id'])) {
 $active_tab = 'branding';
 if ($action === 'edit_slide' || $edit_slide) $active_tab = 'hero';
 if (isset($_GET['action']) && $_GET['action'] === 'edit_promo') $active_tab = 'promo';
+if (isset($_GET['action']) && $_GET['action'] === 'edit_ad') $active_tab = 'adbanners';
 
 // Shipping zones data for the Shipping tab
 $shipping_zones = [];
@@ -250,6 +312,27 @@ try {
     $shipping_zones = $pdo->query("SELECT * FROM shipping_zones ORDER BY sort_order ASC, zone_id ASC")->fetchAll();
 } catch (PDOException $e) {
     error_log("Fetch shipping zones error: " . $e->getMessage());
+}
+
+// Ad banners data for the Ad Banners tab
+ensureAdBannersSchema($pdo);
+$ad_banners = [];
+try {
+    $ad_banners = $pdo->query("SELECT * FROM ad_banners ORDER BY display_order ASC, id ASC")->fetchAll();
+} catch (PDOException $e) {
+    error_log("Fetch ad banners error: " . $e->getMessage());
+}
+
+// Editing ad banner helper
+$edit_ad = null;
+if ($action === 'edit_ad' && isset($_GET['ad_id'])) {
+    $aid = (int)$_GET['ad_id'];
+    foreach ($ad_banners as $a) {
+        if ((int)$a['id'] === $aid) {
+            $edit_ad = $a;
+            break;
+        }
+    }
 }
 
 include 'includes/avazonia_header.php';
@@ -269,6 +352,7 @@ include 'includes/avazonia_header.php';
         <button class="settings-tab-btn <?php echo $active_tab === 'promo' ? 'active' : ''; ?>" data-target="promo"><span>04</span>Promo Grid</button>
         <button class="settings-tab-btn <?php echo $active_tab === 'flash' ? 'active' : ''; ?>" data-target="flash"><span>05</span>Flash Sale</button>
         <button class="settings-tab-btn <?php echo $active_tab === 'shipping' ? 'active' : ''; ?>" data-target="shipping"><span>06</span>Shipping Zones</button>
+        <button class="settings-tab-btn <?php echo $active_tab === 'adbanners' ? 'active' : ''; ?>" data-target="adbanners"><span>07</span>Ad Banners</button>
     </nav>
 
     <div class="settings-content-area">
@@ -843,6 +927,124 @@ include 'includes/avazonia_header.php';
                     </div>
                 </div>
             <?php endif; ?>
+        </section>
+
+        <!-- Ad Banners -->
+        <section class="settings-section <?php echo $active_tab === 'adbanners' ? 'active' : ''; ?>" id="adbanners">
+            <div class="section-header">
+                <h2>Ad Banners</h2>
+                <p>Homepage advertising slider. Add images with a link, caption and call-to-action. Slides auto-rotate between the hero and product grid.</p>
+            </div>
+
+            <div class="panel" style="margin-bottom: 32px;">
+                <div class="panel-header"><div class="panel-title">Banner Slides <span style="opacity: 0.4;">(<?php echo count($ad_banners); ?>)</span></div></div>
+                <div class="table-container" style="border: none; border-bottom: 1px solid var(--light-gray); border-radius: 0; margin: 0;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Preview</th>
+                                <th>Title</th>
+                                <th>Link</th>
+                                <th style="text-align: center;">Order</th>
+                                <th style="text-align: center;">Active</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($ad_banners as $a): ?>
+                            <tr>
+                                <td><img class="hero-thumb" src="<?php echo (strpos($a['image_path'], 'assets/') === 0) ? '../' . $a['image_path'] : '../assets/images/' . $a['image_path']; ?>" alt="ad"></td>
+                                <td><div style="font-weight: 800; font-size: 14px;"><?php echo htmlspecialchars($a['title'] ?: '(untitled)'); ?></div></td>
+                                <td><span style="font-family: var(--f-mono); font-size: 11px; color: var(--mid-gray);"><?php echo htmlspecialchars($a['button_link']); ?></span></td>
+                                <td style="text-align: center;"><span class="order-badge"><?php echo (int)$a['display_order']; ?></span></td>
+                                <td style="text-align: center;"><span class="status-badge <?php echo $a['is_active'] ? 'status-active' : 'status-suspended'; ?>"><?php echo $a['is_active'] ? 'Active' : 'Inactive'; ?></span></td>
+                                <td style="text-align: right;">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a href="settings.php?action=edit_ad&ad_id=<?php echo (int)$a['id']; ?>#adbanners" class="action-btn">Edit</a>
+                                        <form method="POST" class="d-inline" onsubmit="return confirmAction(event, 'Delete this ad banner?');">
+                                            <?php echo csrfField(); ?>
+                                            <input type="hidden" name="action" value="delete_ad_banner">
+                                            <input type="hidden" name="ad_id" value="<?php echo (int)$a['id']; ?>">
+                                            <button type="submit" class="action-btn danger">Del</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                            <?php if (empty($ad_banners)): ?>
+                            <tr><td colspan="6" style="text-align: center; padding: 48px; color: var(--mid-gray);">No ad banners yet. Add your first slide below.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="panel-title"><?php echo $edit_ad ? 'Edit Ad Banner' : 'Add New Ad Banner'; ?></div></div>
+                <div class="panel-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <?php echo csrfField(); ?>
+                        <input type="hidden" name="action" value="save_ad_banner">
+                        <input type="hidden" name="ad_id" value="<?php echo $edit_ad ? (int)$edit_ad['id'] : 0; ?>">
+                        <?php if ($edit_ad): ?>
+                            <input type="hidden" name="existing_ad_image" value="<?php echo htmlspecialchars($edit_ad['image_path']); ?>">
+                        <?php endif; ?>
+
+                        <div class="field-grid">
+                            <div class="field-group">
+                                <label class="field-label">Banner Image <span style="color: var(--red);">*</span></label>
+                                <?php if ($edit_ad && !empty($edit_ad['image_path'])): ?>
+                                    <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 12px;">
+                                        <img class="hero-thumb" style="width: 140px; height: 80px;" src="<?php echo (strpos($edit_ad['image_path'], 'assets/') === 0) ? '../' . $edit_ad['image_path'] : '../assets/images/' . $edit_ad['image_path']; ?>" alt="current">
+                                        <span class="field-sub" style="margin: 0;">Current image (replace by choosing a new file)</span>
+                                    </div>
+                                <?php endif; ?>
+                                <input type="file" name="ad_image" class="file-input" accept="image/*" <?php echo !$edit_ad ? 'required' : ''; ?>>
+                                <span class="field-sub">Landscape recommended (e.g. 1200×500). Shown in the homepage ad slider.</span>
+                            </div>
+                        </div>
+
+                        <div class="field-grid">
+                            <div class="field-group">
+                                <label class="field-label">Title / Caption</label>
+                                <input type="text" name="ad_title" class="field-input" placeholder="e.g. *Summer Sale* – Up to 40% Off" value="<?php echo $edit_ad ? htmlspecialchars($edit_ad['title']) : ''; ?>">
+                                <span class="field-sub">Wrap a word in asterisks to highlight it in gold, e.g. <code>*Summer Sale*</code>.</span>
+                            </div>
+                            <div class="field-group">
+                                <label class="field-label">Description</label>
+                                <textarea name="ad_description" class="field-input" rows="2" placeholder="Short line shown under the title..."><?php echo $edit_ad ? htmlspecialchars($edit_ad['description']) : ''; ?></textarea>
+                            </div>
+                        </div>
+
+                        <div class="field-grid">
+                            <div class="field-group">
+                                <label class="field-label">Button Text</label>
+                                <input type="text" name="ad_button_text" class="field-input" value="<?php echo $edit_ad ? htmlspecialchars($edit_ad['button_text']) : 'Shop Now'; ?>">
+                            </div>
+                            <div class="field-group">
+                                <label class="field-label">Button Link</label>
+                                <input type="text" name="ad_button_link" class="field-input" value="<?php echo $edit_ad ? htmlspecialchars($edit_ad['button_link']) : 'shop.php'; ?>" placeholder="e.g. shop.php?category=deals">
+                            </div>
+                        </div>
+
+                        <div class="field-grid">
+                            <div class="field-group">
+                                <label class="field-label">Display Order</label>
+                                <input type="number" name="ad_display_order" class="field-input" value="<?php echo $edit_ad ? (int)$edit_ad['display_order'] : 0; ?>">
+                            </div>
+                            <div class="field-group" style="display: flex; align-items: center; gap: 10px; padding-top: 24px;">
+                                <input type="checkbox" name="ad_is_active" id="adActive" value="1" <?php echo (!$edit_ad || $edit_ad['is_active']) ? 'checked' : ''; ?> style="width: 16px; height: 16px; accent-color: var(--red);">
+                                <label class="field-label" for="adActive" style="margin: 0;">Banner Active</label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-red" style="margin-top: 8px;"><?php echo $edit_ad ? 'Update Ad Banner' : 'Publish Ad Banner'; ?></button>
+                        <?php if ($edit_ad): ?>
+                            <a href="settings.php#adbanners" class="btn-ink" style="justify-content: center; margin-left: 12px; margin-top: 8px; display: inline-flex; padding: 14px 32px; text-decoration: none;">Cancel Editing</a>
+                        <?php endif; ?>
+                    </form>
+                </div>
+            </div>
         </section>
     </div>
 </div>

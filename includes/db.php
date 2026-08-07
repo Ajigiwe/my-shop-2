@@ -223,7 +223,14 @@ if (!function_exists('getProductImage')) {
         
         $cleanName = basename($filename);
         $baseDir = dirname(__DIR__);
-        
+
+        // 2d. Check in assets/images/ads/ (ad banner uploads stored as ads/<file>)
+        if (strpos($filename, 'ads/') === 0 || strpos($filename, 'assets/images/ads/') === 0) {
+            if (file_exists($baseDir . '/assets/images/ads/' . $cleanName)) {
+                return 'assets/images/ads/' . $cleanName;
+            }
+        }
+
         // 1. Direct path check in assets/images/
         if (file_exists($baseDir . '/assets/images/' . $cleanName)) {
             return 'assets/images/' . $cleanName;
@@ -470,6 +477,47 @@ if (!function_exists('asoGetCartItems')) {
             error_log("Cart items error: " . $e->getMessage());
         }
         return $items;
+    }
+}
+
+if (!function_exists('ensureAdBannersSchema')) {
+    /**
+     * Ensure the ad_banners table + columns exist (used as a migration guard).
+     */
+    function ensureAdBannersSchema($pdo = null) {
+        if (!$pdo) return;
+        try {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS ad_banners (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                image_path VARCHAR(255) NOT NULL,
+                title VARCHAR(255) DEFAULT '',
+                description TEXT,
+                button_text VARCHAR(100) DEFAULT 'Shop Now',
+                button_link VARCHAR(255) DEFAULT 'shop.php',
+                display_order INT DEFAULT 0,
+                is_active TINYINT(1) DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+        } catch (Throwable $e) { error_log("ensureAdBannersSchema: " . $e->getMessage()); }
+    }
+}
+
+if (!function_exists('getAdBanners')) {
+    /**
+     * Active ad banners ordered for display.
+     * @param PDO|null $pdo
+     * @return array
+     */
+    function getAdBanners($pdo = null) {
+        ensureAdBannersSchema($pdo);
+        try {
+            if ($pdo) {
+                $stmt = $pdo->query("SELECT * FROM ad_banners WHERE is_active = 1 ORDER BY display_order ASC, id ASC");
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+        } catch (PDOException $e) { error_log("getAdBanners: " . $e->getMessage()); }
+        return [];
     }
 }
 ?>
