@@ -230,26 +230,36 @@ try {
             $ad_image = sanitizeInput($_POST['existing_ad_image'] ?? '');
 
             // Handle uploaded image, if any
-            if (isset($_FILES['ad_image']) && $_FILES['ad_image']['error'] === UPLOAD_ERR_OK) {
-                $targetDir = realpath(__DIR__ . '/../assets/images/ads');
-                if (!is_dir($targetDir)) { @mkdir($targetDir, 0777, true); }
-                $fileTmp = $_FILES['ad_image']['tmp_name'];
-                $origName = basename($_FILES['ad_image']['name']);
-                $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
-                $allowed = ['jpg','jpeg','png','gif','webp'];
-                if (in_array($ext, $allowed)) {
-                    $newName = 'ad_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-                    $dest = $targetDir . DIRECTORY_SEPARATOR . $newName;
-                    if (move_uploaded_file($fileTmp, $dest)) {
-                        // Clean up old image on update
-                        if ($ad_id > 0 && $ad_image && strpos($ad_image, 'http') !== 0) {
-                            $oldPath = realpath(__DIR__ . '/../assets/images/') . DIRECTORY_SEPARATOR . $ad_image;
-                            if (file_exists($oldPath)) @unlink($oldPath);
+            if (isset($_FILES['ad_image'])) {
+                $fErr = $_FILES['ad_image']['error'];
+                if ($fErr === UPLOAD_ERR_OK) {
+                    $adsDir = __DIR__ . '/../assets/images/ads';
+                    if (!is_dir($adsDir)) { @mkdir($adsDir, 0755, true); }
+                    $targetDir = realpath($adsDir);
+                    if (!$targetDir || !is_dir($targetDir)) {
+                        $errors[] = 'Could not create the ad image upload folder (assets/images/ads).';
+                    } else {
+                        $fileTmp = $_FILES['ad_image']['tmp_name'];
+                        $origName = basename($_FILES['ad_image']['name']);
+                        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+                        $allowed = ['jpg','jpeg','png','gif','webp'];
+                        if (!in_array($ext, $allowed)) {
+                            $errors[] = 'Ad image must be JPG, PNG, GIF or WebP';
+                        } else {
+                            $newName = 'ad_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                            $dest = $targetDir . DIRECTORY_SEPARATOR . $newName;
+                            if (move_uploaded_file($fileTmp, $dest)) {
+                                // Clean up old image on update
+                                if ($ad_id > 0 && $ad_image && strpos($ad_image, 'http') !== 0) {
+                                    $oldPath = realpath(__DIR__ . '/../assets/images/') . DIRECTORY_SEPARATOR . $ad_image;
+                                    if (file_exists($oldPath)) @unlink($oldPath);
+                                }
+                                $ad_image = 'ads/' . $newName;
+                            } else {
+                                $errors[] = 'Failed to move the uploaded image. Check folder permissions on assets/images/ads.';
+                            }
                         }
-                        $ad_image = 'ads/' . $newName;
                     }
-                } else {
-                    $errors[] = 'Ad image must be JPG, PNG, GIF or WebP';
                 }
             }
 
