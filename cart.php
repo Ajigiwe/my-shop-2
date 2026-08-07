@@ -111,7 +111,7 @@ include 'includes/header.php';
 ?>
 
 <style>
-.cart-page { padding-top: 68px; min-height: 100svh; background: var(--gray-50); }
+.cart-page { padding-top: calc(68px + var(--nav-offset, 0px)); min-height: 100svh; background: var(--gray-50); }
 
 /* PAGE HEADER */
 .cart-header { background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 32px 0 24px; }

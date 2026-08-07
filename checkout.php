@@ -194,10 +194,10 @@ include 'includes/header.php';
 
 <style>
 body { background: #f8f8f8; color: #111; font-family: var(--f-body); }
-.co-page { padding-top: 68px; min-height: 100svh; }
+.co-page { padding-top: calc(68px + var(--nav-offset, 0px)); min-height: 100svh; }
 
 /* PROGRESS */
-.pb-bar { background: #fff; border-bottom: 1px solid #eee; height: 48px; position: sticky; top: 68px; z-index: 90; }
+.pb-bar { background: #fff; border-bottom: 1px solid #eee; height: 48px; position: sticky; top: calc(68px + var(--nav-offset, 0px)); z-index: 90; }
 .pb-inner { display: flex; align-items: stretch; height: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 .pb-step { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #ccc; border-bottom: 2px solid transparent; }
 .pb-step.on { color: #111; border-bottom-color: var(--red); }
