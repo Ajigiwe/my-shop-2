@@ -196,18 +196,8 @@ $meta_description = $settings['site_description'] ?? $site_name . ' — your one
 </div>
 <?php endif; ?>
 
-<div class="ghana-topbar" id="ghana-topbar">
-    <a href="<?php echo $base; ?>local.php" class="ghana-topbar-link">
-        <span class="ghana-topbar-flag">🇬🇭</span>
-        <span class="ghana-topbar-text">Made in Ghana — authentic local goods, delivered worldwide</span>
-        <span class="ghana-topbar-cta">Explore <span class="ghana-topbar-arrow">→</span></span>
-    </a>
-    <button type="button" class="ghana-topbar-close" id="ghana-topbar-close" aria-label="Dismiss Made in Ghana banner">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-    </button>
-</div>
 <style>
-.ghana-topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 2100; background: linear-gradient(90deg,#1f1407,#3a2410); color: #fff; }
+.ghana-topbar { background: linear-gradient(90deg,#1f1407,#3a2410); color: #fff; width: 100%; }
 .ghana-topbar-link { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 10px 48px; text-decoration: none; color: #fff; font-family: var(--f-semi); font-size: 13px; letter-spacing: 0.02em; text-align: center; }
 .ghana-topbar-flag { font-size: 15px; line-height: 1; }
 .ghana-topbar-text { color: rgba(255,255,255,0.85); }
@@ -218,34 +208,18 @@ $meta_description = $settings['site_description'] ?? $site_name . ' — your one
 .ghana-topbar-close:hover { color: #fff; }
 @media (max-width: 640px) { .ghana-topbar-link { flex-direction: column; gap: 2px; padding: 8px 40px; } .ghana-topbar-text { font-size: 12px; } }
 </style>
-<script>
-(function(){
-    var bar = document.getElementById('ghana-topbar');
-    if (!bar) return;
-    var navMain = document.getElementById('main-nav');
-    function setTop(){
-        var h = bar.offsetHeight;
-        if (navMain) navMain.style.setProperty('top', h + 'px');
-        document.documentElement.style.setProperty('--nav-offset', h + 'px');
-    }
-    if (sessionStorage.getItem('aso_ghana_topbar_dismissed') === '1') {
-        bar.style.display = 'none';
-        if (navMain) navMain.style.top = '0px';
-        document.documentElement.style.setProperty('--nav-offset', '0px');
-    }
-    window.addEventListener('resize', setTop);
-    var closeBtn = document.getElementById('ghana-topbar-close');
-    if (closeBtn) closeBtn.addEventListener('click', function(){
-        sessionStorage.setItem('aso_ghana_topbar_dismissed', '1');
-        bar.style.display = 'none';
-        if (navMain) navMain.style.top = '0px';
-        document.documentElement.style.setProperty('--nav-offset', '0px');
-    });
-    setTop();
-})();
-</script>
 
 <nav class="nav" id="main-nav">
+    <div class="ghana-topbar" id="ghana-topbar">
+        <a href="<?php echo $base; ?>local.php" class="ghana-topbar-link">
+            <span class="ghana-topbar-flag">🇬🇭</span>
+            <span class="ghana-topbar-text">Made in Ghana — authentic local goods, delivered worldwide</span>
+            <span class="ghana-topbar-cta">Explore <span class="ghana-topbar-arrow">→</span></span>
+        </a>
+        <button type="button" class="ghana-topbar-close" id="ghana-topbar-close" aria-label="Dismiss Made in Ghana banner">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
     <div class="container-fluid nav-inner">
         <!-- Row 1: Actions & Brand -->
         <div class="nav-top">
@@ -385,6 +359,26 @@ $meta_description = $settings['site_description'] ?? $site_name . ' — your one
         <?php endif; ?>
     </nav>
 </div>
+
+<script>(function(){
+    var navMain = document.getElementById('main-nav');
+    var bar = document.getElementById('ghana-topbar');
+    function setOffset(){
+        var h = (navMain ? navMain.offsetHeight : 0);
+        document.documentElement.style.setProperty('--nav-offset', h + 'px');
+    }
+    if (bar && sessionStorage.getItem('aso_ghana_topbar_dismissed') === '1') {
+        bar.remove();
+    }
+    setOffset();
+    window.addEventListener('resize', setOffset);
+    var closeBtn = bar && document.getElementById('ghana-topbar-close');
+    if (closeBtn) closeBtn.addEventListener('click', function(){
+        sessionStorage.setItem('aso_ghana_topbar_dismissed', '1');
+        if (bar) bar.style.display = 'none';
+        setOffset();
+    });
+})();</script>
 
 <script>
     (function() {
